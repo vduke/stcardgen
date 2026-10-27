@@ -1,0 +1,86 @@
+<div id="stcg_settings" class="stcg-settings">
+    <div class="inline-drawer">
+        <div class="inline-drawer-toggle inline-drawer-header">
+            <b>Card Generator</b>
+            <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
+        </div>
+        <div class="inline-drawer-content">
+            <div class="stcg-actions">
+                <div id="stcg_btn_create_persona" class="menu_button menu_button_icon" title="Generate a persona from an image">
+                    <i class="fa-solid fa-user-plus"></i><span>Create Persona</span>
+                </div>
+                <div id="stcg_btn_create_character" class="menu_button menu_button_icon" title="Generate a character card from an image">
+                    <i class="fa-solid fa-id-card"></i><span>Create Character</span>
+                </div>
+                <div id="stcg_btn_bulk" class="menu_button menu_button_icon" title="Generate many personas/characters into Drafts">
+                    <i class="fa-solid fa-layer-group"></i><span>Bulk Create</span>
+                </div>
+                <div id="stcg_btn_drafts" class="menu_button menu_button_icon" title="Review drafts">
+                    <i class="fa-solid fa-inbox"></i><span>Drafts <span class="stcg-draft-count"></span></span>
+                </div>
+                <div id="stcg_btn_import" class="menu_button menu_button_icon" title="Import character card file(s) (.png / .json) as persona(s)">
+                    <i class="fa-solid fa-file-import"></i><span>Import Card as Persona</span>
+                </div>
+            </div>
+
+            <hr class="sysHR">
+            <h4>Connection</h4>
+            <label for="stcg_profile">Connection profile</label>
+            <select id="stcg_profile" class="text_pole"></select>
+            <small class="notes">"Current connection" uses whatever API/model and Chat Completion preset is active right now. A profile uses that profile's API, model and preset. Must be Chat Completion with a vision-capable model to send images.</small>
+            <div class="stcg-row">
+                <label for="stcg_max_tokens">Max response tokens
+                    <input id="stcg_max_tokens" class="text_pole" type="number" min="256" max="65536" step="256">
+                </label>
+                <label for="stcg_image_max">Image max side (px)
+                    <input id="stcg_image_max" class="text_pole" type="number" min="256" max="4096" step="64">
+                </label>
+                <label for="stcg_concurrency">Bulk concurrency
+                    <input id="stcg_concurrency" class="text_pole" type="number" min="1" max="4" step="1">
+                </label>
+            </div>
+
+            <hr class="sysHR">
+            <h4>Persona generation</h4>
+            <label for="stcg_persona_prompt">Generation prompt / rules</label>
+            <textarea id="stcg_persona_prompt" class="text_pole textarea_compact" rows="8"></textarea>
+            <label for="stcg_persona_format">Output format (must yield JSON with <code>name</code>, <code>title</code>, <code>description</code>)</label>
+            <textarea id="stcg_persona_format" class="text_pole textarea_compact" rows="5"></textarea>
+
+            <hr class="sysHR">
+            <h4>Character generation</h4>
+            <label for="stcg_character_prompt">Generation prompt / rules</label>
+            <textarea id="stcg_character_prompt" class="text_pole textarea_compact" rows="8"></textarea>
+            <label for="stcg_character_format">Output format (JSON keys: <code>name, description, personality, scenario, first_mes, mes_example, alternate_greetings, creator_notes, system_prompt, post_history_instructions, tags</code>)</label>
+            <textarea id="stcg_character_format" class="text_pole textarea_compact" rows="5"></textarea>
+
+            <hr class="sysHR">
+            <h4>Banned names</h4>
+            <label for="stcg_banned">Names that must not be used (one per line or comma-separated)</label>
+            <textarea id="stcg_banned" class="text_pole textarea_compact" rows="4" placeholder="Seraphina&#10;Lilith&#10;Elara"></textarea>
+            <label class="checkbox_label"><input id="stcg_ban_tropes" type="checkbox"> Ban overused AI names (first names and surnames below)</label>
+            <textarea id="stcg_trope_names" class="text_pole textarea_compact" rows="5"></textarea>
+            <div class="stcg-row">
+                <div id="stcg_btn_reset_tropes" class="menu_button">Restore default overused names</div>
+            </div>
+            <label class="checkbox_label"><input id="stcg_ban_personas" type="checkbox"> Also ban names of existing personas</label>
+            <label class="checkbox_label"><input id="stcg_ban_characters" type="checkbox"> Also ban names of existing characters</label>
+            <label class="checkbox_label"><input id="stcg_ban_drafts" type="checkbox"> Also ban names already used by drafts</label>
+            <label for="stcg_ban_prompt">Ban instruction (<code>{{bannedNames}}</code>, <code>{{type}}</code>)</label>
+            <textarea id="stcg_ban_prompt" class="text_pole textarea_compact" rows="2"></textarea>
+            <div class="stcg-row">
+                <div id="stcg_btn_preview_bans" class="menu_button">Show effective ban list</div>
+            </div>
+
+            <hr class="sysHR">
+            <h4>Card → Persona import</h4>
+            <label class="checkbox_label"><input id="stcg_import_swap" type="checkbox"> Swap <code>{{char}}</code> ↔ <code>{{user}}</code> in the description</label>
+            <label class="checkbox_label"><input id="stcg_import_personality" type="checkbox"> Append the card's personality field</label>
+
+            <hr class="sysHR">
+            <div class="stcg-row">
+                <div id="stcg_btn_reset" class="menu_button" title="Restore default prompts and formats">Reset prompts to defaults</div>
+            </div>
+        </div>
+    </div>
+</div>
