@@ -3,7 +3,8 @@ import { Popup, POPUP_TYPE, POPUP_RESULT } from '../../../popup.js';
 import { power_user } from '../../../power-user.js';
 import { user_avatar } from '../../../personas.js';
 import { debounce } from '../../../utils.js';
-import { reviewCard, reviseCard, reviseField, renameNames, qualityPass, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, QUALITY_PANEL_HTML, fieldOpsHtml } from './quality.js';
+import { reviewCard, reviseCard, reviseField, renameNames, qualityPass, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, QUALITY_PANEL_HTML, fieldOpsHtml, wireIssueChecks, canFix } from './quality.js';
+import { startTask, guardClosing } from './tasks.js';
 
 // [old line, new line] pairs applied to saved prompts on load; see PROMPT_LINE_MIGRATIONS in index.js.
 export const WORLD_PROMPT_LINE_MIGRATIONS = [
@@ -392,13 +393,19 @@ function entryHtml(entry, index) {
  * @param {object} [options]
  * @param {object} [options.draft] Existing world draft
  */
-export async function openWorldBuilder({ draft = null } = {}) {
+/**
+ * @param {object} [options]
+ * @param {object} [options.draft] World draft to review
+ * @param {string} [options.personaId] Persona to build around (defaults to the current one)
+ */
+export async function openWorldBuilder({ draft = null, personaId = null } = {}) {
     const personas = listPersonas();
     const state = {
-        source: draft?.source ?? null,
+        source: draft?.source ?? (personaId ? personaSource(personaId) : null),
         data: structuredClone(draft?.data ?? emptyWorld()),
         raw: draft?.raw ?? '',
         details: draft?.details ?? '',
+        steer: draft?.steer ?? '',
         imageBlob: null,
         imageUrl: '',
         imageChanged: false,
@@ -513,6 +520,7 @@ export async function openWorldBuilder({ draft = null } = {}) {
         }
         state.details = String($root.find('.stcg-details').val() ?? '');
         state.raw = String($root.find('.stcg-raw-text').val() ?? '');
+        state.steer = String($root.find('.stcg-steer').val() ?? '');
     }
 
     function renderEntries({ openIndex = null } = {}) {
@@ -566,9 +574,13 @@ export async function openWorldBuilder({ draft = null } = {}) {
         }
     }, 400);
 
+    function updateFixButton() {
+        $root.find('.stcg-q-fix').toggleClass('disabled', !canFix(state.review, $root.find('.stcg-steer').val()));
+    }
+
     function renderQuality() {
         $root.find('.stcg-review').html(reviewHtml(state.review));
-        $root.find('.stcg-q-fix').toggleClass('disabled', !state.review?.issues?.length);
+        updateFixButton();
         $root.find('.stcg-q-undo').toggleClass('disabled', !state.history.length);
         updateTokens();
     }
@@ -595,26 +607,37 @@ export async function openWorldBuilder({ draft = null } = {}) {
         $status.text('Undone.');
     }
 
-    /** Runs one AI task with the shared busy/stop/error handling. */
+    /** Runs one AI task with the shared busy/stop/error handling, shown in the task panel with a timer. */
     async function runAi(message, task) {
         if (state.busy) return;
         readCard();
         if (!state.source) { toastr.warning('Pick a persona first.'); return; }
-        state.abort = new AbortController();
+        const controller = new AbortController();
+        state.abort = controller;
+        state.task = startTask(`World${state.data.name ? ` "${state.data.name}"` : ` for ${state.source.name}`}`, { detail: message, onStop: () => controller.abort() });
         setBusy(true, message);
         try {
-            const done = await task(state.abort.signal);
+            const done = await task(controller.signal);
             setBusy(false, done || 'Done.');
+            state.task.finish(done || 'Done.');
         } catch (error) {
             console.error('[stcardgen]', error);
-            const aborted = state.abort.signal.aborted;
-            setBusy(false, aborted ? 'Stopped.' : `Error: ${error?.message || error}`);
+            const aborted = controller.signal.aborted;
+            const text = aborted ? 'Stopped.' : `Error: ${error?.message || error}`;
+            setBusy(false, text);
+            state.task.finish(text, { error: !aborted });
             if (!aborted) toastr.error(String(error?.message || error), 'Card Generator');
         }
         renderQuality();
     }
 
-    const quality = signal => ({ type: 'world', details: state.details, source: state.source, signal });
+    /** Status line in the builder and the task panel. */
+    function status(text) {
+        $status.text(text);
+        state.task?.update({ detail: text });
+    }
+
+    const quality = signal => ({ type: 'world', details: state.details, source: state.source, steer: state.steer, signal });
 
     function refresh() {
         writeCard();
@@ -657,8 +680,10 @@ export async function openWorldBuilder({ draft = null } = {}) {
                 state.data = result.data;
                 refresh();
                 if (kind === 'fix') {
+                    status('Re-reviewing…');
                     const before = state.review;
-                    state.review = { ...await reviewCard({ ...quality(signal), data: state.data, previousIssues: before?.issues || [] }), previous: before?.overall };
+                    const fixed = (before?.issues || []).filter(i => !i.skip);
+                    state.review = { ...await reviewCard({ ...quality(signal), data: state.data, previousIssues: fixed }), previous: before?.overall };
                 }
                 return result.changed.length ? `Changed: ${result.changed.join(', ')}.` : 'The model made no changes.';
             }
@@ -677,7 +702,7 @@ export async function openWorldBuilder({ draft = null } = {}) {
                 refresh();
                 let score = '';
                 if (s.autoReview) {
-                    const checked = await qualityPass({ ...quality(signal), data: state.data, onStatus: text => $status.text(text) });
+                    const checked = await qualityPass({ ...quality(signal), data: state.data, onStatus: status });
                     state.data = checked.data;
                     state.review = checked.review;
                     refresh();
@@ -725,6 +750,8 @@ export async function openWorldBuilder({ draft = null } = {}) {
 
     // Wiring
     $root.find('.stcg-details').val(state.details);
+    $root.find('.stcg-steer').val(state.steer).on('input', updateFixButton);
+    wireIssueChecks($root, () => state.review, updateFixButton);
     $root.find('.stcg-w-count').val(s.worldEntryCount).on('input', e => {
         s.worldEntryCount = Number($(e.target).val());
         SillyTavern.getContext().saveSettingsDebounced();
@@ -825,7 +852,7 @@ export async function openWorldBuilder({ draft = null } = {}) {
         large: true,
         allowVerticalScrolling: true,
         leftAlign: true,
-        onClosing: async (p) => {
+        onClosing: guardClosing(async (p) => {
             readCard();
             state.data.entries = state.data.entries.map(normalizeEntry);
             if (p.result === POPUP_RESULT.AFFIRMATIVE) {
@@ -836,11 +863,15 @@ export async function openWorldBuilder({ draft = null } = {}) {
                     const ok = await Popup.show.confirm('Name already in use', `"${api.escapeHtml(state.data.name)}" is already used by ${conflict}. Create anyway?`);
                     if (!ok) return false;
                 }
+                const task = startTask(`Creating world "${state.data.name.trim()}"`, { detail: 'Saving the lorebook and sandbox card…' });
+                $status.text('Saving…');
                 try {
                     await saveWorldToST(state.data, state.imageBlob);
                     if (draft) await api.deleteDraft(draft.id);
+                    task.finish('Created.');
                 } catch (error) {
                     console.error('[stcardgen]', error);
+                    task.finish(`Error: ${error?.message || error}`, { error: true });
                     toastr.error(String(error?.message || error), 'Card Generator');
                     return false;
                 }
@@ -858,7 +889,7 @@ export async function openWorldBuilder({ draft = null } = {}) {
                 state.abort?.abort();
             }
             return true;
-        },
+        }),
         onClose: () => { if (state.imageUrl) URL.revokeObjectURL(state.imageUrl); },
     });
     return await popup.show();
@@ -880,6 +911,7 @@ async function saveWorldDraft(state, existing) {
     draft.data = structuredClone(state.data);
     draft.raw = state.raw;
     draft.details = state.details;
+    draft.steer = state.steer;
     draft.review = state.review;
     draft.error = '';
     draft.status = state.data.entries.length ? 'ready' : 'queued';

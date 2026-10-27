@@ -4,30 +4,76 @@
 const LEGACY_REVIEW_CALIBRATION = 'Score it honestly; a 10 is rare.';
 const REVIEW_CALIBRATION = 'Score it honestly and be hard to impress. Calibration: a solid first draft usually scores 6-7; 8 is genuinely strong; 9+ means you looked hard and found nothing meaningful to improve. You are likely reviewing AI-generated text, so watch for its habits: stock names, generic adjectives ("mysterious", "enigmatic"), tidy summaries instead of specifics, and repeated phrasing.';
 
-/** Saved rubrics still holding the old calibration line get the new one. */
+const PLAYABILITY_LINE = '- playability: gives the AI what it needs to roleplay well: motivations, speech style, relationships, conflicts and hooks. For worlds: NPCs have goals and distinct voices, places have things to do.';
+const RULES_LINE = '- rules: correct {{char}}/{{user}} macros, never acts or speaks for {{user}}, opening messages end on an in-world beat (never "What do you do?"), example messages use <START> and name prefixes, no Main Prompt content.';
+
+// [old, new] pairs applied to saved rubrics; a line the user edited no longer matches and is left alone.
+const REVIEW_LINE_MIGRATIONS = [
+    [LEGACY_REVIEW_CALIBRATION, REVIEW_CALIBRATION],
+    [PLAYABILITY_LINE, `${PLAYABILITY_LINE} For personas: gives other characters concrete things to notice and react to (look, manner, habits, history) without scripting what {{user}} does.`],
+    [RULES_LINE, '- rules: characters and worlds use correct {{char}}/{{user}} macros, never act or speak for {{user}}, end opening messages on an in-world beat (never "What do you do?"), use <START> and name prefixes in example messages, and have no Main Prompt content. Personas are third person, have no dialogue, and never describe or speak for {{char}}.'],
+];
+
 export function migrateReviewPrompt(text) {
-    return String(text).replace(LEGACY_REVIEW_CALIBRATION, REVIEW_CALIBRATION);
+    return REVIEW_LINE_MIGRATIONS.reduce((acc, [oldLine, newLine]) => acc.replace(oldLine, newLine), String(text));
 }
 
-export const DEFAULT_REVIEW_PROMPT = `You are a strict editor reviewing a SillyTavern {{type}} before it is published. ${REVIEW_CALIBRATION} A good card is vivid and specific without bloat: every sentence should change how the AI plays it.
+export const DEFAULT_REVIEW_PROMPT = migrateReviewPrompt(`You are a strict editor reviewing a SillyTavern {{type}} before it is published. ${REVIEW_CALIBRATION} A good card is vivid and specific without bloat: every sentence should change how the AI plays it.
 
 Score each criterion from 1 to 10:
 - specificity: concrete, original details (names, habits, history, sensory specifics) instead of generic tropes, cliches or purple prose.
 - consistency: fields agree with each other and with the user's details; no contradictions in ages, relationships, timeline or appearance; names used consistently.
-- playability: gives the AI what it needs to roleplay well: motivations, speech style, relationships, conflicts and hooks. For worlds: NPCs have goals and distinct voices, places have things to do.
-- rules: correct {{char}}/{{user}} macros, never acts or speaks for {{user}}, opening messages end on an in-world beat (never "What do you do?"), example messages use <START> and name prefixes, no Main Prompt content.
+${PLAYABILITY_LINE}
+${RULES_LINE}
 - efficiency: no filler, repetition or padding, and no lazy, thin fields either. Length fits the content.
 For worlds, also score:
 - keywords: lorebook keys are specific trigger words (names, places, distinctive terms), not generic words that would fire constantly; secondary keys are used where disambiguation helps.
 - coverage: the world covers what this persona's life needs (home, work or school, people, places, factions, hooks) without overlapping entries.
 
-List concrete issues, most important first. Tie each one to a single field (or lorebook entry index) and give a specific fix. Always list at least the 3 most impactful improvements, even for a good card; skip pure nitpicks; list at most 8.`;
+List concrete issues, most important first. Tie each one to a single field (or lorebook entry index) and give a specific fix. Always list at least the 3 most impactful improvements, even for a good card; skip pure nitpicks; list at most 8.`);
 
 export const DEFAULT_ENHANCE_PROMPT = `Enhance the {{type}}: add concrete, specific details that make it better to roleplay with (history, habits, relationships, sensory details, speech quirks, conflicts, story hooks). Stay consistent with everything already established. Grow the text by roughly 30-60%. No filler, no purple prose, no repetition.`;
 
 export const DEFAULT_OPTIMIZE_PROMPT = `Optimize the {{type}} for token efficiency: cut filler, repetition, purple prose and anything that does not change how the AI plays it. Keep every fact, name, relationship and behavior that matters, and keep the voice. Use tight prose (do not switch to W++ or bullet lists unless the text already uses them). Aim for roughly 30-50% fewer tokens.`;
 
 const FIX_INSTRUCTION = 'Revise the {{type}} to resolve the issues below. Change only what is needed to fix them; keep everything else exactly as it is.';
+const STEER_INSTRUCTION = 'Revise the {{type}} to follow the user\'s instructions below. Change only what they ask for; keep everything else exactly as it is.';
+
+// The fields each type really has. Reviews of a persona kept asking for a first message and example
+// dialogue, which personas do not have, so the reviewer is told the scope and off-scope issues are dropped.
+const TYPE_FIELDS = {
+    persona: ['name', 'title', 'description'],
+    character: ['name', 'description', 'personality', 'scenario', 'first_mes', 'alternate_greetings', 'mes_example', 'tags', 'creator_notes', 'post_history_instructions'],
+    world: ['name', 'description', 'scenario', 'first_mes', 'alternate_greetings', 'mes_example', 'tags', 'creator_notes'],
+};
+const CARD_ONLY_FIELDS = new Set(['first_mes', 'first_message', 'greeting', 'greetings', 'alternate_greetings', 'mes_example', 'example_messages', 'example_dialogue', 'tags', 'creator_notes', 'post_history_instructions', 'system_prompt']);
+const CARD_ONLY_TEXT = /\b(first[ _]?mes(sage)?|opening message|alternate[ _]greetings?|mes_example|example (messages?|dialogues?|exchanges?)|post[ _]history|system[ _]prompt|main prompt|(missing|empty|no|add an?) (personality|scenario) field)\b/i;
+// Personas describe personality inside the description, so these labels point at the description.
+const PERSONA_FIELD_ALIASES = { personality: 'description', scenario: 'description', background: 'description', appearance: 'description' };
+
+function scopeLine(type) {
+    const fields = TYPE_FIELDS[type].join(', ');
+    if (type === 'persona') {
+        return `This is a USER PERSONA (the character the user plays), not a character card. Its only fields are: ${fields}. Personas have no first message, greetings, example messages, scenario, personality field or tags: never ask for them, never list their absence as an issue, and never lower a score because they are missing. Apply only the parts of each criterion that fit a persona.`;
+    }
+    return `Its fields are: ${fields}${type === 'world' ? ', plus the lorebook entries' : ''}. Only raise issues about these.`;
+}
+
+function inScope(type, issue) {
+    if (issue.entry !== null) return type === 'world';
+    if (type !== 'persona') return true;
+    const field = issue.field.toLowerCase().trim().replace(/[\s-]+/g, '_');
+    return !CARD_ONLY_FIELDS.has(field) && !CARD_ONLY_TEXT.test(`${issue.field} ${issue.problem} ${issue.fix}`);
+}
+
+function scopeField(type, field) {
+    if (type !== 'persona') return field;
+    return PERSONA_FIELD_ALIASES[field.toLowerCase().trim()] ?? field;
+}
+
+function steerBlock(steer) {
+    return steer?.trim() ? `The user's instructions (follow them; they take priority over the issues list, but not over the card rules):\n${steer.trim()}` : '';
+}
 
 const CRITERIA = ['specificity', 'consistency', 'playability', 'rules', 'efficiency'];
 const WORLD_CRITERIA = [...CRITERIA, 'keywords', 'coverage'];
@@ -136,6 +182,7 @@ export async function reviewCard({ type, data, details = '', source = null, sign
         : '';
     const system = [
         fill(s.reviewPrompt, type),
+        scopeLine(type),
         `The card was generated under these rules:\n${rulesFor(type)}`,
         banLine(data, source),
         previous,
@@ -154,18 +201,19 @@ export async function reviewCard({ type, data, details = '', source = null, sign
     const overall = values.length ? Math.round(values.reduce((a, b) => a + b, 0) / values.length * 10) / 10 : 0;
     const issues = (Array.isArray(parsed.issues) ? parsed.issues : [])
         .map(i => ({
-            field: String(i?.field ?? '').trim(),
+            field: scopeField(type, String(i?.field ?? '').trim()),
             entry: Number.isInteger(i?.entry) ? i.entry : null,
             problem: String(i?.problem ?? '').trim(),
             fix: String(i?.fix ?? '').trim(),
         }))
-        .filter(i => i.problem)
+        .filter(i => i.problem && inScope(type, i))
         .slice(0, 8);
 
     // Banned names are checked in code, not left to the reviewer, and go first so a fix renames them.
     const nameIssues = api.findOverusedNames(data, [source?.name]).map(name => ({
         field: 'names',
         entry: null,
+        name,
         problem: `"${name}" uses an overused or banned name.`,
         fix: `Rename "${name}" to an original name that fits, everywhere it appears (fields, entry titles, keys and content).`,
     }));
@@ -293,31 +341,38 @@ export async function renameNames({ type, data, names, source = null, signal = n
  * @param {'fix'|'enhance'|'optimize'} options.mode
  * @returns {Promise<{data: object, changed: string[]}>}
  */
-export async function reviseCard({ type, data, mode, issues = [], details = '', source = null, signal = null }) {
+export async function reviseCard({ type, data, mode, issues = [], steer = '', details = '', source = null, signal = null }) {
     const s = api.settings();
-    const instruction = mode === 'fix' ? FIX_INSTRUCTION : mode === 'enhance' ? s.enhancePrompt : s.optimizePrompt;
-    if (mode === 'fix' && !issues.length) throw new Error('Run a review first; there are no issues to fix.');
+    // Unticked issues are ones the user disagrees with; an unticked name issue means "keep this name".
+    const active = issues.filter(i => !i.skip);
+    const keptNames = issues.filter(i => i.skip && i.field === 'names' && i.name).map(i => i.name);
+    const steerText = steerBlock(steer);
+    if (mode === 'fix' && !active.length && !steerText) throw new Error('Nothing to fix: run a review and keep at least one issue ticked, or write instructions.');
     // Name issues are handled by renameNames below, not by the general patch.
-    const contentIssues = issues.filter(i => i.field !== 'names');
+    const contentIssues = active.filter(i => i.field !== 'names');
+    const instruction = mode === 'fix' ? (contentIssues.length ? FIX_INSTRUCTION : STEER_INSTRUCTION) : mode === 'enhance' ? s.enhancePrompt : s.optimizePrompt;
     let next = data;
-    if (mode !== 'fix' || contentIssues.length) {
+    if (mode !== 'fix' || contentIssues.length || steerText) {
         const system = [
             fill(instruction, type),
             `Card rules (revisions must still follow them):\n${rulesFor(type)}`,
             banLine(data, source),
-            'Do not rename existing people or places; renaming is handled separately.',
+            steerText
+                ? 'Do not rename existing people or places unless the user\'s instructions ask for it; stock names are handled separately.'
+                : 'Do not rename existing people or places; renaming is handled separately.',
             PATCH_FORMAT.replace('{{entriesFormat}}', type === 'world' ? ENTRIES_PATCH_FORMAT : ''),
         ].filter(Boolean).join('\n\n');
-        const issueText = mode === 'fix'
+        const issueText = mode === 'fix' && contentIssues.length
             ? `\n\nIssues to fix:\n${contentIssues.map((i, n) => `${n + 1}. [${i.entry !== null ? `entry ${i.entry} ` : ''}${i.field}] ${i.problem} Fix: ${i.fix}`).join('\n')}`
             : '';
-        const patch = await ask(type, system, `${contextBlock({ type, data, details, source })}${issueText}\n\nReturn the patch JSON only.`, signal);
+        const user = [`${contextBlock({ type, data, details, source })}${issueText}`, steerText, 'Return the patch JSON only.'].filter(Boolean).join('\n\n');
+        const patch = await ask(type, system, user, signal);
         next = applyPatch(type, data, patch);
     }
     const changed = changedFields(type, data, next);
 
     // Catch banned names that were already there or that the revision just invented.
-    const names = api.findOverusedNames(next, [source?.name]);
+    const names = api.findOverusedNames(next, [source?.name, ...keptNames]);
     if (names.length) {
         const renamed = await renameNames({ type, data: next, names, source, signal });
         next = renamed.data;
@@ -331,7 +386,7 @@ export async function reviseCard({ type, data, mode, issues = [], details = '', 
  * Rewrites a single field (or one lorebook entry's content) in enhance/optimize mode.
  * @returns {Promise<string|string[]>} The new value
  */
-export async function reviseField({ type, data, field, entryIndex = null, mode, details = '', source = null, signal = null }) {
+export async function reviseField({ type, data, field, entryIndex = null, mode, steer = '', details = '', source = null, signal = null }) {
     const s = api.settings();
     const instruction = mode === 'enhance' ? s.enhancePrompt : s.optimizePrompt;
     const target = entryIndex === null ? `the field "${field}"` : `the "content" of lorebook entry ${entryIndex} ("${data.entries[entryIndex]?.title}")`;
@@ -348,8 +403,9 @@ export async function reviseField({ type, data, field, entryIndex = null, mode, 
     const user = [
         contextBlock({ type, data, details, source }),
         `Current text of ${target}:\n<<<\n${currentText}\n>>>`,
+        steerBlock(steer),
         `Rewrite only that text now. JSON only.`,
-    ].join('\n\n');
+    ].filter(Boolean).join('\n\n');
     const parsed = await ask(type, system, user, signal);
     const value = unwrapFieldValue(parsed, field);
     if (isList) return api.toStringList(value);
@@ -457,9 +513,14 @@ export function reviewHtml(review) {
             <div class="stcg-bar-track"><div class="stcg-bar-fill" style="width:${value * 10}%"></div></div>
             <b>${value}</b>
         </div>`).join('');
-    const issues = review.issues.map(i => `
-        <li><b>${esc(i.entry !== null ? `entry ${i.entry} · ${i.field}` : i.field)}</b>: ${esc(i.problem)}
-        ${i.fix ? `<div class="stcg-issue-fix">→ ${esc(i.fix)}</div>` : ''}</li>`).join('');
+    const issues = review.issues.map((i, n) => `
+        <li class="${i.skip ? 'stcg-issue-skipped' : ''}">
+            <label class="stcg-issue">
+                <input type="checkbox" class="stcg-issue-check" data-issue="${n}" ${i.skip ? '' : 'checked'} title="Untick to leave this one alone when you click Fix issues">
+                <span><b>${esc(i.entry !== null ? `entry ${i.entry} · ${i.field}` : i.field)}</b>: ${esc(i.problem)}
+                ${i.fix ? `<span class="stcg-issue-fix">→ ${esc(i.fix)}</span>` : ''}</span>
+            </label>
+        </li>`).join('');
     const previous = review.previous ? ` <small>(was ${review.previous})</small>` : '';
     return `
         <div class="stcg-score-head stcg-score-${scoreClass(review.overall)}">Score <b>${review.overall}</b>/10${previous}</div>
@@ -468,11 +529,29 @@ export function reviewHtml(review) {
         ${issues ? `<ol class="stcg-issues">${issues}</ol>` : '<div class="stcg-review-summary">No issues listed.</div>'}`;
 }
 
+/** Ticking or unticking an issue marks it for (or keeps it out of) the next Fix. */
+export function wireIssueChecks($root, getReview, onChange = () => { }) {
+    $root.on('change', '.stcg-issue-check', e => {
+        const issue = getReview()?.issues?.[Number($(e.currentTarget).data('issue'))];
+        if (!issue) return;
+        issue.skip = !$(e.currentTarget).prop('checked');
+        $(e.currentTarget).closest('li').toggleClass('stcg-issue-skipped', issue.skip);
+        onChange();
+    });
+}
+
+/** Fix needs a ticked issue or some instructions. */
+export function canFix(review, steer) {
+    return !!(review?.issues?.some(i => !i.skip) || String(steer || '').trim());
+}
+
 export const QUALITY_PANEL_HTML = `
     <div class="stcg-quality">
+        <label class="stcg-steer-label" title="Sent with Fix issues, Enhance, Optimize and the per-field buttons. With no ticked issues, Fix applies just these instructions.">Your instructions (optional)</label>
+        <textarea class="text_pole stcg-steer" rows="2" placeholder="e.g. keep her shy, no tragic backstory, make the bakery a tea shop"></textarea>
         <div class="stcg-quality-buttons">
             <div class="menu_button stcg-q-review" title="Score the card against the rubric and list issues"><i class="fa-solid fa-clipboard-check"></i> Review</div>
-            <div class="menu_button stcg-q-fix" title="Patch the card to fix the listed issues"><i class="fa-solid fa-screwdriver-wrench"></i> Fix issues</div>
+            <div class="menu_button stcg-q-fix" title="Patch the card to fix the ticked issues, following your instructions"><i class="fa-solid fa-screwdriver-wrench"></i> Fix issues</div>
             <div class="menu_button stcg-q-enhance" title="Expand the whole card with richer, specific detail"><i class="fa-solid fa-up-right-and-down-left-from-center"></i> Enhance</div>
             <div class="menu_button stcg-q-optimize" title="Trim the whole card to fewer tokens, keeping what matters"><i class="fa-solid fa-scissors"></i> Optimize</div>
             <div class="menu_button stcg-q-undo" title="Undo the last AI change"><i class="fa-solid fa-rotate-left"></i> Undo</div>

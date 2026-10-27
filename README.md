@@ -12,7 +12,9 @@ Generate personas, character cards, and persona-centered sandbox worlds with a v
 
   You can edit every entry, use **Add more entries** to fill gaps, and use **Fix overused names** to have the model rename NPCs with stock names everywhere they appear.
 - **Quality pass**: after generation, a second request scores the result 1–10 on specificity, consistency, playability, rules and efficiency (worlds also get keywords and coverage), and lists concrete issues.
-  - **Fix issues** sends back a patch of only the fields or entries that need to change, then re-reviews.
+  - Personas are judged as personas. The reviewer never asks for a first message, greetings or example dialogue, and such issues are dropped if it raises them anyway.
+  - **Fix issues** sends back a patch of only the fields or entries that need to change, then re-reviews. Untick an issue to leave it alone; unticking a name issue keeps that name.
+  - **Your instructions** steer Fix, Enhance, Optimize and the per-field buttons (e.g. "keep her shy, no tragic backstory"). With no ticked issues, Fix applies just your instructions.
   - **Enhance** and **Optimize** grow or trim the whole card, a single field, or a single lorebook entry. A rewrite that goes the wrong way is rejected.
   - **Undo** reverts any AI change.
   - Token counts are shown per field and in total. For worlds you also see the lorebook total and the always-on (constant) cost.
@@ -22,6 +24,12 @@ Generate personas, character cards, and persona-centered sandbox worlds with a v
 - **Bulk Create**: queue many images at once, with shared and per-image details. The queue runs in the background and every result lands in **Drafts**.
 - **Drafts**: review, edit, regenerate, approve (one or many), or delete personas, characters and worlds. Drafts and their images persist across reloads. Images are stored in `data/<user>/user/files/stcardgen_*`.
 - **Import Card as Persona**: pick `.png`/`.json` character cards. One file opens the editor; several go straight to Drafts.
+- **Manage Personas**: your installed personas, with score badges.
+  - **Review & edit** opens the same editor with review, fix, enhance, optimize, instructions and undo. **Save Persona** writes the changes back to that persona.
+  - The globe button builds a world around that persona.
+  - **Review selected** scores many personas at once without changing them.
+  - **Remove duplicates** finds personas with the same name and description and deletes the extra copies. Copies used in any chat, linked to a character, holding a lorebook, or set as current or default are always kept. A copy with a different avatar is listed but not ticked. You confirm the list before anything is deleted.
+- **Task panel**: slow work shows in a floating panel (bottom right) with progress, the current step, a running timer and a Stop button where it applies. This covers bulk generation, approvals, imports, reviews, duplicate scans and single AI calls. Click its header to collapse it. Buttons that start a run are disabled while it runs, so repeated clicks no longer create things twice.
 - **Banned names**:
   - your own list, plus a default list of overused AI names (Elara, Thorne, Vance…), plus optionally the names of existing personas, characters and drafts;
   - all of these are injected into the prompt;
@@ -39,12 +47,12 @@ Find them under Extensions → Card Generator.
 - **Image prompts**: turn suggestions on or off, and edit the instruction.
 - **Ban instruction**: a template that supports `{{bannedNames}}` and `{{type}}`.
 
-The wand menu also has Create Persona, Create Character, Create World for Persona, and Card Drafts.
+The wand menu also has Create Persona, Create Character, Create World for Persona, Manage Personas, and Card Drafts.
 
 ## Install
 
 Install it from the repo URL with SillyTavern's built-in extension installer, or copy this folder to `public/scripts/extensions/third-party/` and reload SillyTavern. For the local Docker setup, run:
 
 ```bash
-cp manifest.json index.js world.js quality.js style.css settings.html /c/Users/vduke/dockerapps/SillyTavern/extensions/stcardgen/
+cp manifest.json index.js world.js quality.js tasks.js manager.js style.css settings.html /c/Users/vduke/dockerapps/SillyTavern/extensions/stcardgen/
 ```

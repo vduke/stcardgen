@@ -1,15 +1,17 @@
-import { getRequestHeaders, saveSettingsDebounced, getCharacters } from '../../../../script.js';
+import { getRequestHeaders, saveSettingsDebounced, getCharacters, setUserName } from '../../../../script.js';
 import { extension_settings, renderExtensionTemplateAsync } from '../../../extensions.js';
 import { ConnectionManagerRequestService } from '../../shared.js';
 import { Popup, POPUP_TYPE, POPUP_RESULT } from '../../../popup.js';
 import { power_user } from '../../../power-user.js';
-import { initPersona, getUserAvatars } from '../../../personas.js';
+import { initPersona, getUserAvatars, user_avatar, setPersonaDescription } from '../../../personas.js';
 import { debounce } from '../../../utils.js';
 import {
     initQuality, reviewCard, reviseCard, reviseField, qualityPass, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, scoreClass,
-    QUALITY_PANEL_HTML, fieldOpsHtml, DEFAULT_REVIEW_PROMPT, DEFAULT_ENHANCE_PROMPT, DEFAULT_OPTIMIZE_PROMPT, migrateReviewPrompt,
+    QUALITY_PANEL_HTML, fieldOpsHtml, wireIssueChecks, canFix, DEFAULT_REVIEW_PROMPT, DEFAULT_ENHANCE_PROMPT, DEFAULT_OPTIMIZE_PROMPT, migrateReviewPrompt,
 } from './quality.js';
 import { initWorld, openWorldBuilder, generateWorld, normalizeWorld, normalizeEntry, saveWorldToST, DEFAULT_WORLD_PROMPT, DEFAULT_WORLD_FORMAT, WORLD_PROMPT_LINE_MIGRATIONS, WORLD_FORMAT_LINE_MIGRATIONS } from './world.js';
+import { startTask, exclusive, guardClosing } from './tasks.js';
+import { initManager, openPersonaManager, personaData, getPersonaReview, setPersonaReview, personaAvatarPath } from './manager.js';
 
 const MODULE = 'stcardgen';
 // The installer names the folder after the git repo, so derive it instead of assuming "stcardgen".
@@ -130,6 +132,8 @@ const defaultSettings = Object.freeze({
     enhancePrompt: DEFAULT_ENHANCE_PROMPT,
     optimizePrompt: DEFAULT_OPTIMIZE_PROMPT,
     drafts: [],
+    // Reviews of installed personas, by avatar id: { hash, review }. The hash drops reviews of text that changed since.
+    personaReviews: {},
 });
 
 // Shown in the editor but never written into the persona/character itself.
@@ -426,11 +430,16 @@ function cardToPersona(card) {
 // Banned names
 // ---------------------------------------------------------------------------
 
-function getBannedNames({ excludeDraftId = null } = {}) {
+/** Persona names, leaving out the persona being edited (so regenerating it may keep its own name). */
+function personaNames(excludePersonaId = null) {
+    return Object.entries(power_user.personas || {}).filter(([id]) => id !== excludePersonaId).map(([, name]) => name);
+}
+
+function getBannedNames({ excludeDraftId = null, excludePersonaId = null } = {}) {
     const s = settings();
     const names = splitNames(s.bannedNames);
     if (s.banTropeNames) names.push(...splitNames(s.tropeNames));
-    if (s.banExistingPersonas) names.push(...Object.values(power_user.personas || {}));
+    if (s.banExistingPersonas) names.push(...personaNames(excludePersonaId));
     if (s.banExistingCharacters) names.push(...SillyTavern.getContext().characters.map(c => c?.name));
     if (s.banDraftNames) names.push(...getDrafts().filter(d => d.id !== excludeDraftId).map(d => d.data?.name));
 
@@ -447,10 +456,10 @@ function getBannedNames({ excludeDraftId = null } = {}) {
 }
 
 /** Returns where a name is already used, or null. */
-function findNameConflict(name, { excludeDraftId = null } = {}) {
+function findNameConflict(name, { excludeDraftId = null, excludePersonaId = null } = {}) {
     const key = String(name || '').trim().toLowerCase();
     if (!key) return null;
-    if (Object.values(power_user.personas || {}).some(n => String(n).trim().toLowerCase() === key)) return 'an existing persona';
+    if (personaNames(excludePersonaId).some(n => String(n).trim().toLowerCase() === key)) return 'an existing persona';
     if (SillyTavern.getContext().characters.some(c => String(c?.name).trim().toLowerCase() === key)) return 'an existing character';
     if (getDrafts().some(d => d.id !== excludeDraftId && String(d.data?.name || '').trim().toLowerCase() === key)) return 'another draft';
     const manual = splitNames(settings().bannedNames).map(x => x.toLowerCase());
@@ -672,12 +681,12 @@ function emptyData(type) {
  * Runs one generation.
  * @returns {Promise<{data: object, raw: string}>}
  */
-async function generateEntry({ type, imageBlob, details, excludeDraftId = null, signal = null }) {
+async function generateEntry({ type, imageBlob, details, excludeDraftId = null, excludePersonaId = null, signal = null }) {
     const imageDataUrl = imageBlob ? await imageToPromptDataUrl(imageBlob) : null;
     if (!imageDataUrl && !details?.trim()) {
         throw new Error('Add an image or some details to generate from.');
     }
-    const messages = buildMessages(type, imageDataUrl, details, getBannedNames({ excludeDraftId }));
+    const messages = buildMessages(type, imageDataUrl, details, getBannedNames({ excludeDraftId, excludePersonaId }));
     const result = await sendMessages(messages, signal);
     const raw = String(result?.content ?? '');
     if (!raw.trim()) throw new Error('The model returned an empty response.');
@@ -693,11 +702,8 @@ function safeFileStem(name) {
     return String(name).replace(/[^a-zA-Z0-9]/g, '') || 'persona';
 }
 
-async function createPersonaInST(data, imageBlob) {
-    const name = data.name.trim();
-    const avatarId = `${Date.now()}-${safeFileStem(name)}.png`;
-    const blob = imageBlob || await (await fetch(DEFAULT_PERSONA_AVATAR)).blob();
-
+/** Uploads a persona avatar under the given file name (replacing it if it exists). Returns the stored name. */
+async function uploadPersonaAvatar(blob, avatarId) {
     const formData = new FormData();
     formData.append('avatar', new File([blob], 'avatar.png', { type: blob.type || 'image/png' }));
     formData.append('overwrite_name', avatarId);
@@ -709,11 +715,43 @@ async function createPersonaInST(data, imageBlob) {
     });
     if (!response.ok) throw new Error(`Failed to upload persona avatar: ${response.statusText}`);
     const { path } = await response.json();
-    const finalId = path || avatarId;
+    return path || avatarId;
+}
 
-    await initPersona(finalId, name, data.description || '', data.title || '');
-    await getUserAvatars(true, finalId);
-    return finalId;
+async function createPersonaInST(data, imageBlob) {
+    const name = data.name.trim();
+    const blob = imageBlob || await (await fetch(DEFAULT_PERSONA_AVATAR)).blob();
+    const avatarId = await uploadPersonaAvatar(blob, `${Date.now()}-${safeFileStem(name)}.png`);
+    await initPersona(avatarId, name, data.description || '', data.title || '');
+    await getUserAvatars(true, avatarId);
+    return avatarId;
+}
+
+/**
+ * Writes edited text (and optionally a new image) back to an installed persona, the same way
+ * SillyTavern's /persona-update command does, so the persona panel and current chat pick it up.
+ */
+async function updatePersonaInST(avatarId, data, imageBlob = null) {
+    if (!(avatarId in (power_user.personas || {}))) throw new Error('This persona no longer exists.');
+    const context = SillyTavern.getContext();
+    const name = data.name.trim();
+    const oldName = power_user.personas[avatarId];
+    if (imageBlob) await uploadPersonaAvatar(imageBlob, avatarId);
+
+    power_user.persona_descriptions[avatarId] ??= { description: '', position: 0, depth: 2, role: 0, lorebook: '', connections: [], title: '' };
+    const descriptor = power_user.persona_descriptions[avatarId];
+    descriptor.description = data.description || '';
+    descriptor.title = data.title || '';
+    power_user.personas[avatarId] = name;
+    if (avatarId === user_avatar) {
+        power_user.persona_description = descriptor.description;
+        if (name !== oldName) setUserName(name, { toastPersonaNameChange: false });
+    }
+    saveSettingsDebounced();
+    if (name !== oldName) await context.eventSource.emit(context.eventTypes.PERSONA_RENAMED, { avatarId, oldName, newName: name });
+    await context.eventSource.emit(context.eventTypes.PERSONA_UPDATED, avatarId);
+    if (avatarId === user_avatar) setPersonaDescription();
+    await getUserAvatars(true, avatarId);
 }
 
 /**
@@ -776,6 +814,12 @@ function fieldsFor(type) {
     return type === 'persona' ? PERSONA_FIELDS : CHARACTER_FIELDS;
 }
 
+/** The stored review of an installed persona, unless it was edited since. */
+function freshPersonaReview(avatarId) {
+    const stored = getPersonaReview(avatarId);
+    return stored && !stored.stale ? stored.review : null;
+}
+
 function renderFieldValue(field, value) {
     if (field.list) return (value || []).join(GREETING_SEPARATOR);
     if (field.tags) return (value || []).join(', ');
@@ -796,32 +840,38 @@ function readFieldValue(field, text) {
  * @param {object} [options.data] Prefilled data
  * @param {Blob} [options.imageBlob] Prefilled image
  * @param {boolean} [options.autoGenerate] Start generating immediately
+ * @param {string} [options.personaId] Edit this installed persona in place instead of creating one
  */
-async function openEditor({ type, draft = null, data = null, imageBlob = null, autoGenerate = false }) {
+async function openEditor({ type, draft = null, data = null, imageBlob = null, autoGenerate = false, personaId = null }) {
     if ((draft?.type ?? type) === 'world') {
         return await openWorldBuilder({ draft });
     }
     const state = {
-        type: draft?.type ?? type,
-        data: structuredClone(draft?.data ?? data ?? emptyData(type)),
+        type: personaId ? 'persona' : (draft?.type ?? type),
+        data: structuredClone(personaId ? personaData(personaId) : (draft?.data ?? data ?? emptyData(type))),
         raw: draft?.raw ?? '',
         details: draft?.details ?? '',
+        steer: draft?.steer ?? '',
         imageBlob,
+        originalImage: null,
         imageUrl: '',
         busy: false,
         abort: null,
-        review: draft?.review ?? null,
+        review: personaId ? freshPersonaReview(personaId) : (draft?.review ?? null),
         history: [],
     };
-    if (!state.imageBlob && draft?.image) {
-        try { state.imageBlob = await fetchBlob(draft.image); } catch (e) { console.warn(e); }
+    if (!state.imageBlob && (draft?.image || personaId)) {
+        try { state.imageBlob = await fetchBlob(personaId ? personaAvatarPath(personaId) : draft.image); } catch (e) { console.warn(e); }
     }
+    state.originalImage = state.imageBlob;
+    const initialData = JSON.stringify(state.data);
+    const nameScope = { excludeDraftId: draft?.id, excludePersonaId: personaId };
 
     const fields = fieldsFor(state.type);
     const root = document.createElement('div');
     root.classList.add('stcg-editor');
     root.innerHTML = `
-        <h3 class="stcg-editor-title">${draft ? 'Review draft' : 'Create'} ${typeLabel(state.type)}</h3>
+        <h3 class="stcg-editor-title">${personaId ? 'Edit Persona' : `${draft ? 'Review draft' : 'Create'} ${typeLabel(state.type)}`}</h3>
         <div class="stcg-editor-body">
             <div class="stcg-editor-side">
                 <div class="stcg-dropzone" title="Click or drop an image">
@@ -834,12 +884,13 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
                 </div>
                 <label>Optional details / requirements</label>
                 <textarea class="text_pole stcg-details" rows="5" placeholder="e.g. She's a 28 year old starship mechanic, sarcastic, from Mars..."></textarea>
-                <div class="menu_button stcg-generate"><i class="fa-solid fa-wand-magic-sparkles"></i> <span>Generate</span></div>
+                <div class="menu_button stcg-generate" ${personaId ? 'title="Rewrites the persona from the image and details (Undo brings the old text back)"' : ''}><i class="fa-solid fa-wand-magic-sparkles"></i> <span>${personaId ? 'Regenerate' : 'Generate'}</span></div>
                 <div class="stcg-status"></div>
                 <div class="stcg-conflict"></div>
                 ${QUALITY_PANEL_HTML}
             </div>
             <div class="stcg-editor-fields">
+                ${personaId ? `<div class="stcg-editing-note"><i class="fa-solid fa-circle-info"></i> Editing an installed persona. Changes are written to it when you click Save Persona.</div>` : ''}
                 ${fields.map(f => `
                     <div class="stcg-field-group">
                         <div class="stcg-field-head">
@@ -888,11 +939,17 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
         }
         state.details = String($root.find('.stcg-details').val() ?? '');
         state.raw = String($root.find('.stcg-raw-text').val() ?? '');
+        state.steer = String($root.find('.stcg-steer').val() ?? '');
+    }
+
+    function isDirty() {
+        readFields();
+        return JSON.stringify(state.data) !== initialData || state.imageBlob !== state.originalImage;
     }
 
     function checkConflict() {
         const name = String($root.find('[data-key="name"]').val() ?? '');
-        const conflict = findNameConflict(name, { excludeDraftId: draft?.id });
+        const conflict = findNameConflict(name, nameScope);
         // Names buried in other fields (an ex-wife or a rival mentioned in the description) count too.
         readFields();
         const others = findOverusedNames({ ...state.data, name: '' });
@@ -904,7 +961,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
     function setBusy(busy, message = '') {
         state.busy = busy;
         $root.toggleClass('stcg-is-busy', busy);
-        $generate.toggleClass('stcg-busy', busy).find('span').text(busy ? 'Stop' : 'Generate');
+        $generate.toggleClass('stcg-busy', busy).find('span').text(busy ? 'Stop' : (personaId ? 'Regenerate' : 'Generate'));
         $generate.find('i').attr('class', busy ? 'fa-solid fa-stop' : 'fa-solid fa-wand-magic-sparkles');
         $status.text(message);
     }
@@ -919,9 +976,13 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
         }
     }, 400);
 
+    function updateFixButton() {
+        $root.find('.stcg-q-fix').toggleClass('disabled', !canFix(state.review, $root.find('.stcg-steer').val()));
+    }
+
     function renderQuality() {
         $root.find('.stcg-review').html(reviewHtml(state.review));
-        $root.find('.stcg-q-fix').toggleClass('disabled', !state.review?.issues?.length);
+        updateFixButton();
         $root.find('.stcg-q-undo').toggleClass('disabled', !state.history.length);
         updateTokens();
     }
@@ -937,29 +998,41 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
         if (state.history.length > 20) state.history.shift();
     }
 
-    /** Runs one AI task with the shared busy/stop/error handling. */
+    /** Runs one AI task with the shared busy/stop/error handling, shown in the task panel with a timer. */
     async function runAi(message, task) {
         if (state.busy) return;
         readFields();
-        state.abort = new AbortController();
+        const controller = new AbortController();
+        state.abort = controller;
+        const name = state.data.name?.trim();
+        state.task = startTask(`${typeLabel(state.type)}${name ? ` "${name}"` : ''}`, { detail: message, onStop: () => controller.abort() });
         setBusy(true, message);
         try {
-            const done = await task(state.abort.signal);
+            const done = await task(controller.signal);
             setBusy(false, done || 'Done.');
+            state.task.finish(done || 'Done.');
         } catch (error) {
             console.error(`[${MODULE}]`, error);
-            const aborted = error?.name === 'AbortError' || state.abort.signal.aborted;
-            setBusy(false, aborted ? 'Stopped.' : `Error: ${error?.message || error}`);
+            const aborted = error?.name === 'AbortError' || controller.signal.aborted;
+            const text = aborted ? 'Stopped.' : `Error: ${error?.message || error}`;
+            setBusy(false, text);
+            state.task.finish(text, { error: !aborted });
             if (!aborted) toastr.error(String(error?.message || error), 'Card Generator');
         }
         renderQuality();
+    }
+
+    /** Status line in the editor and the task panel. */
+    function status(text) {
+        $status.text(text);
+        state.task?.update({ detail: text });
     }
 
     async function autoQuality(signal) {
         if (!settings().autoReview) return '';
         const result = await qualityPass({
             type: state.type, data: state.data, details: state.details, signal,
-            onStatus: text => $status.text(text),
+            onStatus: status,
         });
         state.data = result.data;
         state.review = result.review;
@@ -978,7 +1051,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
                 type: state.type,
                 imageBlob: state.imageBlob,
                 details: state.details,
-                excludeDraftId: draft?.id,
+                ...nameScope,
                 signal,
             });
             if (snap.data.name || snap.data.description) pushHistory(snap);
@@ -1002,13 +1075,15 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
         const labels = { fix: 'Fixing issues…', enhance: 'Enhancing…', optimize: 'Optimizing…' };
         return runAi(labels[mode], async (signal) => {
             const snap = snapshot();
-            const result = await reviseCard({ type: state.type, data: state.data, mode, issues: state.review?.issues || [], details: state.details, signal });
+            const result = await reviseCard({ type: state.type, data: state.data, mode, issues: state.review?.issues || [], steer: state.steer, details: state.details, signal });
             pushHistory(snap);
             state.data = result.data;
             writeFields();
             if (mode === 'fix') {
+                status('Re-reviewing…');
                 const before = state.review;
-                state.review = { ...await reviewCard({ type: state.type, data: state.data, details: state.details, signal, previousIssues: before?.issues || [] }), previous: before?.overall };
+                const fixed = (before?.issues || []).filter(i => !i.skip);
+                state.review = { ...await reviewCard({ type: state.type, data: state.data, details: state.details, signal, previousIssues: fixed }), previous: before?.overall };
             }
             return result.changed.length ? `Changed: ${result.changed.join(', ')}.` : 'The model made no changes.';
         });
@@ -1017,7 +1092,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
     function runFieldOp(field, mode) {
         return runAi(`${mode === 'enhance' ? 'Enhancing' : 'Optimizing'} ${field}…`, async (signal) => {
             const snap = snapshot();
-            const value = await reviseField({ type: state.type, data: state.data, field, mode, details: state.details, signal });
+            const value = await reviseField({ type: state.type, data: state.data, field, mode, steer: state.steer, details: state.details, signal });
             pushHistory(snap);
             state.data[field] = value;
             writeFields();
@@ -1036,6 +1111,8 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
     }
 
     $root.find('.stcg-details').val(state.details);
+    $root.find('.stcg-steer').val(state.steer).on('input', updateFixButton);
+    wireIssueChecks($root, () => state.review, updateFixButton);
     setImage(state.imageBlob);
     writeFields();
     renderQuality();
@@ -1081,36 +1158,58 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
         }
     });
 
+    /** Saves into SillyTavern: creates the persona/character, or writes back to the persona being edited. */
+    async function save() {
+        if (state.busy) { toastr.warning('Wait for generation to finish.'); return false; }
+        if (!state.data.name?.trim()) { toastr.warning('Give it a name first.'); return false; }
+        // An installed persona keeping its own name is not a conflict worth asking about, even if a copy shares it.
+        const renamed = !personaId || state.data.name.trim().toLowerCase() !== String(power_user.personas?.[personaId] ?? '').trim().toLowerCase();
+        const conflict = renamed ? findNameConflict(state.data.name, nameScope) : null;
+        if (conflict) {
+            const ok = await Popup.show.confirm('Name already in use', `"${escapeHtml(state.data.name)}" is already used by ${conflict}. ${personaId ? 'Save' : 'Create'} anyway?`);
+            if (!ok) return false;
+        }
+        const name = state.data.name.trim();
+        const task = startTask(personaId ? `Saving persona "${name}"` : `Creating ${typeLabel(state.type).toLowerCase()} "${name}"`);
+        $status.text('Saving…');
+        try {
+            if (personaId) {
+                await updatePersonaInST(personaId, state.data, state.imageBlob !== state.originalImage ? state.imageBlob : null);
+                setPersonaReview(personaId, state.data, state.review);
+                toastr.success(`Persona "${name}" saved.`, 'Card Generator');
+            } else {
+                await saveToST(state.type, state.data, state.imageBlob);
+                toastr.success(`${typeLabel(state.type)} "${name}" created.`, 'Card Generator');
+                if (draft) await deleteDraft(draft.id);
+            }
+            task.finish('Saved.');
+            return true;
+        } catch (error) {
+            console.error(`[${MODULE}]`, error);
+            task.finish(`Error: ${error?.message || error}`, { error: true });
+            $status.text(`Error: ${error?.message || error}`);
+            toastr.error(String(error?.message || error), 'Card Generator');
+            return false;
+        }
+    }
+
     const SAVE_DRAFT = POPUP_RESULT.CUSTOM1;
     const popup = new Popup(root, POPUP_TYPE.TEXT, '', {
-        okButton: `Create ${typeLabel(state.type)}`,
+        okButton: personaId ? 'Save Persona' : `Create ${typeLabel(state.type)}`,
         cancelButton: 'Close',
-        customButtons: [{ text: draft ? 'Update Draft' : 'Save to Drafts', result: SAVE_DRAFT, classes: ['stcg-save-draft'] }],
+        // An installed persona is saved in place; a draft copy of it would create a second persona on approval.
+        customButtons: personaId ? [] : [{ text: draft ? 'Update Draft' : 'Save to Drafts', result: SAVE_DRAFT, classes: ['stcg-save-draft'] }],
         wide: true,
         large: true,
         allowVerticalScrolling: true,
         leftAlign: true,
         onOpen: () => { if (autoGenerate) runGeneration(); },
-        onClosing: async (p) => {
+        onClosing: guardClosing(async (p) => {
             readFields();
             if (p.result === POPUP_RESULT.AFFIRMATIVE) {
-                if (state.busy) { toastr.warning('Wait for generation to finish.'); return false; }
-                if (!state.data.name?.trim()) { toastr.warning('Give it a name first.'); return false; }
-                const conflict = findNameConflict(state.data.name, { excludeDraftId: draft?.id });
-                if (conflict) {
-                    const ok = await Popup.show.confirm('Name already in use', `"${escapeHtml(state.data.name)}" is already used by ${conflict}. Create anyway?`);
-                    if (!ok) return false;
-                }
-                try {
-                    await saveToST(state.type, state.data, state.imageBlob);
-                    toastr.success(`${typeLabel(state.type)} "${state.data.name}" created.`, 'Card Generator');
-                    if (draft) await deleteDraft(draft.id);
-                } catch (error) {
-                    console.error(`[${MODULE}]`, error);
-                    toastr.error(String(error?.message || error), 'Card Generator');
-                    return false;
-                }
-            } else if (p.result === SAVE_DRAFT) {
+                return await save();
+            }
+            if (p.result === SAVE_DRAFT) {
                 if (state.busy) { toastr.warning('Wait for generation to finish.'); return false; }
                 try {
                     await saveEditorDraft(state, draft);
@@ -1119,11 +1218,18 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
                     toastr.error(String(error?.message || error), 'Card Generator');
                     return false;
                 }
-            } else if (state.busy) {
+                return true;
+            }
+            if (state.busy) {
                 state.abort?.abort();
+            } else if (personaId && isDirty()) {
+                return !!await Popup.show.confirm('Discard changes?', `Your edits to "${escapeHtml(personaData(personaId).name)}" have not been saved.`);
+            } else if (personaId && state.review && !isDirty()) {
+                // A review of the unchanged persona is still worth keeping for the manager's score badges.
+                setPersonaReview(personaId, state.data, state.review);
             }
             return true;
-        },
+        }),
         onClose: () => { if (state.imageUrl) URL.revokeObjectURL(state.imageUrl); },
     });
     return await popup.show();
@@ -1156,6 +1262,7 @@ async function saveEditorDraft(state, existing) {
     draft.data = structuredClone(state.data);
     draft.raw = state.raw;
     draft.details = state.details;
+    draft.steer = state.steer;
     draft.review = state.review;
     draft.error = '';
     draft.status = state.data.name?.trim() ? 'ready' : (draft.image || state.details ? 'queued' : 'ready');
@@ -1166,13 +1273,22 @@ async function saveEditorDraft(state, existing) {
 // Bulk queue
 // ---------------------------------------------------------------------------
 
-async function processDraft(draft) {
+/** A short name for a draft in progress messages. */
+function draftLabel(draft) {
+    return draft.data?.name?.trim()
+        || (draft.source?.name && `world for ${draft.source.name}`)
+        || draft.details?.split('\n').pop()?.slice(0, 40)
+        || `${typeLabel(draft.type).toLowerCase()} draft`;
+}
+
+async function processDraft(draft, onStatus = () => { }) {
     const controller = new AbortController();
     activeRequests.set(draft.id, controller);
     draft.status = 'generating';
     draft.error = '';
     upsertDraft(draft);
     try {
+        onStatus(`Generating ${draftLabel(draft)}…`);
         const imageBlob = draft.image ? await fetchBlob(draft.image) : null;
         const result = draft.type === 'world'
             ? await generateWorld({ source: draft.source, imageBlob, details: draft.details, excludeDraftId: draft.id, signal: controller.signal })
@@ -1188,7 +1304,10 @@ async function processDraft(draft) {
         draft.raw = result.raw;
         draft.review = null;
         if (settings().autoReview) {
-            const checked = await qualityPass({ type: draft.type, data: draft.data, details: draft.details, source: draft.source, signal: controller.signal });
+            const checked = await qualityPass({
+                type: draft.type, data: draft.data, details: draft.details, source: draft.source, signal: controller.signal,
+                onStatus: text => onStatus(`${draftLabel(draft)}: ${text}`),
+            });
             if (!getDraft(draft.id)) return;
             draft.data = checked.data;
             draft.review = checked.review;
@@ -1207,10 +1326,22 @@ async function processDraft(draft) {
 
 async function runQueue() {
     if (queueRunning) return;
+    const pending = () => getDrafts().filter(d => d.status === 'queued').length;
+    if (!pending()) return;
     queueRunning = true;
     queueStopRequested = false;
     notifyDrafts();
-    let processed = 0;
+    let generated = 0;
+    let failed = 0;
+    /** @type {Map<string, string>} What each worker is doing right now. */
+    const current = new Map();
+    const task = startTask('Bulk generation', { total: pending(), onStop: stopQueue });
+    const report = () => task.update({
+        done: generated + failed,
+        // Drafts queued while running (Regenerate, more bulk images) grow the total.
+        total: generated + failed + current.size + pending(),
+        detail: [...current.values()].join('\n'),
+    });
     try {
         const workers = Math.min(4, Math.max(1, Number(settings().concurrency) || 1));
         // Drafts are stored newest-first; process oldest-first.
@@ -1219,8 +1350,15 @@ async function runQueue() {
             while (!queueStopRequested) {
                 const draft = next();
                 if (!draft) return;
-                await processDraft(draft);
-                processed++;
+                current.set(draft.id, `Starting ${draftLabel(draft)}…`);
+                report();
+                await processDraft(draft, text => { current.set(draft.id, text); report(); });
+                current.delete(draft.id);
+                // A stopped draft goes back to Queued and counts as neither.
+                const status = getDraft(draft.id)?.status;
+                if (status === 'ready') generated++;
+                if (status === 'error') failed++;
+                report();
             }
         };
         await Promise.all(Array.from({ length: workers }, worker));
@@ -1228,15 +1366,23 @@ async function runQueue() {
         queueRunning = false;
         notifyDrafts();
     }
-    if (processed) {
-        const failed = getDrafts().filter(d => d.status === 'error').length;
-        toastr.info(`Bulk generation ${queueStopRequested ? 'stopped' : 'finished'}. ${failed ? `${failed} failed.` : ''}`, 'Card Generator');
-    }
+    const summary = `${queueStopRequested ? 'Stopped' : 'Finished'}: ${generated} generated${failed ? `, ${failed} failed (see Drafts)` : ''}${pending() ? `, ${pending()} still queued` : ''}.`;
+    task.finish(summary, { error: failed > 0 });
+    if (generated || failed) toastr.info(summary, 'Card Generator');
 }
 
 function stopQueue() {
     queueStopRequested = true;
     for (const controller of activeRequests.values()) controller.abort();
+}
+
+let lastQueueToggle = 0;
+
+/** Run/Stop share one button, so a double click would start and immediately stop the queue. */
+function toggleQueue() {
+    if (Date.now() - lastQueueToggle < 1000) return;
+    lastQueueToggle = Date.now();
+    if (queueRunning) stopQueue(); else runQueue();
 }
 
 async function openBulk() {
@@ -1313,14 +1459,16 @@ async function openBulk() {
         wide: true,
         allowVerticalScrolling: true,
         leftAlign: true,
-        onClosing: async (p) => {
+        onClosing: guardClosing(async (p) => {
             if (p.result !== POPUP_RESULT.AFFIRMATIVE) return true;
             if (!items.length) { toastr.warning('Add at least one image.'); return false; }
             const type = String($root.find('.stcg-bulk-type').val());
             const shared = String($root.find('.stcg-bulk-shared').val() || '').trim();
             const useFileName = $root.find('.stcg-bulk-filename').prop('checked');
-            toastr.info(`Queuing ${items.length} ${type}(s)…`, 'Card Generator');
+            const task = startTask(`Queuing ${items.length} ${type}${items.length === 1 ? '' : 's'}`, { total: items.length });
+            let done = 0;
             for (const item of items) {
+                task.update({ detail: `Uploading ${item.file.name}…` });
                 const id = uid();
                 const details = [
                     shared,
@@ -1333,9 +1481,11 @@ async function openBulk() {
                 } catch (error) {
                     toastr.error(`${item.file.name}: ${error.message}`, 'Card Generator');
                 }
+                task.update({ done: ++done });
             }
+            task.finish('Queued. Generation is running.');
             return true;
-        },
+        }),
         onClose: () => items.forEach(i => URL.revokeObjectURL(i.url)),
     });
 
@@ -1356,6 +1506,9 @@ const STATUS_LABELS = {
     ready: 'Ready',
     error: 'Error',
 };
+
+/** Drafts being saved into SillyTavern right now (not persisted: a reload simply leaves them Ready). */
+const savingDrafts = new Set();
 
 async function openDrafts() {
     const selected = new Set();
@@ -1432,7 +1585,7 @@ async function openDrafts() {
                     <div class="stcg-draft-body">
                         <div class="stcg-draft-head">
                             <span class="stcg-badge stcg-badge-${draft.type}">${typeLabel(draft.type)}</span>
-                            <span class="stcg-badge stcg-badge-status">${STATUS_LABELS[draft.status] || draft.status}</span>
+                            <span class="stcg-badge stcg-badge-status">${savingDrafts.has(draft.id) ? 'Saving…' : (STATUS_LABELS[draft.status] || draft.status)}</span>
                             ${worldInfo}
                             ${score}
                             ${conflict ? `<span class="stcg-badge stcg-badge-conflict" title="Name used by ${escapeHtml(conflict)}">Name conflict</span>` : ''}
@@ -1449,15 +1602,17 @@ async function openDrafts() {
                         </div>
                     </div>
                 </div>`);
-            const busy = draft.status === 'generating';
+            const busy = draft.status === 'generating' || savingDrafts.has(draft.id);
+            $card.toggleClass('stcg-status-saving', savingDrafts.has(draft.id));
             $card.find('input[type=checkbox]').prop('checked', selected.has(draft.id)).on('change', e => {
                 if ($(e.target).prop('checked')) selected.add(draft.id); else selected.delete(draft.id);
             });
             $card.find('.stcg-d-review').toggleClass('disabled', busy).on('click', () => !busy && openEditor({ type: draft.type, draft }));
             $card.find('.stcg-d-copy-prompt').on('click', () => copyText(draft.data.image_prompt));
-            $card.find('.stcg-d-approve').toggleClass('disabled', draft.status !== 'ready').on('click', () => approveDrafts([draft.id]));
-            $card.find('.stcg-d-retry').toggleClass('disabled', busy).on('click', () => requeue([draft.id]));
-            $card.find('.stcg-d-delete').on('click', async () => {
+            $card.find('.stcg-d-approve').toggleClass('disabled', busy || draft.status !== 'ready').on('click', () => !busy && approveDrafts([draft.id]));
+            $card.find('.stcg-d-retry').toggleClass('disabled', busy).on('click', () => !busy && requeue([draft.id]));
+            $card.find('.stcg-d-delete').toggleClass('disabled', savingDrafts.has(draft.id)).on('click', async () => {
+                if (savingDrafts.has(draft.id)) return;
                 if (await Popup.show.confirm('Delete draft?', escapeHtml(draft.data?.name || 'This draft'))) await deleteDraft(draft.id);
             });
             $grid.append($card);
@@ -1483,15 +1638,25 @@ async function openDrafts() {
         if (checked) visibleDrafts().forEach(d => selected.add(d.id));
         render();
     });
-    $root.find('.stcg-approve-selected').on('click', () => approveDrafts([...selected]));
-    $root.find('.stcg-retry-selected').on('click', () => requeue([...selected]));
-    $root.find('.stcg-delete-selected').on('click', async () => {
-        if (!selected.size) return;
-        if (!await Popup.show.confirm(`Delete ${selected.size} draft(s)?`, 'Their stored images are removed too.')) return;
-        for (const id of [...selected]) await deleteDraft(id);
-        selected.clear();
+    $root.find('.stcg-approve-selected').on('click', () => {
+        if (!selected.size) { toastr.info('Tick the drafts to approve first.', 'Card Generator'); return; }
+        approveDrafts([...selected]);
     });
-    $root.find('.stcg-queue-toggle').on('click', () => queueRunning ? stopQueue() : runQueue());
+    $root.find('.stcg-retry-selected').on('click', () => requeue([...selected]));
+    $root.find('.stcg-delete-selected').on('click', () => exclusive('delete', async () => {
+        const ids = [...selected].filter(id => !savingDrafts.has(id));
+        if (!ids.length) return;
+        if (!await Popup.show.confirm(`Delete ${ids.length} draft(s)?`, 'Their stored images are removed too.')) return;
+        const task = startTask(`Deleting ${ids.length} draft${ids.length === 1 ? '' : 's'}`, { total: ids.length });
+        let done = 0;
+        for (const id of ids) {
+            await deleteDraft(id);
+            selected.delete(id);
+            task.update({ done: ++done });
+        }
+        task.finish('Deleted.');
+    }));
+    $root.find('.stcg-queue-toggle').on('click', toggleQueue);
 
     draftListeners.add(render);
     render();
@@ -1507,27 +1672,50 @@ async function openDrafts() {
     await popup.show();
 }
 
-async function approveDrafts(ids) {
-    let created = 0;
-    const skipped = [];
-    for (const id of ids) {
-        const draft = getDraft(id);
-        if (!draft || draft.status !== 'ready') continue;
-        if (!draft.data?.name?.trim()) { skipped.push('(unnamed)'); continue; }
-        const conflict = findNameConflict(draft.data.name, { excludeDraftId: draft.id });
-        if (conflict) { skipped.push(`${draft.data.name} (used by ${conflict})`); continue; }
-        try {
-            const imageBlob = draft.image ? await fetchBlob(draft.image) : null;
-            await saveToST(draft.type, draft.data, imageBlob);
-            await deleteDraft(draft.id);
-            created++;
-        } catch (error) {
-            console.error(`[${MODULE}]`, error);
-            skipped.push(`${draft.data.name} (${error.message})`);
+/** Creates the given Ready drafts in SillyTavern. One run at a time, so repeated clicks cannot create duplicates. */
+function approveDrafts(ids) {
+    return exclusive('approve', async () => {
+        const ready = ids.map(getDraft).filter(d => d?.status === 'ready' && !savingDrafts.has(d.id));
+        if (!ready.length) {
+            toastr.info('None of the selected drafts are Ready.', 'Card Generator');
+            return;
         }
-    }
-    if (created) toastr.success(`Created ${created} from drafts.`, 'Card Generator');
-    if (skipped.length) toastr.warning(`Skipped: ${skipped.join(', ')}. Review them individually.`, 'Card Generator', { timeOut: 10000 });
+        let created = 0;
+        let processed = 0;
+        const skipped = [];
+        const task = startTask(`Creating ${ready.length} from drafts`, { total: ready.length });
+        ready.forEach(d => savingDrafts.add(d.id));
+        notifyDrafts();
+        try {
+            for (const draft of ready) {
+                task.update({ detail: `Creating ${typeLabel(draft.type).toLowerCase()} "${draft.data?.name || '(unnamed)'}"…` });
+                try {
+                    if (!getDraft(draft.id)) continue;
+                    if (!draft.data?.name?.trim()) { skipped.push('(unnamed)'); continue; }
+                    const conflict = findNameConflict(draft.data.name, { excludeDraftId: draft.id });
+                    if (conflict) { skipped.push(`${draft.data.name} (used by ${conflict})`); continue; }
+                    const imageBlob = draft.image ? await fetchBlob(draft.image) : null;
+                    await saveToST(draft.type, draft.data, imageBlob);
+                    savingDrafts.delete(draft.id);
+                    await deleteDraft(draft.id);
+                    created++;
+                } catch (error) {
+                    console.error(`[${MODULE}]`, error);
+                    skipped.push(`${draft.data.name} (${error.message})`);
+                } finally {
+                    savingDrafts.delete(draft.id);
+                    task.update({ done: ++processed });
+                    notifyDrafts();
+                }
+            }
+        } finally {
+            ready.forEach(d => savingDrafts.delete(d.id));
+            notifyDrafts();
+        }
+        task.finish(`Created ${created}${skipped.length ? `, skipped ${skipped.length}` : ''}.`, { error: skipped.length > 0 });
+        if (created) toastr.success(`Created ${created} from drafts.`, 'Card Generator');
+        if (skipped.length) toastr.warning(`Skipped: ${skipped.join(', ')}. Review them individually.`, 'Card Generator', { timeOut: 10000 });
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -1548,22 +1736,28 @@ async function importCardsAsPersonas() {
         return;
     }
 
-    let imported = 0;
-    for (const file of files) {
-        try {
-            const { card, image } = await readCardFile(file);
-            const id = uid();
-            const stored = image ? await storeFile(image, id) : null;
-            upsertDraft({ id, type: 'persona', status: 'ready', image: stored, details: '', data: cardToPersona(card), raw: '', error: '', createdAt: Date.now() });
-            imported++;
-        } catch (error) {
-            toastr.error(`${file.name}: ${error.message}`, 'Card Generator');
+    await exclusive('import', async () => {
+        let imported = 0;
+        const task = startTask(`Importing ${files.length} cards as personas`, { total: files.length });
+        for (const [index, file] of files.entries()) {
+            task.update({ detail: `Reading ${file.name}…` });
+            try {
+                const { card, image } = await readCardFile(file);
+                const id = uid();
+                const stored = image ? await storeFile(image, id) : null;
+                upsertDraft({ id, type: 'persona', status: 'ready', image: stored, details: '', data: cardToPersona(card), raw: '', error: '', createdAt: Date.now() });
+                imported++;
+            } catch (error) {
+                toastr.error(`${file.name}: ${error.message}`, 'Card Generator');
+            }
+            task.update({ done: index + 1 });
         }
-    }
-    if (imported) {
-        toastr.success(`Imported ${imported} card(s) into Drafts as personas.`, 'Card Generator');
-        openDrafts();
-    }
+        task.finish(`Imported ${imported} into Drafts.`, { error: imported < files.length });
+        if (imported) {
+            toastr.success(`Imported ${imported} card(s) into Drafts as personas.`, 'Card Generator');
+            openDrafts();
+        }
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -1668,6 +1862,7 @@ async function initSettingsUI() {
     bindSetting('#stcg_optimize_prompt', 'optimizePrompt');
 
     $('#stcg_btn_create_world').on('click', () => openWorldBuilder());
+    $('#stcg_btn_personas').on('click', openPersonaManager);
     $('#stcg_btn_create_persona').on('click', () => openEditor({ type: 'persona' }));
     $('#stcg_btn_create_character').on('click', () => openEditor({ type: 'character' }));
     $('#stcg_btn_bulk').on('click', openBulk);
@@ -1708,6 +1903,9 @@ function addWandMenu() {
             <div id="stcg_wand_world" class="list-group-item flex-container flexGap5 interactable" tabindex="0" role="listitem">
                 <div class="fa-solid fa-earth-americas extensionsMenuExtensionButton"></div><span>Create World for Persona</span>
             </div>
+            <div id="stcg_wand_personas" class="list-group-item flex-container flexGap5 interactable" tabindex="0" role="listitem">
+                <div class="fa-solid fa-users-gear extensionsMenuExtensionButton"></div><span>Manage Personas</span>
+            </div>
             <div id="stcg_wand_drafts" class="list-group-item flex-container flexGap5 interactable" tabindex="0" role="listitem">
                 <div class="fa-solid fa-inbox extensionsMenuExtensionButton"></div><span>Card Drafts <span class="stcg-draft-count"></span></span>
             </div>
@@ -1716,6 +1914,7 @@ function addWandMenu() {
     $('#stcg_wand_persona').on('click', () => openEditor({ type: 'persona' }));
     $('#stcg_wand_character').on('click', () => openEditor({ type: 'character' }));
     $('#stcg_wand_world').on('click', () => openWorldBuilder());
+    $('#stcg_wand_personas').on('click', openPersonaManager);
     $('#stcg_wand_drafts').on('click', openDrafts);
 }
 
@@ -1726,6 +1925,7 @@ jQuery(async () => {
         upsertDraft, getDraft, deleteDraft, uid, createCharacterInST, asText, toStringList,
     });
     initQuality({ settings, sendMessages, parseJsonLoose, escapeHtml, normalizeData, normalizeEntry, asText, toStringList, getBannedNames, findOverusedNames });
+    initManager({ settings, escapeHtml, openEditor, openWorldBuilder, findOverusedParts });
     loadSettings();
     await initSettingsUI();
     addWandMenu();

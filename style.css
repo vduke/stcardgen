@@ -649,14 +649,280 @@
 
 .stcg-issues {
     margin: 0;
-    padding-left: 1.4em;
+    padding-left: 0;
+    list-style: none;
     display: flex;
     flex-direction: column;
     gap: 4px;
 }
 
+.stcg-issue {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.stcg-issue input {
+    flex: 0 0 auto;
+    margin-top: 0.2em;
+}
+
 .stcg-issue-fix {
+    display: block;
     opacity: 0.8;
+}
+
+.stcg-issue-skipped .stcg-issue > span {
+    opacity: 0.45;
+    text-decoration: line-through;
+}
+
+.stcg-steer-label {
+    font-size: 0.85em;
+    opacity: 0.85;
+}
+
+.stcg-steer {
+    min-height: calc(2 * 1.5em + 12px);
+    resize: vertical;
+}
+
+.stcg-editing-note {
+    font-size: 0.85em;
+    opacity: 0.85;
+    padding: 4px 8px;
+    border-left: 3px solid var(--SmartThemeQuoteColor);
+    background: var(--black30a);
+}
+
+/* ---------- Double-click guards ---------- */
+
+/* A popup whose OK is still saving: its buttons can't be clicked again. */
+.stcg-closing .popup-controls {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.stcg-running-approve .stcg-approve-selected,
+.stcg-running-approve .stcg-d-approve,
+.stcg-running-delete .stcg-delete-selected,
+.stcg-running-import #stcg_btn_import,
+.stcg-running-persona-review .stcg-pm-review-selected,
+.stcg-running-dedupe .stcg-pm-dedupe {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+.stcg-draft.stcg-status-saving {
+    border-color: var(--SmartThemeQuoteColor);
+}
+
+.stcg-status-saving .stcg-badge-status {
+    animation: stcg-pulse 1.2s ease-in-out infinite;
+}
+
+/* ---------- Task panel ---------- */
+
+.stcg-tasks {
+    position: fixed;
+    right: 12px;
+    bottom: calc(var(--bottomFormBlockSize, 40px) + 24px);
+    z-index: 10000;
+    width: 320px;
+    max-width: calc(100vw - 24px);
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 10px;
+    background: var(--SmartThemeBlurTintColor);
+    backdrop-filter: blur(var(--SmartThemeBlurStrength, 10px));
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+    color: var(--SmartThemeBodyColor);
+    font-size: 0.85em;
+    text-align: left;
+}
+
+.stcg-tasks-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.stcg-tasks-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: bold;
+}
+
+.stcg-tasks-chevron {
+    transition: transform 0.2s;
+}
+
+.stcg-tasks.collapsed .stcg-tasks-chevron {
+    transform: rotate(180deg);
+}
+
+.stcg-tasks.collapsed .stcg-tasks-list {
+    display: none;
+}
+
+.stcg-tasks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 40vh;
+    overflow-y: auto;
+    padding: 0 10px 8px;
+}
+
+.stcg-task-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.stcg-task-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stcg-task-meta {
+    opacity: 0.75;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Font Awesome sets display on icons, which would beat the hidden attribute. */
+.stcg-tasks [hidden] {
+    display: none !important;
+}
+
+.stcg-task-stop {
+    cursor: pointer;
+    padding: 2px 4px;
+    opacity: 0.8;
+}
+
+.stcg-task-stop:hover {
+    opacity: 1;
+    color: #ef6b6b;
+}
+
+.stcg-task-bar {
+    height: 5px;
+    margin-top: 4px;
+    border-radius: 3px;
+    background: var(--black50a);
+    overflow: hidden;
+}
+
+.stcg-task-bar > div {
+    height: 100%;
+    background: var(--SmartThemeQuoteColor);
+    transition: width 0.3s;
+}
+
+.stcg-task-bar.indeterminate > div {
+    width: 35% !important;
+    animation: stcg-indeterminate 1.4s ease-in-out infinite;
+}
+
+@keyframes stcg-indeterminate {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(290%);
+    }
+}
+
+.stcg-task.done .stcg-task-bar > div {
+    background: #6fcf7f;
+}
+
+.stcg-task.failed .stcg-task-bar > div {
+    background: #ef6b6b;
+}
+
+.stcg-task-detail {
+    margin-top: 3px;
+    opacity: 0.8;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+/* ---------- Persona manager ---------- */
+
+.stcg-pm-search {
+    flex: 1 1 160px;
+    min-width: 120px;
+}
+
+.stcg-badge-keep {
+    background: rgba(60, 180, 120, 0.25);
+}
+
+.stcg-draft-name small {
+    font-weight: normal;
+    opacity: 0.7;
+}
+
+.stcg-dupes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+}
+
+.stcg-dupe-group h4 {
+    margin: 0 0 4px;
+}
+
+.stcg-dupe-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.stcg-dupe-row:hover {
+    background: var(--black30a);
+}
+
+.stcg-dupe-row.locked {
+    cursor: default;
+}
+
+.stcg-dupe-row img {
+    width: 36px;
+    height: 54px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.stcg-dupe-id {
+    font-family: var(--monoFontFamily, monospace);
+    font-size: 0.8em;
+    opacity: 0.8;
+    overflow-wrap: anywhere;
+}
+
+.stcg-dupe-notes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-left: auto;
 }
 
 .stcg-field-head .stcg-field-label {
