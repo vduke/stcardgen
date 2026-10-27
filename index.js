@@ -4,7 +4,12 @@ import { ConnectionManagerRequestService } from '../../shared.js';
 import { Popup, POPUP_TYPE, POPUP_RESULT } from '../../../popup.js';
 import { power_user } from '../../../power-user.js';
 import { initPersona, getUserAvatars } from '../../../personas.js';
-import { initWorld, openWorldBuilder, generateWorld, normalizeWorld, saveWorldToST, DEFAULT_WORLD_PROMPT, DEFAULT_WORLD_FORMAT, WORLD_PROMPT_LINE_MIGRATIONS, WORLD_FORMAT_LINE_MIGRATIONS } from './world.js';
+import { debounce } from '../../../utils.js';
+import {
+    initQuality, reviewCard, reviseCard, reviseField, qualityPass, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, scoreClass,
+    QUALITY_PANEL_HTML, fieldOpsHtml, DEFAULT_REVIEW_PROMPT, DEFAULT_ENHANCE_PROMPT, DEFAULT_OPTIMIZE_PROMPT, migrateReviewPrompt,
+} from './quality.js';
+import { initWorld, openWorldBuilder, generateWorld, normalizeWorld, normalizeEntry, saveWorldToST, DEFAULT_WORLD_PROMPT, DEFAULT_WORLD_FORMAT, WORLD_PROMPT_LINE_MIGRATIONS, WORLD_FORMAT_LINE_MIGRATIONS } from './world.js';
 
 const MODULE = 'stcardgen';
 // The installer names the folder after the git repo, so derive it instead of assuming "stcardgen".
@@ -118,6 +123,12 @@ const defaultSettings = Object.freeze({
     worldFormat: DEFAULT_WORLD_FORMAT,
     worldEntryCount: 20,
     worldMaxTokens: 12000,
+    autoReview: true,
+    autoFixBelow: 7,
+    reviewProfileId: '',
+    reviewPrompt: DEFAULT_REVIEW_PROMPT,
+    enhancePrompt: DEFAULT_ENHANCE_PROMPT,
+    optimizePrompt: DEFAULT_OPTIMIZE_PROMPT,
     drafts: [],
 });
 
@@ -172,6 +183,7 @@ function loadSettings() {
     s.characterFormat = migrate(s.characterFormat, CHARACTER_FORMAT_LINE_MIGRATIONS);
     s.worldPrompt = migrate(s.worldPrompt, WORLD_PROMPT_LINE_MIGRATIONS);
     s.worldFormat = migrate(s.worldFormat, WORLD_FORMAT_LINE_MIGRATIONS);
+    s.reviewPrompt = migrateReviewPrompt(s.reviewPrompt);
     // Drafts that were mid-generation when the page closed go back to the queue.
     for (const draft of s.drafts) {
         if (draft.status === 'generating') draft.status = 'queued';
@@ -454,6 +466,50 @@ function findOverusedParts(name) {
     return String(name || '').split(/[\s\-']+/).filter(word => word && tropes.has(word.toLowerCase()));
 }
 
+function collectStrings(value, out = []) {
+    if (typeof value === 'string') out.push(value);
+    else if (Array.isArray(value)) value.forEach(v => collectStrings(v, out));
+    else if (value && typeof value === 'object') Object.values(value).forEach(v => collectStrings(v, out));
+    return out;
+}
+
+/**
+ * Finds names anywhere in a card's text (fields, entry titles and contents) that use an overused
+ * or manually banned word, e.g. "Dr. Aris Thorne" buried in a location entry.
+ * Multi-word capitalized names are always checked; a single capitalized word only counts mid-sentence,
+ * so ordinary sentence openers like "Frost covers the docks" are not flagged.
+ * @param {object} data Card data
+ * @param {string[]} [allow] Names to ignore (e.g. the persona's own name)
+ * @returns {string[]}
+ */
+function findOverusedNames(data, allow = []) {
+    const s = settings();
+    const banned = new Set([
+        ...(s.banTropeNames ? splitNames(s.tropeNames) : []),
+        ...splitNames(s.bannedNames),
+    ].map(x => x.toLowerCase()));
+    if (!banned.size) return [];
+    const allowed = new Set(allow.filter(Boolean).flatMap(n => String(n).toLowerCase().split(/\s+/)));
+    const { image_prompt: _, ...rest } = data || {};
+    const found = new Map();
+    const namePattern = /[A-Z][a-zÀ-ɏ'’-]+(?:\s+[A-Z][a-zÀ-ɏ'’-]+){0,2}/g;
+    for (const text of collectStrings(rest)) {
+        for (const match of text.matchAll(namePattern)) {
+            const name = match[0];
+            const words = name.split(/\s+/);
+            if (!words.some(w => banned.has(w.toLowerCase()) && !allowed.has(w.toLowerCase()))) continue;
+            if (words.length === 1) {
+                const before = text.slice(0, match.index);
+                if (!before.trim() || /[.!?"*\n:]\s*$/.test(before)) continue;
+            }
+            found.set(name.toLowerCase(), name);
+        }
+    }
+    // Drop single words already covered by a full name ("Thorne" when "Aris Thorne" was found).
+    const names = [...found.values()];
+    return names.filter(n => n.includes(' ') || !names.some(other => other !== n && other.split(/\s+/).includes(n)));
+}
+
 function nameWarningHtml(name, conflict) {
     const parts = [];
     if (conflict) parts.push(`"${escapeHtml(name)}" is already used by ${conflict}.`);
@@ -500,14 +556,22 @@ function buildMessages(type, imageDataUrl, details, bannedNames) {
     ];
 }
 
-async function sendMessages(messages, signal, { maxTokens = null } = {}) {
+/**
+ * @param {object[]} messages Chat Completion messages
+ * @param {AbortSignal} signal
+ * @param {object} [options]
+ * @param {number} [options.maxTokens] Overrides the max tokens setting
+ * @param {string} [options.profileId] Overrides the connection profile setting (e.g. a separate reviewer)
+ */
+async function sendMessages(messages, signal, { maxTokens = null, profileId = null } = {}) {
     const s = settings();
     const context = SillyTavern.getContext();
     maxTokens = Number(maxTokens) || Number(s.maxTokens) || 4096;
+    profileId = profileId || s.profileId;
 
-    if (s.profileId) {
+    if (profileId) {
         try {
-            return await ConnectionManagerRequestService.sendRequest(s.profileId, messages, maxTokens, {
+            return await ConnectionManagerRequestService.sendRequest(profileId, messages, maxTokens, {
                 stream: false,
                 signal,
                 extractData: true,
@@ -746,6 +810,8 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
         imageUrl: '',
         busy: false,
         abort: null,
+        review: draft?.review ?? null,
+        history: [],
     };
     if (!state.imageBlob && draft?.image) {
         try { state.imageBlob = await fetchBlob(draft.image); } catch (e) { console.warn(e); }
@@ -771,6 +837,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
                 <div class="menu_button stcg-generate"><i class="fa-solid fa-wand-magic-sparkles"></i> <span>Generate</span></div>
                 <div class="stcg-status"></div>
                 <div class="stcg-conflict"></div>
+                ${QUALITY_PANEL_HTML}
             </div>
             <div class="stcg-editor-fields">
                 ${fields.map(f => `
@@ -778,6 +845,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
                         <div class="stcg-field-head">
                             <label class="stcg-field-label" for="stcg_f_${f.key}">${escapeHtml(f.label)}</label>
                             ${f.imagePrompt ? `<div class="menu_button menu_button_icon stcg-copy" data-copy="${f.key}" title="Copy to clipboard"><i class="fa-solid fa-copy"></i> Copy</div>` : ''}
+                            ${f.rows > 1 && !f.imagePrompt ? fieldOpsHtml(`data-target="${f.key}"`) : ''}
                         </div>
                         ${f.rows === 1
                             ? `<input id="stcg_f_${f.key}" data-key="${f.key}" class="text_pole stcg-field" type="text">`
@@ -825,14 +893,78 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
     function checkConflict() {
         const name = String($root.find('[data-key="name"]').val() ?? '');
         const conflict = findNameConflict(name, { excludeDraftId: draft?.id });
-        $conflict.html(nameWarningHtml(name, conflict));
+        // Names buried in other fields (an ex-wife or a rival mentioned in the description) count too.
+        readFields();
+        const others = findOverusedNames({ ...state.data, name: '' });
+        $conflict.html(nameWarningHtml(name, conflict) + (others.length
+            ? `<div><i class="fa-solid fa-triangle-exclamation"></i> Overused names in the text: ${escapeHtml(others.join(', '))}. Review → Fix issues renames them.</div>`
+            : ''));
     }
 
     function setBusy(busy, message = '') {
         state.busy = busy;
+        $root.toggleClass('stcg-is-busy', busy);
         $generate.toggleClass('stcg-busy', busy).find('span').text(busy ? 'Stop' : 'Generate');
         $generate.find('i').attr('class', busy ? 'fa-solid fa-stop' : 'fa-solid fa-wand-magic-sparkles');
         $status.text(message);
+    }
+
+    const updateTokens = debounce(async () => {
+        readFields();
+        $root.find('.stcg-tokens').html(tokenSummaryHtml(state.type, await tokenSummary(state.type, state.data)));
+        for (const el of $root.find('.stcg-field-tokens').toArray()) {
+            const key = $(el).data('target');
+            const n = await countTokens(state.data[key]);
+            $(el).text(n ? `${n} tok` : '');
+        }
+    }, 400);
+
+    function renderQuality() {
+        $root.find('.stcg-review').html(reviewHtml(state.review));
+        $root.find('.stcg-q-fix').toggleClass('disabled', !state.review?.issues?.length);
+        $root.find('.stcg-q-undo').toggleClass('disabled', !state.history.length);
+        updateTokens();
+    }
+
+    /** Snapshot taken before an AI change; committed to the undo stack only if the change succeeds. */
+    function snapshot() {
+        readFields();
+        return { data: structuredClone(state.data), review: state.review };
+    }
+
+    function pushHistory(snap) {
+        state.history.push(snap);
+        if (state.history.length > 20) state.history.shift();
+    }
+
+    /** Runs one AI task with the shared busy/stop/error handling. */
+    async function runAi(message, task) {
+        if (state.busy) return;
+        readFields();
+        state.abort = new AbortController();
+        setBusy(true, message);
+        try {
+            const done = await task(state.abort.signal);
+            setBusy(false, done || 'Done.');
+        } catch (error) {
+            console.error(`[${MODULE}]`, error);
+            const aborted = error?.name === 'AbortError' || state.abort.signal.aborted;
+            setBusy(false, aborted ? 'Stopped.' : `Error: ${error?.message || error}`);
+            if (!aborted) toastr.error(String(error?.message || error), 'Card Generator');
+        }
+        renderQuality();
+    }
+
+    async function autoQuality(signal) {
+        if (!settings().autoReview) return '';
+        const result = await qualityPass({
+            type: state.type, data: state.data, details: state.details, signal,
+            onStatus: text => $status.text(text),
+        });
+        state.data = result.data;
+        state.review = result.review;
+        writeFields();
+        return ` Score ${result.review.overall}/10${result.review.previous ? ` (was ${result.review.previous}, auto-fixed)` : ''}.`;
     }
 
     async function runGeneration() {
@@ -840,36 +972,81 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
             state.abort?.abort();
             return;
         }
-        readFields();
-        state.abort = new AbortController();
-        setBusy(true, 'Generating… this can take a minute.');
-        try {
+        await runAi('Generating… this can take a minute.', async (signal) => {
+            const snap = snapshot();
             const result = await generateEntry({
                 type: state.type,
                 imageBlob: state.imageBlob,
                 details: state.details,
                 excludeDraftId: draft?.id,
-                signal: state.abort.signal,
+                signal,
             });
+            if (snap.data.name || snap.data.description) pushHistory(snap);
             state.data = result.data;
             state.raw = result.raw;
+            state.review = null;
             writeFields();
-            setBusy(false, 'Done. Review and edit before saving.');
-        } catch (error) {
-            console.error(`[${MODULE}]`, error);
-            setBusy(false, '');
-            if (error?.name === 'AbortError' || state.abort.signal.aborted) {
-                $status.text('Stopped.');
-            } else {
-                $status.text(`Error: ${error?.message || error}`);
-                toastr.error(String(error?.message || error), 'Card Generator');
+            const score = await autoQuality(signal);
+            return `Done.${score} Review and edit before saving.`;
+        });
+    }
+
+    function runReview() {
+        return runAi('Reviewing…', async (signal) => {
+            state.review = await reviewCard({ type: state.type, data: state.data, details: state.details, signal });
+            return `Score ${state.review.overall}/10.`;
+        });
+    }
+
+    function runRevise(mode) {
+        const labels = { fix: 'Fixing issues…', enhance: 'Enhancing…', optimize: 'Optimizing…' };
+        return runAi(labels[mode], async (signal) => {
+            const snap = snapshot();
+            const result = await reviseCard({ type: state.type, data: state.data, mode, issues: state.review?.issues || [], details: state.details, signal });
+            pushHistory(snap);
+            state.data = result.data;
+            writeFields();
+            if (mode === 'fix') {
+                const before = state.review;
+                state.review = { ...await reviewCard({ type: state.type, data: state.data, details: state.details, signal, previousIssues: before?.issues || [] }), previous: before?.overall };
             }
-        }
+            return result.changed.length ? `Changed: ${result.changed.join(', ')}.` : 'The model made no changes.';
+        });
+    }
+
+    function runFieldOp(field, mode) {
+        return runAi(`${mode === 'enhance' ? 'Enhancing' : 'Optimizing'} ${field}…`, async (signal) => {
+            const snap = snapshot();
+            const value = await reviseField({ type: state.type, data: state.data, field, mode, details: state.details, signal });
+            pushHistory(snap);
+            state.data[field] = value;
+            writeFields();
+            return `${field} ${mode === 'enhance' ? 'enhanced' : 'optimized'}.`;
+        });
+    }
+
+    function undo() {
+        const previous = state.history.pop();
+        if (!previous) return;
+        state.data = previous.data;
+        state.review = previous.review;
+        writeFields();
+        renderQuality();
+        $status.text('Undone.');
     }
 
     $root.find('.stcg-details').val(state.details);
     setImage(state.imageBlob);
     writeFields();
+    renderQuality();
+
+    $root.find('.stcg-q-review').on('click', runReview);
+    $root.find('.stcg-q-fix').on('click', () => runRevise('fix'));
+    $root.find('.stcg-q-enhance').on('click', () => runRevise('enhance'));
+    $root.find('.stcg-q-optimize').on('click', () => runRevise('optimize'));
+    $root.find('.stcg-q-undo').on('click', undo);
+    $root.find('.stcg-field-op').on('click', e => runFieldOp(String($(e.currentTarget).data('target')), String($(e.currentTarget).data('op'))));
+    $root.find('.stcg-field').on('input', updateTokens);
 
     const pickImage = async () => {
         const [file] = await pickFiles();
@@ -979,6 +1156,7 @@ async function saveEditorDraft(state, existing) {
     draft.data = structuredClone(state.data);
     draft.raw = state.raw;
     draft.details = state.details;
+    draft.review = state.review;
     draft.error = '';
     draft.status = state.data.name?.trim() ? 'ready' : (draft.image || state.details ? 'queued' : 'ready');
     upsertDraft(draft);
@@ -1008,6 +1186,13 @@ async function processDraft(draft) {
         if (!getDraft(draft.id)) return; // deleted meanwhile
         draft.data = result.data;
         draft.raw = result.raw;
+        draft.review = null;
+        if (settings().autoReview) {
+            const checked = await qualityPass({ type: draft.type, data: draft.data, details: draft.details, source: draft.source, signal: controller.signal });
+            if (!getDraft(draft.id)) return;
+            draft.data = checked.data;
+            draft.review = checked.review;
+        }
         draft.status = 'ready';
     } catch (error) {
         if (!getDraft(draft.id)) return;
@@ -1238,6 +1423,8 @@ async function openDrafts() {
             const placeholderIcon = draft.type === 'world' ? 'fa-globe' : 'fa-user';
             const worldInfo = draft.type === 'world' && draft.status === 'ready'
                 ? `<span class="stcg-badge" title="Lorebook entries">${draft.data?.entries?.length || 0} entries</span>` : '';
+            const score = draft.review?.overall
+                ? `<span class="stcg-badge stcg-badge-score stcg-score-${scoreClass(draft.review.overall)}" title="${escapeHtml(draft.review.summary || 'Quality score')}">★ ${draft.review.overall}</span>` : '';
             const $card = $(`
                 <div class="stcg-draft stcg-status-${draft.status}">
                     <label class="stcg-draft-check"><input type="checkbox"></label>
@@ -1247,6 +1434,7 @@ async function openDrafts() {
                             <span class="stcg-badge stcg-badge-${draft.type}">${typeLabel(draft.type)}</span>
                             <span class="stcg-badge stcg-badge-status">${STATUS_LABELS[draft.status] || draft.status}</span>
                             ${worldInfo}
+                            ${score}
                             ${conflict ? `<span class="stcg-badge stcg-badge-conflict" title="Name used by ${escapeHtml(conflict)}">Name conflict</span>` : ''}
                             ${overused.length ? `<span class="stcg-badge stcg-badge-overused" title="On the overused names list">Overused: ${escapeHtml(overused.join(', '))}</span>` : ''}
                         </div>
@@ -1383,9 +1571,14 @@ async function importCardsAsPersonas() {
 // ---------------------------------------------------------------------------
 
 function populateProfiles() {
-    const $select = $('#stcg_profile');
-    const s = settings();
-    $select.empty().append(new Option('(Current connection)', CURRENT_CONNECTION));
+    fillProfileSelect('#stcg_profile', 'profileId', '(Current connection)');
+    fillProfileSelect('#stcg_review_profile', 'reviewProfileId', '(Same as generation)');
+}
+
+function fillProfileSelect(selector, key, emptyLabel) {
+    const $select = $(selector);
+    const value = settings()[key];
+    $select.empty().append(new Option(emptyLabel, CURRENT_CONNECTION));
     try {
         for (const profile of ConnectionManagerRequestService.getSupportedProfiles()) {
             if (profile.mode !== 'cc') continue;
@@ -1394,10 +1587,10 @@ function populateProfiles() {
     } catch (e) {
         console.debug(`[${MODULE}] Connection Manager unavailable`, e);
     }
-    if (s.profileId && !$select.find(`option[value="${s.profileId}"]`).length) {
-        $select.append(new Option('(missing profile)', s.profileId));
+    if (value && !$select.find(`option[value="${value}"]`).length) {
+        $select.append(new Option('(missing profile)', value));
     }
-    $select.val(s.profileId);
+    $select.val(value);
 }
 
 function bindSetting(selector, key, { type = 'text' } = {}) {
@@ -1422,6 +1615,9 @@ function refreshSettingsUI() {
     $('#stcg_image_prompt_instruction').val(s.imagePromptInstruction);
     $('#stcg_world_prompt').val(s.worldPrompt);
     $('#stcg_world_format').val(s.worldFormat);
+    $('#stcg_review_prompt').val(s.reviewPrompt);
+    $('#stcg_enhance_prompt').val(s.enhancePrompt);
+    $('#stcg_optimize_prompt').val(s.optimizePrompt);
 }
 
 async function initSettingsUI() {
@@ -1431,6 +1627,10 @@ async function initSettingsUI() {
     populateProfiles();
     $('#stcg_profile').on('focus', populateProfiles).on('change', function () {
         settings().profileId = String($(this).val());
+        saveSettingsDebounced();
+    });
+    $('#stcg_review_profile').on('focus', populateProfiles).on('change', function () {
+        settings().reviewProfileId = String($(this).val());
         saveSettingsDebounced();
     });
     bindSetting('#stcg_max_tokens', 'maxTokens', { type: 'number' });
@@ -1461,6 +1661,11 @@ async function initSettingsUI() {
     bindSetting('#stcg_world_format', 'worldFormat');
     bindSetting('#stcg_world_count', 'worldEntryCount', { type: 'number' });
     bindSetting('#stcg_world_max_tokens', 'worldMaxTokens', { type: 'number' });
+    bindSetting('#stcg_auto_review', 'autoReview', { type: 'checkbox' });
+    bindSetting('#stcg_auto_fix_below', 'autoFixBelow', { type: 'number' });
+    bindSetting('#stcg_review_prompt', 'reviewPrompt');
+    bindSetting('#stcg_enhance_prompt', 'enhancePrompt');
+    bindSetting('#stcg_optimize_prompt', 'optimizePrompt');
 
     $('#stcg_btn_create_world').on('click', () => openWorldBuilder());
     $('#stcg_btn_create_persona').on('click', () => openEditor({ type: 'persona' }));
@@ -1483,6 +1688,9 @@ async function initSettingsUI() {
         s.imagePromptInstruction = DEFAULT_IMAGE_PROMPT_INSTRUCTION;
         s.worldPrompt = DEFAULT_WORLD_PROMPT;
         s.worldFormat = DEFAULT_WORLD_FORMAT;
+        s.reviewPrompt = DEFAULT_REVIEW_PROMPT;
+        s.enhancePrompt = DEFAULT_ENHANCE_PROMPT;
+        s.optimizePrompt = DEFAULT_OPTIMIZE_PROMPT;
         refreshSettingsUI();
         saveSettingsDebounced();
     });
@@ -1513,10 +1721,11 @@ function addWandMenu() {
 
 jQuery(async () => {
     initWorld({
-        settings, sendMessages, parseJsonLoose, stripReasoning, getBannedNames, findNameConflict, findOverusedParts,
+        settings, sendMessages, parseJsonLoose, stripReasoning, getBannedNames, findNameConflict, findOverusedParts, findOverusedNames,
         escapeHtml, copyText, pickFiles, imageToPromptDataUrl, fetchBlob, storeFile, deleteStoredFile,
         upsertDraft, getDraft, deleteDraft, uid, createCharacterInST, asText, toStringList,
     });
+    initQuality({ settings, sendMessages, parseJsonLoose, escapeHtml, normalizeData, normalizeEntry, asText, toStringList, getBannedNames, findOverusedNames });
     loadSettings();
     await initSettingsUI();
     addWandMenu();

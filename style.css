@@ -540,3 +540,144 @@
 .stcg-badge-world {
     background: rgba(60, 180, 120, 0.25);
 }
+
+/* ---------- Quality pass ---------- */
+
+.stcg-quality {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-top: 1px solid var(--SmartThemeBorderColor);
+    padding-top: 8px;
+}
+
+.stcg-quality-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.stcg-quality-buttons .menu_button {
+    flex: 1 1 auto;
+    margin: 0;
+    padding: 3px 6px;
+    font-size: 0.85em;
+}
+
+.stcg-is-busy .stcg-quality-buttons .menu_button,
+.stcg-is-busy .stcg-field-op,
+.stcg-quality-buttons .menu_button.disabled {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+.stcg-tokens {
+    font-size: 0.85em;
+    opacity: 0.85;
+}
+
+.stcg-review {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.85em;
+}
+
+.stcg-score-head {
+    font-size: 1.15em;
+}
+
+.stcg-review-summary {
+    opacity: 0.85;
+    font-style: italic;
+}
+
+.stcg-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.stcg-bar {
+    display: grid;
+    grid-template-columns: 6.5em 1fr 1.5em;
+    align-items: center;
+    gap: 6px;
+}
+
+.stcg-bar-name {
+    opacity: 0.85;
+}
+
+.stcg-bar-track {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--black50a);
+    overflow: hidden;
+}
+
+.stcg-bar-fill {
+    height: 100%;
+    background: currentColor;
+}
+
+.stcg-bar b {
+    text-align: right;
+}
+
+.stcg-score-good {
+    color: #6fcf7f;
+}
+
+.stcg-score-ok {
+    color: #e8c547;
+}
+
+.stcg-score-bad {
+    color: #ef6b6b;
+}
+
+.stcg-score-head b,
+.stcg-badge-score {
+    color: inherit;
+}
+
+.stcg-bar-name,
+.stcg-score-head small {
+    color: var(--SmartThemeBodyColor);
+}
+
+.stcg-issues {
+    margin: 0;
+    padding-left: 1.4em;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stcg-issue-fix {
+    opacity: 0.8;
+}
+
+.stcg-field-head .stcg-field-label {
+    flex: 1;
+}
+
+.stcg-field-tokens {
+    font-size: 0.75em;
+    opacity: 0.6;
+    white-space: nowrap;
+}
+
+.stcg-field-head .stcg-field-op,
+.stcg-entry-ops .stcg-field-op {
+    margin: 0;
+    padding: 2px 6px;
+    font-size: 0.8em;
+}
+
+.stcg-entry-ops {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}

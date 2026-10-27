@@ -2,6 +2,8 @@ import { saveWorldInfo, updateWorldInfoList, world_names, createWorldInfoEntry, 
 import { Popup, POPUP_TYPE, POPUP_RESULT } from '../../../popup.js';
 import { power_user } from '../../../power-user.js';
 import { user_avatar } from '../../../personas.js';
+import { debounce } from '../../../utils.js';
+import { reviewCard, reviseCard, reviseField, renameNames, qualityPass, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, QUALITY_PANEL_HTML, fieldOpsHtml } from './quality.js';
 
 // [old line, new line] pairs applied to saved prompts on load; see PROMPT_LINE_MIGRATIONS in index.js.
 export const WORLD_PROMPT_LINE_MIGRATIONS = [
@@ -127,7 +129,7 @@ function keyList(value) {
     return api.toStringList(value).flatMap(k => k.split(',')).map(k => k.trim()).filter(Boolean);
 }
 
-function normalizeEntry(e = {}) {
+export function normalizeEntry(e = {}) {
     const position = String(e.position || '').toLowerCase().replace(/[^a-z_]/g, '');
     return {
         title: api.asText(e.title ?? e.name ?? e.comment).trim(),
@@ -275,66 +277,9 @@ async function generateMoreEntries({ source, world, details, count, excludeDraft
     return { entries: entries.filter(e => !known.has(e.title.toLowerCase())), raw: api.stripReasoning(raw) };
 }
 
-/** Entry titles (usually NPC names) that contain a word from the overused names list. */
-function overusedTitles(world) {
-    return world.entries
-        .map(e => ({ title: e.title, parts: api.findOverusedParts(e.title) }))
-        .filter(x => x.parts.length);
-}
-
-function escapeRegex(text) {
-    return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-/** Replaces a name everywhere in the world: card text, entry titles, keys and content. */
-function applyRename(world, oldName, newName) {
-    const pairs = [[oldName, newName]];
-    // Also map word by word ("Vance" -> "Okafor") so surname-only mentions are caught.
-    const oldWords = oldName.split(/\s+/);
-    const newWords = newName.split(/\s+/);
-    if (oldWords.length === newWords.length) {
-        oldWords.forEach((word, i) => { if (word !== newWords[i]) pairs.push([word, newWords[i]]); });
-    }
-    const replace = text => pairs.reduce((acc, [from, to]) => acc
-        .replace(new RegExp(`\\b${escapeRegex(from)}\\b`, 'g'), to)
-        .replace(new RegExp(`\\b${escapeRegex(from.toLowerCase())}\\b`, 'g'), to.toLowerCase()), String(text ?? ''));
-
-    for (const key of ['name', 'description', 'scenario', 'first_mes', 'mes_example', 'creator_notes']) {
-        world[key] = replace(world[key]);
-    }
-    world.alternate_greetings = world.alternate_greetings.map(replace);
-    for (const entry of world.entries) {
-        entry.title = replace(entry.title);
-        entry.content = replace(entry.content);
-        entry.keys = entry.keys.map(replace);
-        entry.secondary_keys = entry.secondary_keys.map(replace);
-    }
-}
-
-/** Asks the model for fresh names for entries that use overused names, then applies them. */
-async function renameOverused({ source, world, excludeDraftId, signal }) {
-    const flagged = overusedTitles(world);
-    if (!flagged.length) return [];
-    const text = [
-        'These names in the world below use overused or banned names. Give each one a new, original name that fits the setting and the character (keep the same number of words; keep a first name if only the surname is banned, and vice versa).',
-        flagged.map(f => `- ${f.title} (banned part: ${f.parts.join(', ')})`).join('\n'),
-        `World: ${world.name}\n${world.description.slice(0, 1500)}`,
-        'Reply with JSON only: {"renames": {"Old Name": "New Name"}}',
-    ].join('\n\n');
-    const messages = [
-        { role: 'system', content: ['You rename characters in a roleplay world so no one uses a stock or banned name.', banText(source, excludeDraftId)].filter(Boolean).join('\n\n') },
-        { role: 'user', content: text },
-    ];
-    const raw = await request(messages, signal);
-    const renames = api.parseJsonLoose(raw).renames || {};
-    const applied = [];
-    for (const { title } of flagged) {
-        const next = String(renames[title] ?? '').trim();
-        if (!next || next === title) continue;
-        applyRename(world, title, next);
-        applied.push(`${title} → ${next}`);
-    }
-    return applied;
+/** Names anywhere in the world (titles, card text, entry content) that use an overused or banned word. */
+function overusedNames(world, source) {
+    return api.findOverusedNames(world, [source?.name]);
 }
 
 // ---------------------------------------------------------------------------
@@ -403,6 +348,7 @@ function fieldHtml(f) {
             <div class="stcg-field-head">
                 <label class="stcg-field-label" for="stcg_w_${f.key}">${api.escapeHtml(f.label)}</label>
                 ${f.imagePrompt ? `<div class="menu_button menu_button_icon stcg-copy" title="Copy to clipboard"><i class="fa-solid fa-copy"></i> Copy</div>` : ''}
+                ${f.rows > 1 && !f.imagePrompt ? fieldOpsHtml(`data-target="${f.key}"`) : ''}
             </div>
             ${input}
         </div>`;
@@ -434,6 +380,7 @@ function entryHtml(entry, index) {
                     <label title="Only used for @ Depth">Depth<input class="text_pole" type="number" min="0" max="999" data-field="depth" value="${entry.depth}"></label>
                     <label title="1-10, higher wins when the budget is tight">Priority<input class="text_pole" type="number" min="1" max="10" data-field="priority" value="${entry.priority}"></label>
                     <label title="Chance to fire when triggered">Probability %<input class="text_pole" type="number" min="1" max="100" data-field="probability" value="${entry.probability}"></label>
+                    <div class="stcg-entry-ops">${fieldOpsHtml(`data-entry="${index}"`)}</div>
                     <div class="menu_button stcg-entry-delete" title="Delete entry"><i class="fa-solid fa-trash"></i></div>
                 </div>
             </div>
@@ -457,6 +404,8 @@ export async function openWorldBuilder({ draft = null } = {}) {
         imageChanged: false,
         busy: false,
         abort: null,
+        review: draft?.review ?? null,
+        history: [],
     };
     if (draft?.image) {
         try { state.imageBlob = await api.fetchBlob(draft.image); } catch (e) { console.warn(e); }
@@ -493,6 +442,7 @@ export async function openWorldBuilder({ draft = null } = {}) {
                 <div class="menu_button stcg-w-rename" title="Ask the model for new names for entries using overused names, then replace them everywhere"><i class="fa-solid fa-signature"></i> Fix overused names</div>
                 <div class="stcg-status"></div>
                 <div class="stcg-conflict"></div>
+                ${QUALITY_PANEL_HTML}
             </div>
             <div class="stcg-editor-fields">
                 <h4 class="stcg-section-title"><i class="fa-solid fa-id-card"></i> Sandbox card</h4>
@@ -573,11 +523,11 @@ export async function openWorldBuilder({ draft = null } = {}) {
     }
 
     function updateOverusedWarning() {
-        const flagged = overusedTitles(state.data);
+        const flagged = overusedNames(state.data, state.source);
         $rename.toggle(flagged.length > 0);
         $root.find('.stcg-w-overused').remove();
         if (flagged.length) {
-            $root.find('.stcg-conflict').after(`<div class="stcg-conflict stcg-w-overused"><i class="fa-solid fa-triangle-exclamation"></i> ${flagged.length} entr${flagged.length === 1 ? 'y uses' : 'ies use'} overused names: ${api.escapeHtml(flagged.map(f => f.title).join(', '))}</div>`);
+            $root.find('.stcg-conflict').after(`<div class="stcg-conflict stcg-w-overused"><i class="fa-solid fa-triangle-exclamation"></i> Overused names in this world: ${api.escapeHtml(flagged.join(', '))}</div>`);
         }
     }
 
@@ -593,6 +543,7 @@ export async function openWorldBuilder({ draft = null } = {}) {
 
     function setBusy(busy, message = '') {
         state.busy = busy;
+        $root.toggleClass('stcg-is-busy', busy);
         $generate.toggleClass('stcg-busy', busy).find('span').text(busy ? 'Stop' : 'Generate World');
         $generate.find('i').attr('class', busy ? 'fa-solid fa-stop' : 'fa-solid fa-wand-magic-sparkles');
         $more.toggleClass('disabled', busy);
@@ -600,27 +551,116 @@ export async function openWorldBuilder({ draft = null } = {}) {
         $status.text(message);
     }
 
+    const updateTokens = debounce(async () => {
+        readCard();
+        const t = await tokenSummary('world', state.data);
+        $root.find('.stcg-tokens').html(tokenSummaryHtml('world', t));
+        $root.find('.stcg-field-tokens[data-entry]').each((_, el) => {
+            const n = t.perEntry[Number($(el).data('entry'))];
+            $(el).text(n ? `${n} tok` : '');
+        });
+        for (const el of $root.find('.stcg-field-tokens[data-target]').toArray()) {
+            const value = state.data[$(el).data('target')];
+            const n = await countTokens(value);
+            $(el).text(n ? `${n} tok` : '');
+        }
+    }, 400);
+
+    function renderQuality() {
+        $root.find('.stcg-review').html(reviewHtml(state.review));
+        $root.find('.stcg-q-fix').toggleClass('disabled', !state.review?.issues?.length);
+        $root.find('.stcg-q-undo').toggleClass('disabled', !state.history.length);
+        updateTokens();
+    }
+
+    /** Snapshot taken before an AI change; committed to the undo stack only if the change succeeds. */
+    function snapshot() {
+        readCard();
+        return { data: structuredClone(state.data), review: state.review };
+    }
+
+    function pushHistory(snap) {
+        state.history.push(snap);
+        if (state.history.length > 20) state.history.shift();
+    }
+
+    function undo() {
+        const previous = state.history.pop();
+        if (!previous) return;
+        state.data = previous.data;
+        state.review = previous.review;
+        writeCard();
+        renderEntries();
+        renderQuality();
+        $status.text('Undone.');
+    }
+
+    /** Runs one AI task with the shared busy/stop/error handling. */
+    async function runAi(message, task) {
+        if (state.busy) return;
+        readCard();
+        if (!state.source) { toastr.warning('Pick a persona first.'); return; }
+        state.abort = new AbortController();
+        setBusy(true, message);
+        try {
+            const done = await task(state.abort.signal);
+            setBusy(false, done || 'Done.');
+        } catch (error) {
+            console.error('[stcardgen]', error);
+            const aborted = state.abort.signal.aborted;
+            setBusy(false, aborted ? 'Stopped.' : `Error: ${error?.message || error}`);
+            if (!aborted) toastr.error(String(error?.message || error), 'Card Generator');
+        }
+        renderQuality();
+    }
+
+    const quality = signal => ({ type: 'world', details: state.details, source: state.source, signal });
+
+    function refresh() {
+        writeCard();
+        renderEntries();
+    }
+
     async function run(kind) {
         if (state.busy) {
             if (kind === 'world') state.abort?.abort();
             return;
         }
-        readCard();
-        if (!state.source) { toastr.warning('Pick a persona first.'); return; }
         if (kind === 'more' && !state.data.entries.length) { toastr.warning('Generate a world first.'); return; }
-        state.abort = new AbortController();
-        setBusy(true, ({
+        const labels = {
             world: 'Building the world… big worlds can take a few minutes.',
             more: 'Adding entries…',
             rename: 'Finding new names…',
-        })[kind]);
-        try {
+            review: 'Reviewing…',
+            fix: 'Fixing issues…',
+            enhance: 'Enhancing…',
+            optimize: 'Optimizing…',
+        };
+        await runAi(labels[kind], async (signal) => {
+            if (kind === 'review') {
+                state.review = await reviewCard({ ...quality(signal), data: state.data });
+                return `Score ${state.review.overall}/10.`;
+            }
+            const snap = snapshot();
             if (kind === 'rename') {
-                const applied = await renameOverused({ source: state.source, world: state.data, excludeDraftId: draft?.id, signal: state.abort.signal });
-                writeCard();
-                renderEntries();
-                setBusy(false, applied.length ? `Renamed: ${applied.join(', ')}` : 'The model suggested no usable new names. Edit them by hand.');
-                return;
+                const names = overusedNames(state.data, state.source);
+                const result = await renameNames({ type: 'world', data: state.data, names, source: state.source, signal });
+                pushHistory(snap);
+                state.data = result.data;
+                refresh();
+                const unresolved = result.unresolved.length ? ` Could not find an allowed name for: ${result.unresolved.join(', ')}.` : '';
+                return result.applied.length ? `Renamed: ${result.applied.join(', ')}.${unresolved}` : `No usable new names.${unresolved} Edit them by hand.`;
+            }
+            if (kind === 'fix' || kind === 'enhance' || kind === 'optimize') {
+                const result = await reviseCard({ ...quality(signal), data: state.data, mode: kind, issues: state.review?.issues || [] });
+                pushHistory(snap);
+                state.data = result.data;
+                refresh();
+                if (kind === 'fix') {
+                    const before = state.review;
+                    state.review = { ...await reviewCard({ ...quality(signal), data: state.data, previousIssues: before?.issues || [] }), previous: before?.overall };
+                }
+                return result.changed.length ? `Changed: ${result.changed.join(', ')}.` : 'The model made no changes.';
             }
             if (kind === 'world') {
                 const result = await generateWorld({
@@ -628,32 +668,59 @@ export async function openWorldBuilder({ draft = null } = {}) {
                     imageBlob: state.imageBlob,
                     details: state.details,
                     excludeDraftId: draft?.id,
-                    signal: state.abort.signal,
+                    signal,
                 });
+                if (snap.data.entries.length) pushHistory(snap);
                 state.data = result.data;
                 state.raw = result.raw;
+                state.review = null;
+                refresh();
+                let score = '';
+                if (s.autoReview) {
+                    const checked = await qualityPass({ ...quality(signal), data: state.data, onStatus: text => $status.text(text) });
+                    state.data = checked.data;
+                    state.review = checked.review;
+                    refresh();
+                    score = ` Score ${checked.review.overall}/10${checked.review.previous ? ` (was ${checked.review.previous}, auto-fixed)` : ''}.`;
+                }
+                return `Done. ${state.data.entries.length} entries.${score} Review and edit before saving.`;
+            }
+            const result = await generateMoreEntries({
+                source: state.source,
+                world: state.data,
+                details: state.details,
+                count: clampInt(s.worldEntryCount, 3, 80, 20),
+                excludeDraftId: draft?.id,
+                signal,
+            });
+            pushHistory(snap);
+            state.data.entries.push(...result.entries);
+            state.raw = result.raw;
+            $root.find('.stcg-raw-text').val(state.raw);
+            renderEntries();
+            return `Added ${result.entries.length} entries (${state.data.entries.length} total).`;
+        });
+    }
+
+    function runFieldOp($button) {
+        const mode = String($button.data('op'));
+        const entryAttr = $button.attr('data-entry');
+        const entryIndex = entryAttr === undefined ? null : Number(entryAttr);
+        const field = entryIndex === null ? String($button.data('target')) : 'content';
+        const label = entryIndex === null ? field : `entry "${state.data.entries[entryIndex]?.title}"`;
+        return runAi(`${mode === 'enhance' ? 'Enhancing' : 'Optimizing'} ${label}…`, async (signal) => {
+            const snap = snapshot();
+            const value = await reviseField({ ...quality(signal), data: state.data, field, entryIndex, mode });
+            pushHistory(snap);
+            if (entryIndex === null) {
+                state.data[field] = value;
                 writeCard();
             } else {
-                const result = await generateMoreEntries({
-                    source: state.source,
-                    world: state.data,
-                    details: state.details,
-                    count: clampInt(s.worldEntryCount, 3, 80, 20),
-                    excludeDraftId: draft?.id,
-                    signal: state.abort.signal,
-                });
-                state.data.entries.push(...result.entries);
-                state.raw = result.raw;
-                $root.find('.stcg-raw-text').val(state.raw);
+                state.data.entries[entryIndex].content = value;
+                renderEntries({ openIndex: entryIndex });
             }
-            renderEntries();
-            setBusy(false, `Done. ${state.data.entries.length} entries. Review and edit before saving.`);
-        } catch (error) {
-            console.error('[stcardgen]', error);
-            const aborted = state.abort.signal.aborted;
-            setBusy(false, aborted ? 'Stopped.' : `Error: ${error?.message || error}`);
-            if (!aborted) toastr.error(String(error?.message || error), 'Card Generator');
-        }
+            return `${label} ${mode === 'enhance' ? 'enhanced' : 'optimized'}.`;
+        });
     }
 
     // Wiring
@@ -671,6 +738,17 @@ export async function openWorldBuilder({ draft = null } = {}) {
     writeCard();
     renderEntries();
     renderPersonaPreview();
+    renderQuality();
+
+    $root.find('.stcg-q-review').on('click', () => run('review'));
+    $root.find('.stcg-q-fix').on('click', () => run('fix'));
+    $root.find('.stcg-q-enhance').on('click', () => run('enhance'));
+    $root.find('.stcg-q-optimize').on('click', () => run('optimize'));
+    $root.find('.stcg-q-undo').on('click', undo);
+    $root.on('click', '.stcg-field-op', e => runFieldOp($(e.currentTarget)));
+    $root.on('input', '[data-card], [data-field="content"]', updateTokens);
+    $root.on('input', '[data-card], [data-field="content"]', debounce(updateOverusedWarning, 600));
+    $root.on('change', '[data-field="constant"]', updateTokens);
 
     const pickImage = async () => {
         const [file] = await api.pickFiles();
@@ -735,6 +813,7 @@ export async function openWorldBuilder({ draft = null } = {}) {
         const index = Number($(e.currentTarget).closest('.stcg-entry').data('index'));
         state.data.entries.splice(index, 1);
         renderEntries();
+        updateTokens();
     });
 
     const SAVE_DRAFT = POPUP_RESULT.CUSTOM1;
@@ -801,6 +880,7 @@ async function saveWorldDraft(state, existing) {
     draft.data = structuredClone(state.data);
     draft.raw = state.raw;
     draft.details = state.details;
+    draft.review = state.review;
     draft.error = '';
     draft.status = state.data.entries.length ? 'ready' : 'queued';
     api.upsertDraft(draft);

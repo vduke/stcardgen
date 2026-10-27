@@ -74,6 +74,25 @@
             </div>
 
             <hr class="sysHR">
+            <h4>Quality pass</h4>
+            <small class="notes">A second request scores the result against the rubric and lists issues. "Fix issues", "Enhance" and "Optimize" send back a patch of only the changed fields, so good content isn't rewritten.</small>
+            <label for="stcg_review_profile">Reviewer connection profile</label>
+            <select id="stcg_review_profile" class="text_pole"></select>
+            <small class="notes">A model grading its own output is lenient. A different model as the reviewer gives harsher, more useful scores. Fixes, Enhance and Optimize still use the generation connection.</small>
+            <label class="checkbox_label"><input id="stcg_auto_review" type="checkbox"> Automatically review after every generation (including bulk)</label>
+            <div class="stcg-row">
+                <label for="stcg_auto_fix_below">Auto-fix when the score is below (0 = never)
+                    <input id="stcg_auto_fix_below" class="text_pole" type="number" min="0" max="10" step="0.5">
+                </label>
+            </div>
+            <label for="stcg_review_prompt">Review rubric (<code>&#123;&#123;type&#125;&#125;</code>)</label>
+            <textarea id="stcg_review_prompt" class="text_pole textarea_compact" rows="8"></textarea>
+            <label for="stcg_enhance_prompt">Enhance instruction</label>
+            <textarea id="stcg_enhance_prompt" class="text_pole textarea_compact" rows="3"></textarea>
+            <label for="stcg_optimize_prompt">Optimize instruction</label>
+            <textarea id="stcg_optimize_prompt" class="text_pole textarea_compact" rows="3"></textarea>
+
+            <hr class="sysHR">
             <h4>Image prompts</h4>
             <label class="checkbox_label"><input id="stcg_suggest_image_prompt" type="checkbox"> When no image is provided, have the AI suggest an image prompt (for ComfyUI)</label>
             <label for="stcg_image_prompt_instruction">Image prompt instruction for personas/characters (<code>&#123;&#123;type&#125;&#125;</code>)</label>
