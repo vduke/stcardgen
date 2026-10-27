@@ -28,7 +28,11 @@ Generate personas, character cards, and persona-centered sandbox worlds with a v
   - **Review & edit** opens the same editor with review, fix, enhance, optimize, instructions and undo. **Save Persona** writes the changes back to that persona.
   - The globe button builds a world around that persona.
   - **Review selected** scores many personas at once without changing them.
-  - **Remove duplicates** finds personas with the same name and description and deletes the extra copies. Copies used in any chat, linked to a character, holding a lorebook, or set as current or default are always kept. A copy with a different avatar is listed but not ticked. You confirm the list before anything is deleted.
+  - **Remove duplicates** finds personas with the same name, the same description and the same avatar picture, and deletes the extra copies.
+    - Pictures are compared by how they look, not by file, so a copy that SillyTavern cropped, resized and renamed on upload still matches. Bulk-uploaded "[Unnamed Persona]" entries are told apart by picture alone.
+    - Copies used in any chat, linked to a character, holding a lorebook, or set as current or default are always kept.
+    - Only copies showing the same picture are ticked. A merely similar one (cropped differently, say) is listed for you to check.
+    - You confirm the list before anything is deleted.
 - **Task panel**: slow work shows in a floating panel (bottom right) with progress, the current step, a running timer and a Stop button where it applies. This covers bulk generation, approvals, imports, reviews, duplicate scans and single AI calls. Click its header to collapse it. Buttons that start a run are disabled while it runs, so repeated clicks no longer create things twice.
 - **Banned names**:
   - your own list, plus a default list of overused AI names (Elara, Thorne, Vance…), plus optionally the names of existing personas, characters and drafts;

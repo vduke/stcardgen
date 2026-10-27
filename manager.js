@@ -81,8 +81,8 @@ function duplicateKey(avatarId) {
     return `${normalize(data.name).toLowerCase()}\u0000${normalize(data.description)}`;
 }
 
-/** @returns {string[][]} Groups of avatar ids that are copies of each other */
-function findDuplicateGroups() {
+/** @returns {string[][]} Groups of avatar ids with the same text; not yet duplicates until the avatars match too */
+function findTextGroups() {
     const groups = new Map();
     for (const id of listPersonaIds()) {
         if (!normalize(personaData(id).name)) continue;
@@ -91,6 +91,101 @@ function findDuplicateGroups() {
         groups.get(key).push(id);
     }
     return [...groups.values()].filter(group => group.length > 1);
+}
+
+// ---------------------------------------------------------------------------
+// Avatar similarity
+// ---------------------------------------------------------------------------
+
+/** @type {Map<string, Promise<object|null>>} Cleared each time the manager opens. */
+const signatures = new Map();
+
+/**
+ * A small perceptual fingerprint of a persona's avatar. SillyTavern crops, resizes and renames every
+ * upload, so the same picture uploaded twice has different bytes and file names; this still matches it.
+ */
+function avatarSignature(avatarId) {
+    if (!signatures.has(avatarId)) signatures.set(avatarId, computeSignature(avatarId));
+    return signatures.get(avatarId);
+}
+
+async function computeSignature(avatarId) {
+    try {
+        const response = await fetch(getThumbnailUrl('persona', avatarId), { cache: 'no-cache' });
+        if (!response.ok) return null;
+        const bitmap = await createImageBitmap(await response.blob());
+        const grayscale = (width, height) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(bitmap, 0, 0, width, height);
+            const { data } = ctx.getImageData(0, 0, width, height);
+            return Float32Array.from({ length: width * height }, (_, i) => data[i * 4] * 0.299 + data[i * 4 + 1] * 0.587 + data[i * 4 + 2] * 0.114);
+        };
+        // Difference hash: is each pixel darker than its right neighbour, on a 9x8 version.
+        const tiny = grayscale(9, 8);
+        const hash = Array.from({ length: 64 }, (_, i) => tiny[Math.floor(i / 8) * 9 + (i % 8)] < tiny[Math.floor(i / 8) * 9 + (i % 8) + 1]);
+        const signature = { aspect: bitmap.width / bitmap.height, hash, gray: grayscale(16, 16) };
+        bitmap.close();
+        return signature;
+    } catch (error) {
+        console.warn('[stcardgen] Could not read avatar', avatarId, error);
+        return null;
+    }
+}
+
+/**
+ * 'identical' (the same picture, re-encoded or resized), 'similar' (e.g. cropped a little differently),
+ * or null. An avatar that could not be read never matches.
+ * Measured on 2:3 portraits: a smaller JPEG re-encode was 1 bit / 1.3 gray apart, a 6% re-crop
+ * 17 bits / 25 gray, and different pictures 24-39 bits / 61-83 gray. Similar copies are never ticked
+ * for deletion automatically, so that threshold can be generous.
+ */
+function compareAvatars(a, b) {
+    if (!a || !b || Math.abs(a.aspect - b.aspect) > 0.05) return null;
+    const bits = a.hash.reduce((n, bit, i) => n + Number(bit !== b.hash[i]), 0);
+    const gray = a.gray.reduce((sum, v, i) => sum + Math.abs(v - b.gray[i]), 0) / a.gray.length;
+    if (bits <= 4 && gray <= 6) return 'identical';
+    if (bits <= 20 && gray <= 35) return 'similar';
+    return null;
+}
+
+/**
+ * Duplicate sets: personas with the same name and description whose avatars show the same picture.
+ * Unnamed personas (same "[Unnamed Persona]" name, empty description) are told apart by their avatar alone.
+ * @returns {Promise<{sets: string[][], sigs: Map<string, object|null>}>}
+ */
+async function findDuplicateSets(task = null) {
+    const groups = findTextGroups();
+    const ids = groups.flat();
+    const sigs = new Map();
+    let done = 0;
+    task?.update({ total: ids.length, done: 0, detail: `Comparing ${ids.length} avatars…` });
+    await Promise.all(ids.map(async id => {
+        sigs.set(id, await avatarSignature(id));
+        task?.update({ done: ++done });
+    }));
+
+    const sets = [];
+    for (const group of groups) {
+        // Union-find: copies chain together through any matching pair.
+        const parent = new Map(group.map(id => [id, id]));
+        const root = id => (parent.get(id) === id ? id : root(parent.get(id)));
+        for (let i = 0; i < group.length; i++) {
+            for (let j = i + 1; j < group.length; j++) {
+                if (compareAvatars(sigs.get(group[i]), sigs.get(group[j]))) parent.set(root(group[j]), root(group[i]));
+            }
+        }
+        const clusters = new Map();
+        for (const id of group) {
+            const key = root(id);
+            if (!clusters.has(key)) clusters.set(key, []);
+            clusters.get(key).push(id);
+        }
+        sets.push(...[...clusters.values()].filter(cluster => cluster.length > 1));
+    }
+    return { sets, sigs };
 }
 
 // ---------------------------------------------------------------------------
@@ -200,16 +295,6 @@ async function countChatsByPersona(ids, task) {
     return counts;
 }
 
-async function imageHash(avatarId) {
-    try {
-        const response = await fetch(`/${personaAvatarPath(avatarId)}`, { cache: 'no-cache' });
-        if (!response.ok) return '';
-        return fnv1a(new Uint8Array(await response.arrayBuffer()));
-    } catch {
-        return '';
-    }
-}
-
 /** Why a persona must be kept, if anything ties it to a chat or a setting. */
 function keepReasons(avatarId, chatCount) {
     const reasons = [];
@@ -239,29 +324,28 @@ function thumbnail(id, bust) {
 }
 
 /**
- * Plans which copies to remove. Copies that are in use are always kept. When none is, the oldest
- * copy is kept. A copy whose image differs from the kept one is listed but not ticked.
+ * Plans which copies to remove from each duplicate set. Copies that are in use are always kept; when
+ * none is, the oldest copy is kept. Only copies showing the identical picture as a kept copy are ticked;
+ * merely similar ones (a different crop, say) are listed for you to decide.
  */
-async function planDuplicates(groups, task) {
-    const counts = await countChatsByPersona(groups.flat(), task);
-    task.update({ detail: 'Comparing avatars…' });
-    const plans = [];
-    for (const group of groups) {
-        const members = [];
-        for (const id of creationOrder(group)) {
-            members.push({ id, reasons: keepReasons(id, counts.get(id) || 0), image: await imageHash(id) });
-        }
+async function planDuplicates(sets, sigs, task) {
+    const counts = await countChatsByPersona(sets.flat(), task);
+    const rank = { identical: 2, similar: 1 };
+    return sets.map(set => {
+        const members = creationOrder(set).map(id => ({ id, reasons: keepReasons(id, counts.get(id) || 0) }));
         const inUse = members.filter(m => m.reasons.length);
         const kept = inUse.length ? inUse : [members[0]];
         for (const member of members) {
             member.locked = member.reasons.length > 0;
             member.keep = kept.includes(member);
-            member.imageDiffers = !member.keep && !kept.some(k => k.image && k.image === member.image);
-            member.remove = !member.keep && !member.imageDiffers;
+            // The closest match among the kept copies.
+            member.match = member.keep ? null : kept
+                .map(k => compareAvatars(sigs.get(member.id), sigs.get(k.id)))
+                .sort((a, b) => (rank[b] || 0) - (rank[a] || 0))[0] ?? null;
+            member.remove = !member.keep && member.match === 'identical';
         }
-        plans.push({ name: personaData(group[0]).name, members });
-    }
-    return plans;
+        return { name: personaData(set[0]).name, members };
+    });
 }
 
 /** Lets the user check the plan. Resolves to the ids to delete, or null. */
@@ -271,7 +355,7 @@ async function confirmDuplicates(plans) {
     root.classList.add('stcg-dupes');
     root.innerHTML = `
         <h3>Remove duplicate personas</h3>
-        <p>These personas have the same name and description. Ticked copies are deleted. Copies used in a chat, linked to a character, holding a lorebook, or set as current/default are always kept.</p>
+        <p>Each group below is one persona saved more than once: same name, same description, and the same avatar picture (even when SillyTavern resized and renamed the file). Ticked copies are deleted. Copies used in a chat, linked to a character, holding a lorebook, or set as current/default are always kept.</p>
         ${plans.map((plan, g) => `
             <div class="stcg-dupe-group">
                 <h4>${esc(plan.name)} <small>(${plan.members.length} copies)</small></h4>
@@ -283,7 +367,9 @@ async function confirmDuplicates(plans) {
                         <span class="stcg-dupe-notes">
                             ${m.locked ? `<span class="stcg-badge stcg-badge-keep">Kept: ${esc(m.reasons.join(', '))}</span>` : ''}
                             ${!m.locked && m.keep ? '<span class="stcg-badge stcg-badge-keep">Kept: oldest copy</span>' : ''}
-                            ${m.imageDiffers ? '<span class="stcg-badge stcg-badge-overused">Different image</span>' : ''}
+                            ${m.match === 'identical' ? '<span class="stcg-badge">Same picture</span>' : ''}
+                            ${m.match === 'similar' ? '<span class="stcg-badge stcg-badge-overused" title="Close but not identical, e.g. cropped differently. Compare the thumbnails before ticking.">Similar picture, check it</span>' : ''}
+                            ${!m.keep && !m.match ? '<span class="stcg-badge stcg-badge-overused" title="It matches another copy in this group, not the kept one.">Matches another copy, check it</span>' : ''}
                         </span>
                     </label>`).join('')}
             </div>`).join('')}`;
@@ -333,6 +419,7 @@ async function deletePersonas(ids, task) {
             if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
             delete power_user.personas[id];
             delete power_user.persona_descriptions[id];
+            signatures.delete(id);
             setPersonaReview(id, null, null);
             await context.eventSource.emit(context.eventTypes.PERSONA_DELETED, { avatarId: id, name });
             deleted++;
@@ -349,16 +436,22 @@ async function deletePersonas(ids, task) {
 
 function removeDuplicates(onChange) {
     return exclusive('dedupe', async () => {
-        const groups = findDuplicateGroups();
-        if (!groups.length) {
+        if (!findTextGroups().length) {
             toastr.success('No duplicate personas found.', 'Card Generator');
             return;
         }
-        const copies = groups.reduce((sum, g) => sum + g.length, 0);
-        const task = startTask(`Checking ${copies} duplicate personas`, { detail: 'Finding which copies are used in chats…' });
+        const task = startTask('Looking for duplicate personas');
         let plans;
         try {
-            plans = await planDuplicates(groups, task);
+            const { sets, sigs } = await findDuplicateSets(task);
+            if (!sets.length) {
+                task.finish('No duplicates: personas that share a name and description have different pictures.');
+                toastr.success('No duplicate personas found.', 'Card Generator');
+                return;
+            }
+            const copies = sets.reduce((sum, set) => sum + set.length, 0);
+            task.update({ label: `Checking ${copies} duplicate personas`, detail: 'Finding which copies are used in chats…' });
+            plans = await planDuplicates(sets, sigs, task);
         } catch (error) {
             console.error('[stcardgen]', error);
             task.finish(`Error: ${error.message}`, { error: true });
@@ -393,7 +486,7 @@ export async function openPersonaManager() {
             <input type="search" class="text_pole stcg-pm-search" placeholder="Search personas…">
             <label class="checkbox_label"><input type="checkbox" class="stcg-select-all"> Select all</label>
             <div class="menu_button stcg-pm-review-selected" title="Score the selected personas against the rubric (nothing is changed)"><i class="fa-solid fa-clipboard-check"></i> Review selected</div>
-            <div class="menu_button stcg-pm-dedupe" title="Find personas with the same name and description and delete the extra copies. Copies used in chats are kept."><i class="fa-solid fa-clone"></i> Remove duplicates</div>
+            <div class="menu_button stcg-pm-dedupe" title="Find personas with the same name, description and avatar picture, and delete the extra copies. Copies used in chats are kept."><i class="fa-solid fa-clone"></i> Remove duplicates</div>
         </div>
         <div class="stcg-drafts-summary"></div>
         <div class="stcg-drafts-grid"></div>`;
@@ -401,6 +494,25 @@ export async function openPersonaManager() {
     const $root = $(root);
     const $grid = $root.find('.stcg-drafts-grid');
     let bust = Date.now();
+    // Duplicate badges need the avatars compared, which is async; null until that finishes.
+    /** @type {Map<string, number>|null} */
+    let dupes = null;
+    let dupeSets = [];
+    signatures.clear();
+
+    async function refreshDuplicates() {
+        try {
+            const many = findTextGroups().flat().length > 12;
+            const task = many ? startTask('Comparing persona avatars') : null;
+            dupeSets = (await findDuplicateSets(task)).sets;
+            task?.finish(`${dupeSets.length} duplicate persona${dupeSets.length === 1 ? '' : 's'} found.`);
+        } catch (error) {
+            console.error('[stcardgen]', error);
+            dupeSets = [];
+        }
+        dupes = new Map(dupeSets.flatMap(set => set.map(id => [id, set.length])));
+        render();
+    }
 
     function visible() {
         const q = query.trim().toLowerCase();
@@ -417,11 +529,12 @@ export async function openPersonaManager() {
         const reviews = api.settings().personaReviews || {};
         for (const id of Object.keys(reviews)) if (!ids.has(id)) delete reviews[id];
 
-        const dupes = new Map();
-        const groups = findDuplicateGroups();
-        for (const group of groups) for (const id of group) dupes.set(id, group.length);
-        const extra = groups.reduce((sum, g) => sum + g.length - 1, 0);
-        $root.find('.stcg-drafts-summary').text(`${ids.size} personas${extra ? ` — ${extra} extra cop${extra === 1 ? 'y' : 'ies'} of ${groups.length} persona${groups.length === 1 ? '' : 's'} (Remove duplicates cleans them up)` : ''}`);
+        const sets = dupeSets.map(set => set.filter(id => ids.has(id))).filter(set => set.length > 1);
+        const extra = sets.reduce((sum, set) => sum + set.length - 1, 0);
+        const dupeText = dupes === null
+            ? ' — checking for duplicates…'
+            : extra ? ` — ${extra} extra cop${extra === 1 ? 'y' : 'ies'} of ${sets.length} persona${sets.length === 1 ? '' : 's'} (Remove duplicates cleans them up)` : '';
+        $root.find('.stcg-drafts-summary').text(`${ids.size} personas${dupeText}`);
 
         $grid.empty();
         const list = visible();
@@ -442,7 +555,7 @@ export async function openPersonaManager() {
                             ${persona.id === user_avatar ? '<span class="stcg-badge stcg-badge-keep">Current</span>' : ''}
                             ${persona.id === power_user.default_persona ? '<span class="stcg-badge stcg-badge-keep">Default</span>' : ''}
                             ${score}
-                            ${dupes.has(persona.id) ? `<span class="stcg-badge stcg-badge-conflict" title="Same name and description as other personas">Duplicate ×${dupes.get(persona.id)}</span>` : ''}
+                            ${dupes?.has(persona.id) ? `<span class="stcg-badge stcg-badge-conflict" title="Same name, description and picture as other personas">Duplicate ×${dupes.get(persona.id)}</span>` : ''}
                             ${overused.length ? `<span class="stcg-badge stcg-badge-overused" title="On the overused names list">Overused: ${esc(overused.join(', '))}</span>` : ''}
                         </div>
                         <div class="stcg-draft-name">${esc(persona.name || '(unnamed)')}${persona.title ? ` <small>${esc(persona.title)}</small>` : ''}</div>
@@ -458,8 +571,11 @@ export async function openPersonaManager() {
             });
             $card.find('.stcg-p-edit').on('click', async () => {
                 await api.openEditor({ type: 'persona', personaId: persona.id });
-                bust = Date.now(); // the avatar may have been replaced
+                // The text or the avatar may have changed.
+                bust = Date.now();
+                signatures.delete(persona.id);
                 render();
+                refreshDuplicates();
             });
             $card.find('.stcg-p-world').on('click', () => api.openWorldBuilder({ personaId: persona.id }));
             $grid.append($card);
@@ -476,8 +592,9 @@ export async function openPersonaManager() {
         if (!selected.size) { toastr.info('Tick the personas to review first.', 'Card Generator'); return; }
         reviewPersonas([...selected], render);
     });
-    $root.find('.stcg-pm-dedupe').on('click', () => removeDuplicates(render));
+    $root.find('.stcg-pm-dedupe').on('click', () => removeDuplicates(refreshDuplicates));
     render();
+    refreshDuplicates();
 
     const popup = new Popup(root, POPUP_TYPE.TEXT, '', {
         okButton: 'Close',
