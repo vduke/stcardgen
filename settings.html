@@ -21,6 +21,9 @@
                 <div id="stcg_btn_import" class="menu_button menu_button_icon" title="Import character card file(s) (.png / .json) as persona(s)">
                     <i class="fa-solid fa-file-import"></i><span>Import Card as Persona</span>
                 </div>
+                <div id="stcg_btn_create_world" class="menu_button menu_button_icon" title="Build a sandbox world card + lorebook around one of your personas">
+                    <i class="fa-solid fa-earth-americas"></i><span>Create World for Persona</span>
+                </div>
             </div>
 
             <hr class="sysHR">
@@ -53,6 +56,28 @@
             <textarea id="stcg_character_prompt" class="text_pole textarea_compact" rows="8"></textarea>
             <label for="stcg_character_format">Output format (JSON keys: <code>name, description, personality, scenario, first_mes, mes_example, alternate_greetings, creator_notes, system_prompt, post_history_instructions, tags</code>)</label>
             <textarea id="stcg_character_format" class="text_pole textarea_compact" rows="5"></textarea>
+
+            <hr class="sysHR">
+            <h4>World / sandbox generation</h4>
+            <small class="notes">Creates a narrator-style sandbox character card with its own lorebook, built around a persona. The persona itself is not changed.</small>
+            <label for="stcg_world_prompt">Generation prompt / rules</label>
+            <textarea id="stcg_world_prompt" class="text_pole textarea_compact" rows="8"></textarea>
+            <label for="stcg_world_format">Output format (JSON with card fields plus an <code>entries</code> array)</label>
+            <textarea id="stcg_world_format" class="text_pole textarea_compact" rows="5"></textarea>
+            <div class="stcg-row">
+                <label for="stcg_world_count">Entries per generation
+                    <input id="stcg_world_count" class="text_pole" type="number" min="3" max="80">
+                </label>
+                <label for="stcg_world_max_tokens">World max tokens
+                    <input id="stcg_world_max_tokens" class="text_pole" type="number" min="1024" max="131072" step="1024">
+                </label>
+            </div>
+
+            <hr class="sysHR">
+            <h4>Image prompts</h4>
+            <label class="checkbox_label"><input id="stcg_suggest_image_prompt" type="checkbox"> When no image is provided, have the AI suggest an image prompt (for ComfyUI)</label>
+            <label for="stcg_image_prompt_instruction">Image prompt instruction for personas/characters (<code>&#123;&#123;type&#125;&#125;</code>)</label>
+            <textarea id="stcg_image_prompt_instruction" class="text_pole textarea_compact" rows="4"></textarea>
 
             <hr class="sysHR">
             <h4>Banned names</h4>

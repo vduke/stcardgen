@@ -4,6 +4,7 @@ import { ConnectionManagerRequestService } from '../../shared.js';
 import { Popup, POPUP_TYPE, POPUP_RESULT } from '../../../popup.js';
 import { power_user } from '../../../power-user.js';
 import { initPersona, getUserAvatars } from '../../../personas.js';
+import { initWorld, openWorldBuilder, generateWorld, normalizeWorld, saveWorldToST, DEFAULT_WORLD_PROMPT, DEFAULT_WORLD_FORMAT } from './world.js';
 
 const MODULE = 'stcardgen';
 // The installer names the folder after the git repo, so derive it instead of assuming "stcardgen".
@@ -66,6 +67,10 @@ const DEFAULT_BAN_PROMPT = 'These names are already taken or overused. Do NOT us
 const DEFAULT_TROPE_NAMES = `Elara, Lyra, Seraphina, Aria, Aurora, Luna, Kael, Kaelen, Kaelan, Zara, Zephyr, Elias, Elian, Elowen, Lirael, Lysandra, Isolde, Nyx, Selene, Evelyn, Evangeline, Ember, Willow, Sable, Raven, Rowan, Orion, Silas, Jaxon, Ryker, Damien, Lucian, Caspian, Cassian, Thalia, Anya, Mira, Nova, Liora, Astrid, Seren, Eldrin, Theron, Alaric, Vesper, Juniper, Talia, Elena, Lena, Sarah, Marcus, Aiden, Nyla, Kira, Aelin, Cyrus, Dorian, Ezra, Finn
 Thorne, Vance, Miller, Blackwood, Ashford, Ashworth, Sterling, Nightshade, Moonwhisper, Silverleaf, Shadowend, Voss, Hawthorne, Reyes, Chen, Holloway, Graves, Cross, Steele, Hart, Wolfe, Blackthorne, Stone, Frost, Winters, Crane, Valentine, Sinclair, Montgomery, Rivers, Kane, Drake, Ravenwood, Whitlock, Harrow, Vale, Nightingale, Mercer, Calloway, Rourke, Locke`;
 
+const DEFAULT_IMAGE_PROMPT_INSTRUCTION = `No reference image was provided. Add one extra key to the JSON: "image_prompt", a prompt for an AI image generator (Stable Diffusion / ComfyUI) that depicts this {{type}} as a single-subject portrait.
+- Comma-separated descriptive tags, most important first: subject (gender, apparent age, build), face, hair, eyes, skin, outfit, accessories, pose, expression, setting/background, lighting, art style, framing (upper body or cowboy shot, 2:3 portrait).
+- Describe only what is visible. No names, no backstory, no {{user}}/{{char}} macros.`;
+
 function splitNames(text) {
     return String(text || '').split(/[\n,]/).map(x => x.trim()).filter(Boolean);
 }
@@ -88,13 +93,23 @@ const defaultSettings = Object.freeze({
     tropeNames: DEFAULT_TROPE_NAMES,
     importSwapMacros: true,
     importAppendPersonality: false,
+    suggestImagePrompt: true,
+    imagePromptInstruction: DEFAULT_IMAGE_PROMPT_INSTRUCTION,
+    worldPrompt: DEFAULT_WORLD_PROMPT,
+    worldFormat: DEFAULT_WORLD_FORMAT,
+    worldEntryCount: 20,
+    worldMaxTokens: 12000,
     drafts: [],
 });
+
+// Shown in the editor but never written into the persona/character itself.
+const IMAGE_PROMPT_FIELD = { key: 'image_prompt', label: 'Image prompt (for ComfyUI, not saved to the card)', rows: 4, imagePrompt: true };
 
 const PERSONA_FIELDS = [
     { key: 'name', label: 'Name', rows: 1 },
     { key: 'title', label: 'Title (display only)', rows: 1 },
     { key: 'description', label: 'Description', rows: 16 },
+    IMAGE_PROMPT_FIELD,
 ];
 
 const CHARACTER_FIELDS = [
@@ -109,6 +124,7 @@ const CHARACTER_FIELDS = [
     { key: 'creator_notes', label: "Creator's notes", rows: 2 },
     { key: 'system_prompt', label: 'System prompt override', rows: 2 },
     { key: 'post_history_instructions', label: 'Post-history instructions', rows: 2 },
+    IMAGE_PROMPT_FIELD,
 ];
 
 const GREETING_SEPARATOR = '\n---\n';
@@ -140,11 +156,30 @@ function loadSettings() {
 }
 
 function typeLabel(type) {
-    return type === 'persona' ? 'Persona' : 'Character';
+    return ({ persona: 'Persona', character: 'Character', world: 'World' })[type] || 'Character';
 }
 
 function uid() {
     return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+}
+
+async function copyText(text) {
+    if (!text.trim()) {
+        toastr.warning('Nothing to copy yet.');
+        return;
+    }
+    try {
+        await navigator.clipboard.writeText(text);
+    } catch {
+        // Clipboard API needs a secure context; plain http on a LAN IP falls back to execCommand.
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        textarea.remove();
+    }
+    toastr.success('Copied to clipboard.');
 }
 
 function escapeHtml(str) {
@@ -418,6 +453,9 @@ function buildMessages(type, imageDataUrl, details, bannedNames) {
             .replace(/{{bannedNames}}/g, bannedNames.join(', '))
             .replace(/{{type}}/g, type);
     }
+    if (!imageDataUrl && s.suggestImagePrompt && s.imagePromptInstruction) {
+        system += '\n\n' + s.imagePromptInstruction.replace(/{{type}}/g, type);
+    }
 
     const parts = [];
     parts.push(imageDataUrl
@@ -439,10 +477,10 @@ function buildMessages(type, imageDataUrl, details, bannedNames) {
     ];
 }
 
-async function sendMessages(messages, signal) {
+async function sendMessages(messages, signal, { maxTokens = null } = {}) {
     const s = settings();
     const context = SillyTavern.getContext();
-    const maxTokens = Number(s.maxTokens) || 4096;
+    maxTokens = Number(maxTokens) || Number(s.maxTokens) || 4096;
 
     if (s.profileId) {
         try {
@@ -508,13 +546,19 @@ function toStringList(value) {
     return [];
 }
 
+function asText(v) {
+    return (v === undefined || v === null) ? '' : (typeof v === 'string' ? v : JSON.stringify(v, null, 2));
+}
+
 function normalizeData(type, obj) {
-    const str = v => (v === undefined || v === null) ? '' : (typeof v === 'string' ? v : JSON.stringify(v, null, 2));
+    const str = asText;
+    if (type === 'world') return normalizeWorld(obj);
     if (type === 'persona') {
         return {
             name: str(obj.name).trim(),
             title: str(obj.title).trim(),
             description: str(obj.description ?? obj.persona ?? obj.persona_description).trim(),
+            image_prompt: str(obj.image_prompt).trim(),
         };
     }
     const tags = toStringList(obj.tags).flatMap(tag => tag.split(','));
@@ -530,6 +574,7 @@ function normalizeData(type, obj) {
         system_prompt: str(obj.system_prompt).trim(),
         post_history_instructions: str(obj.post_history_instructions).trim(),
         tags: toStringList(tags),
+        image_prompt: str(obj.image_prompt).trim(),
     };
 }
 
@@ -585,7 +630,13 @@ async function createPersonaInST(data, imageBlob) {
     return finalId;
 }
 
-async function createCharacterInST(data, imageBlob) {
+/**
+ * @param {object} data Character fields
+ * @param {Blob?} imageBlob Avatar
+ * @param {object} [options]
+ * @param {string} [options.world] Lorebook to attach as the primary lorebook (it is also embedded in the card)
+ */
+async function createCharacterInST(data, imageBlob, { world = '' } = {}) {
     const formData = new FormData();
     formData.append('ch_name', data.name.trim());
     formData.append('description', data.description || '');
@@ -601,7 +652,7 @@ async function createCharacterInST(data, imageBlob) {
     formData.append('character_version', '');
     formData.append('talkativeness', '0.5');
     formData.append('fav', 'false');
-    formData.append('world', '');
+    formData.append('world', world);
     formData.append('depth_prompt_prompt', '');
     formData.append('depth_prompt_depth', '4');
     formData.append('depth_prompt_role', 'system');
@@ -627,6 +678,7 @@ async function createCharacterInST(data, imageBlob) {
 async function saveToST(type, data, imageBlob) {
     if (!data.name?.trim()) throw new Error('A name is required.');
     if (type === 'persona') return await createPersonaInST(data, imageBlob);
+    if (type === 'world') return await saveWorldToST(data, imageBlob);
     return await createCharacterInST(data, imageBlob);
 }
 
@@ -660,6 +712,9 @@ function readFieldValue(field, text) {
  * @param {boolean} [options.autoGenerate] Start generating immediately
  */
 async function openEditor({ type, draft = null, data = null, imageBlob = null, autoGenerate = false }) {
+    if ((draft?.type ?? type) === 'world') {
+        return await openWorldBuilder({ draft });
+    }
     const state = {
         type: draft?.type ?? type,
         data: structuredClone(draft?.data ?? data ?? emptyData(type)),
@@ -698,7 +753,10 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
             <div class="stcg-editor-fields">
                 ${fields.map(f => `
                     <div class="stcg-field-group">
-                        <label class="stcg-field-label" for="stcg_f_${f.key}">${escapeHtml(f.label)}</label>
+                        <div class="stcg-field-head">
+                            <label class="stcg-field-label" for="stcg_f_${f.key}">${escapeHtml(f.label)}</label>
+                            ${f.imagePrompt ? `<div class="menu_button menu_button_icon stcg-copy" data-copy="${f.key}" title="Copy to clipboard"><i class="fa-solid fa-copy"></i> Copy</div>` : ''}
+                        </div>
                         ${f.rows === 1
                             ? `<input id="stcg_f_${f.key}" data-key="${f.key}" class="text_pole stcg-field" type="text">`
                             : `<textarea id="stcg_f_${f.key}" data-key="${f.key}" class="text_pole stcg-field" rows="${f.rows}" style="min-height: calc(${f.rows} * 1.5em + 12px)"></textarea>`}
@@ -811,6 +869,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
             if (file?.type.startsWith('image/')) setImage(file);
         });
     $root.find('[data-key="name"]').on('input', checkConflict);
+    $root.find('.stcg-copy').on('click', e => copyText(String($root.find(`[data-key="${$(e.currentTarget).data('copy')}"]`).val() ?? '')));
     $generate.on('click', runGeneration);
     $root.find('.stcg-parse-raw').on('click', () => {
         readFields();
@@ -915,13 +974,15 @@ async function processDraft(draft) {
     upsertDraft(draft);
     try {
         const imageBlob = draft.image ? await fetchBlob(draft.image) : null;
-        const result = await generateEntry({
-            type: draft.type,
-            imageBlob,
-            details: draft.details,
-            excludeDraftId: draft.id,
-            signal: controller.signal,
-        });
+        const result = draft.type === 'world'
+            ? await generateWorld({ source: draft.source, imageBlob, details: draft.details, excludeDraftId: draft.id, signal: controller.signal })
+            : await generateEntry({
+                type: draft.type,
+                imageBlob,
+                details: draft.details,
+                excludeDraftId: draft.id,
+                signal: controller.signal,
+            });
         if (!getDraft(draft.id)) return; // deleted meanwhile
         draft.data = result.data;
         draft.raw = result.raw;
@@ -1102,6 +1163,7 @@ async function openDrafts() {
                 <option value="persona">Personas</option>
                 <option value="character">Characters</option>
                 <option value="ready">Ready</option>
+                <option value="world">Worlds</option>
                 <option value="pending">Queued / Generating</option>
                 <option value="error">Errors</option>
             </select>
@@ -1121,7 +1183,8 @@ async function openDrafts() {
         return getDrafts().filter(d => {
             switch (filter) {
                 case 'persona':
-                case 'character': return d.type === filter;
+                case 'character':
+                case 'world': return d.type === filter;
                 case 'ready': return d.status === 'ready';
                 case 'pending': return d.status === 'queued' || d.status === 'generating';
                 case 'error': return d.status === 'error';
@@ -1149,15 +1212,19 @@ async function openDrafts() {
         for (const draft of list) {
             const conflict = draft.data?.name ? findNameConflict(draft.data.name, { excludeDraftId: draft.id }) : null;
             const overused = findOverusedParts(draft.data?.name);
-            const preview = draft.type === 'persona' ? draft.data?.description : (draft.data?.personality || draft.data?.description);
+            const preview = draft.type === 'character' ? (draft.data?.personality || draft.data?.description) : draft.data?.description;
+            const placeholderIcon = draft.type === 'world' ? 'fa-globe' : 'fa-user';
+            const worldInfo = draft.type === 'world' && draft.status === 'ready'
+                ? `<span class="stcg-badge" title="Lorebook entries">${draft.data?.entries?.length || 0} entries</span>` : '';
             const $card = $(`
                 <div class="stcg-draft stcg-status-${draft.status}">
                     <label class="stcg-draft-check"><input type="checkbox"></label>
-                    <div class="stcg-draft-img">${draft.image ? `<img src="${fileUrl(draft.image)}" alt="" loading="lazy">` : '<i class="fa-solid fa-user fa-2x"></i>'}</div>
+                    <div class="stcg-draft-img">${draft.image ? `<img src="${fileUrl(draft.image)}" alt="" loading="lazy">` : `<i class="fa-solid ${placeholderIcon} fa-2x"></i>`}</div>
                     <div class="stcg-draft-body">
                         <div class="stcg-draft-head">
                             <span class="stcg-badge stcg-badge-${draft.type}">${typeLabel(draft.type)}</span>
                             <span class="stcg-badge stcg-badge-status">${STATUS_LABELS[draft.status] || draft.status}</span>
+                            ${worldInfo}
                             ${conflict ? `<span class="stcg-badge stcg-badge-conflict" title="Name used by ${escapeHtml(conflict)}">Name conflict</span>` : ''}
                             ${overused.length ? `<span class="stcg-badge stcg-badge-overused" title="On the overused names list">Overused: ${escapeHtml(overused.join(', '))}</span>` : ''}
                         </div>
@@ -1165,6 +1232,7 @@ async function openDrafts() {
                         <div class="stcg-draft-preview">${escapeHtml(draft.status === 'error' ? draft.error : (preview || draft.details || '')).slice(0, 220)}</div>
                         <div class="stcg-draft-buttons">
                             <div class="menu_button stcg-d-review" title="Review & edit"><i class="fa-solid fa-pen-to-square"></i> Review</div>
+                            ${!draft.image && draft.data?.image_prompt ? '<div class="menu_button stcg-d-copy-prompt" title="Copy image prompt (for ComfyUI)"><i class="fa-solid fa-image"></i></div>' : ''}
                             <div class="menu_button stcg-d-approve" title="Create without review"><i class="fa-solid fa-check"></i></div>
                             <div class="menu_button stcg-d-retry" title="Regenerate"><i class="fa-solid fa-rotate"></i></div>
                             <div class="menu_button stcg-d-delete" title="Delete draft"><i class="fa-solid fa-trash"></i></div>
@@ -1176,6 +1244,7 @@ async function openDrafts() {
                 if ($(e.target).prop('checked')) selected.add(draft.id); else selected.delete(draft.id);
             });
             $card.find('.stcg-d-review').toggleClass('disabled', busy).on('click', () => !busy && openEditor({ type: draft.type, draft }));
+            $card.find('.stcg-d-copy-prompt').on('click', () => copyText(draft.data.image_prompt));
             $card.find('.stcg-d-approve').toggleClass('disabled', draft.status !== 'ready').on('click', () => approveDrafts([draft.id]));
             $card.find('.stcg-d-retry').toggleClass('disabled', busy).on('click', () => requeue([draft.id]));
             $card.find('.stcg-d-delete').on('click', async () => {
@@ -1189,7 +1258,7 @@ async function openDrafts() {
         for (const id of ids) {
             const draft = getDraft(id);
             if (!draft || draft.status === 'generating') continue;
-            if (!draft.image && !draft.details?.trim()) continue;
+            if (draft.type === 'world' ? !draft.source : (!draft.image && !draft.details?.trim())) continue;
             draft.status = 'queued';
             draft.error = '';
             upsertDraft(draft);
@@ -1328,6 +1397,9 @@ function refreshSettingsUI() {
     $('#stcg_character_prompt').val(s.characterPrompt);
     $('#stcg_character_format').val(s.characterFormat);
     $('#stcg_ban_prompt').val(s.banPrompt);
+    $('#stcg_image_prompt_instruction').val(s.imagePromptInstruction);
+    $('#stcg_world_prompt').val(s.worldPrompt);
+    $('#stcg_world_format').val(s.worldFormat);
 }
 
 async function initSettingsUI() {
@@ -1361,7 +1433,14 @@ async function initSettingsUI() {
     });
     bindSetting('#stcg_import_swap', 'importSwapMacros', { type: 'checkbox' });
     bindSetting('#stcg_import_personality', 'importAppendPersonality', { type: 'checkbox' });
+    bindSetting('#stcg_suggest_image_prompt', 'suggestImagePrompt', { type: 'checkbox' });
+    bindSetting('#stcg_image_prompt_instruction', 'imagePromptInstruction');
+    bindSetting('#stcg_world_prompt', 'worldPrompt');
+    bindSetting('#stcg_world_format', 'worldFormat');
+    bindSetting('#stcg_world_count', 'worldEntryCount', { type: 'number' });
+    bindSetting('#stcg_world_max_tokens', 'worldMaxTokens', { type: 'number' });
 
+    $('#stcg_btn_create_world').on('click', () => openWorldBuilder());
     $('#stcg_btn_create_persona').on('click', () => openEditor({ type: 'persona' }));
     $('#stcg_btn_create_character').on('click', () => openEditor({ type: 'character' }));
     $('#stcg_btn_bulk').on('click', openBulk);
@@ -1379,6 +1458,9 @@ async function initSettingsUI() {
         s.characterPrompt = DEFAULT_CHARACTER_PROMPT;
         s.characterFormat = DEFAULT_CHARACTER_FORMAT;
         s.banPrompt = DEFAULT_BAN_PROMPT;
+        s.imagePromptInstruction = DEFAULT_IMAGE_PROMPT_INSTRUCTION;
+        s.worldPrompt = DEFAULT_WORLD_PROMPT;
+        s.worldFormat = DEFAULT_WORLD_FORMAT;
         refreshSettingsUI();
         saveSettingsDebounced();
     });
@@ -1393,6 +1475,9 @@ function addWandMenu() {
             <div id="stcg_wand_character" class="list-group-item flex-container flexGap5 interactable" tabindex="0" role="listitem">
                 <div class="fa-solid fa-id-card extensionsMenuExtensionButton"></div><span>Create Character</span>
             </div>
+            <div id="stcg_wand_world" class="list-group-item flex-container flexGap5 interactable" tabindex="0" role="listitem">
+                <div class="fa-solid fa-earth-americas extensionsMenuExtensionButton"></div><span>Create World for Persona</span>
+            </div>
             <div id="stcg_wand_drafts" class="list-group-item flex-container flexGap5 interactable" tabindex="0" role="listitem">
                 <div class="fa-solid fa-inbox extensionsMenuExtensionButton"></div><span>Card Drafts <span class="stcg-draft-count"></span></span>
             </div>
@@ -1400,10 +1485,16 @@ function addWandMenu() {
     $('#extensionsMenu').append($menu);
     $('#stcg_wand_persona').on('click', () => openEditor({ type: 'persona' }));
     $('#stcg_wand_character').on('click', () => openEditor({ type: 'character' }));
+    $('#stcg_wand_world').on('click', () => openWorldBuilder());
     $('#stcg_wand_drafts').on('click', openDrafts);
 }
 
 jQuery(async () => {
+    initWorld({
+        settings, sendMessages, parseJsonLoose, stripReasoning, getBannedNames, findNameConflict, findOverusedParts,
+        escapeHtml, copyText, pickFiles, imageToPromptDataUrl, fetchBlob, storeFile, deleteStoredFile,
+        upsertDraft, getDraft, deleteDraft, uid, createCharacterInST, asText, toStringList,
+    });
     loadSettings();
     await initSettingsUI();
     addWandMenu();

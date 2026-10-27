@@ -87,6 +87,19 @@
     max-height: none;
 }
 
+.stcg-field-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.stcg-field-head .menu_button {
+    margin: 0;
+    padding: 2px 8px;
+    font-size: 0.85em;
+}
+
 .stcg-field-label {
     font-weight: bold;
     font-size: 0.9em;
@@ -405,4 +418,125 @@
 
 .stcg-d-review {
     flex: 1;
+}
+
+/* ---------- World builder ---------- */
+
+.stcg-section-title {
+    margin: 4px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.stcg-section-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-top: 1px solid var(--SmartThemeBorderColor);
+    padding-top: 10px;
+}
+
+.stcg-section-head .stcg-section-title {
+    flex: 1;
+    margin: 0;
+}
+
+.stcg-section-head .menu_button {
+    margin: 0;
+}
+
+.stcg-dropzone.stcg-dropzone-small {
+    aspect-ratio: 3 / 2;
+}
+
+.stcg-w-persona-preview {
+    font-size: 0.85em;
+    opacity: 0.75;
+    white-space: pre-wrap;
+    max-height: 9em;
+    overflow-y: auto;
+}
+
+.stcg-w-more.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.stcg-w-entries {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.stcg-entry {
+    border: 1px solid var(--SmartThemeBorderColor);
+    border-radius: 8px;
+    background: var(--black30a);
+}
+
+.stcg-entry > summary {
+    cursor: pointer;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.stcg-entry-title {
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.stcg-entry-keys {
+    flex: 1;
+    min-width: 0;
+    opacity: 0.7;
+    font-size: 0.85em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stcg-entry-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 4px 10px 10px;
+}
+
+.stcg-entry-body > label,
+.stcg-entry-row > label:not(.checkbox_label) {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.85em;
+    font-weight: bold;
+}
+
+.stcg-entry-body input,
+.stcg-entry-body textarea,
+.stcg-entry-body select {
+    font-weight: normal;
+    margin: 0;
+}
+
+.stcg-entry-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.stcg-entry-row > label:not(.checkbox_label) {
+    flex: 1 1 90px;
+}
+
+.stcg-entry-row .stcg-entry-delete {
+    margin: 0;
+}
+
+.stcg-badge-world {
+    background: rgba(60, 180, 120, 0.25);
 }
