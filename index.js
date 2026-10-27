@@ -6,7 +6,9 @@ import { power_user } from '../../../power-user.js';
 import { initPersona, getUserAvatars } from '../../../personas.js';
 
 const MODULE = 'stcardgen';
-const TEMPLATE_PATH = `third-party/${MODULE}`;
+// The installer names the folder after the git repo, so derive it instead of assuming "stcardgen".
+const EXTENSION_FOLDER = decodeURIComponent(new URL('.', import.meta.url).pathname.split('/').filter(Boolean).pop());
+const TEMPLATE_PATH = `third-party/${EXTENSION_FOLDER}`;
 const CURRENT_CONNECTION = '';
 const DEFAULT_PERSONA_AVATAR = 'img/user-default.png';
 
