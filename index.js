@@ -4,7 +4,7 @@ import { ConnectionManagerRequestService } from '../../shared.js';
 import { Popup, POPUP_TYPE, POPUP_RESULT } from '../../../popup.js';
 import { power_user } from '../../../power-user.js';
 import { initPersona, getUserAvatars } from '../../../personas.js';
-import { initWorld, openWorldBuilder, generateWorld, normalizeWorld, saveWorldToST, DEFAULT_WORLD_PROMPT, DEFAULT_WORLD_FORMAT } from './world.js';
+import { initWorld, openWorldBuilder, generateWorld, normalizeWorld, saveWorldToST, DEFAULT_WORLD_PROMPT, DEFAULT_WORLD_FORMAT, WORLD_PROMPT_LINE_MIGRATIONS, WORLD_FORMAT_LINE_MIGRATIONS } from './world.js';
 
 const MODULE = 'stcardgen';
 // The installer names the folder after the git repo, so derive it instead of assuming "stcardgen".
@@ -30,6 +30,26 @@ const DEFAULT_PERSONA_FORMAT = `Respond ONLY with one JSON object and nothing el
   "description": "the full persona description; use \\n for line breaks"
 }`;
 
+const NO_QUESTION_ENDING = 'End on a concrete beat (an action, a line of dialogue, or something happening) that {{user}} can react to. Never end with a question to the player such as "What do you do?", "What\'s your next move?" or "How do you respond?".';
+
+// [old line, new line] pairs. Saved prompts get the new line only if the old one is still there verbatim,
+// so any other edits the user made are kept.
+const PROMPT_LINE_MIGRATIONS = [
+    [
+        '- first_mes: an engaging opening message written as {{char}}, in roleplay prose with actions in *asterisks*. Never act or speak for {{user}}.',
+        `- first_mes: an engaging opening message written as {{char}}, in roleplay prose with actions in *asterisks*. Never act or speak for {{user}}. ${NO_QUESTION_ENDING}`,
+    ],
+    [
+        '- alternate_greetings: 1-2 alternative opening messages.',
+        '- alternate_greetings: 1-2 alternative opening messages, following the same rules as first_mes.',
+    ],
+];
+
+// Cards never get a Main Prompt override (system_prompt), so it was dropped from the format.
+const CHARACTER_FORMAT_LINE_MIGRATIONS = [
+    ['  "system_prompt": "",\n', ''],
+];
+
 const DEFAULT_CHARACTER_PROMPT = `You are an expert character card writer for SillyTavern roleplay. You turn a reference image (and optional notes) into a complete, high-quality character card.
 
 Study the attached image carefully: apparent age, build, face, hair, eyes, skin, clothing, accessories, posture, expression, setting, art style and mood. Build a believable, distinctive character around it. If the user supplied details, they override anything inferred from the image.
@@ -39,9 +59,9 @@ Rules:
 - description: detailed appearance, background, relationships, and anything the model needs to portray {{char}} (250-600 words).
 - personality: a concise summary of traits.
 - scenario: the starting situation between {{char}} and {{user}}.
-- first_mes: an engaging opening message written as {{char}}, in roleplay prose with actions in *asterisks*. Never act or speak for {{user}}.
+${PROMPT_LINE_MIGRATIONS[0][1]}
 - mes_example: 2-3 short example exchanges, each starting with <START>, using {{user}}: and {{char}}: prefixes.
-- alternate_greetings: 1-2 alternative opening messages.
+${PROMPT_LINE_MIGRATIONS[1][1]}
 - tags: 3-8 short genre/trait tags.
 - Pick an original, fitting name.`;
 
@@ -55,7 +75,6 @@ const DEFAULT_CHARACTER_FORMAT = `Respond ONLY with one JSON object and nothing 
   "mes_example": "",
   "alternate_greetings": ["array of strings"],
   "creator_notes": "",
-  "system_prompt": "",
   "post_history_instructions": "",
   "tags": ["array of strings"]
 }`;
@@ -122,7 +141,6 @@ const CHARACTER_FIELDS = [
     { key: 'mes_example', label: 'Example messages', rows: 6 },
     { key: 'tags', label: 'Tags (comma-separated)', rows: 1, tags: true },
     { key: 'creator_notes', label: "Creator's notes", rows: 2 },
-    { key: 'system_prompt', label: 'System prompt override', rows: 2 },
     { key: 'post_history_instructions', label: 'Post-history instructions', rows: 2 },
     IMAGE_PROMPT_FIELD,
 ];
@@ -149,6 +167,11 @@ function loadSettings() {
         }
     }
     if (s.banPrompt === LEGACY_BAN_PROMPT) s.banPrompt = DEFAULT_BAN_PROMPT;
+    const migrate = (text, pairs) => pairs.reduce((acc, [oldLine, newLine]) => acc.replace(oldLine, newLine), String(text));
+    s.characterPrompt = migrate(s.characterPrompt, PROMPT_LINE_MIGRATIONS);
+    s.characterFormat = migrate(s.characterFormat, CHARACTER_FORMAT_LINE_MIGRATIONS);
+    s.worldPrompt = migrate(s.worldPrompt, WORLD_PROMPT_LINE_MIGRATIONS);
+    s.worldFormat = migrate(s.worldFormat, WORLD_FORMAT_LINE_MIGRATIONS);
     // Drafts that were mid-generation when the page closed go back to the queue.
     for (const draft of s.drafts) {
         if (draft.status === 'generating') draft.status = 'queued';
@@ -571,7 +594,6 @@ function normalizeData(type, obj) {
         mes_example: str(obj.mes_example ?? obj.example_messages).trim(),
         alternate_greetings: toStringList(obj.alternate_greetings),
         creator_notes: str(obj.creator_notes).trim(),
-        system_prompt: str(obj.system_prompt).trim(),
         post_history_instructions: str(obj.post_history_instructions).trim(),
         tags: toStringList(tags),
         image_prompt: str(obj.image_prompt).trim(),
@@ -645,7 +667,7 @@ async function createCharacterInST(data, imageBlob, { world = '' } = {}) {
     formData.append('first_mes', data.first_mes || '');
     formData.append('mes_example', data.mes_example || '');
     formData.append('creator_notes', data.creator_notes || '');
-    formData.append('system_prompt', data.system_prompt || '');
+    formData.append('system_prompt', '');
     formData.append('post_history_instructions', data.post_history_instructions || '');
     formData.append('tags', (data.tags || []).join(', '));
     formData.append('creator', '');

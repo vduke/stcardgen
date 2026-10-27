@@ -3,6 +3,28 @@ import { Popup, POPUP_TYPE, POPUP_RESULT } from '../../../popup.js';
 import { power_user } from '../../../power-user.js';
 import { user_avatar } from '../../../personas.js';
 
+// [old line, new line] pairs applied to saved prompts on load; see PROMPT_LINE_MIGRATIONS in index.js.
+export const WORLD_PROMPT_LINE_MIGRATIONS = [
+    [
+        '- first_mes: an immersive opening scene addressed to {{user}} in second person, ending on an open situation. Never act or speak for {{user}}.',
+        `- first_mes: an immersive opening scene addressed to {{user}} in second person. Never act or speak for {{user}}. End on a concrete beat (an NPC speaking or acting, or something happening) that {{user}} can react to. Never end with a question to the player such as "What do you do?", "What's your next move?" or "Where do you go from here?".
+- alternate_greetings: 1-2 alternative opening scenes set at different places or moments in {{user}}'s life, following the same rules as first_mes.`,
+    ],
+    // No Main Prompt override on cards; narrator example messages instead.
+    [
+        '- system_prompt: short narrator instructions (optional).',
+        '- mes_example: 2-3 short example exchanges, each starting with <START> and using {{user}}: and {{char}}: prefixes, where {{char}} narrates and voices different NPCs so their distinct speech styles show.',
+    ],
+    [
+        '- NPC entries: full name, age, role, relationship to {{user}}, appearance, personality, speech style, current goal.',
+        '- NPC entries: full name, age, role, relationship to {{user}}, appearance, personality, speech style, current goal. For important NPCs (family, close friends, love interests, rivals, bosses, crew), end the content with "Example dialogue:" followed by 2-3 short lines in their own voice, showing how they talk to {{user}}. These lines may push the entry past 180 words.',
+    ],
+];
+
+export const WORLD_FORMAT_LINE_MIGRATIONS = [
+    ['  "system_prompt": "",\n', '  "mes_example": "",\n'],
+];
+
 export const DEFAULT_WORLD_PROMPT = `You are a world-builder for SillyTavern roleplay. You turn a user persona into a living sandbox: a world/narrator character card plus a lorebook (World Info) that makes the setting feel real and reactive.
 
 The persona is the character the USER plays. Refer to them as {{user}} everywhere. The sandbox card ({{char}}) is not one person: it is the narrator / game master who describes the world and voices every NPC.
@@ -20,13 +42,13 @@ Examples: a college student needs the campus, their dorm or apartment, parents, 
 Sandbox card:
 - description: setting overview, tone, and the narrator's role (voices all NPCs, describes the world, keeps continuity, lets {{user}} drive). 300-600 words.
 - scenario: where {{user}}'s story starts.
-- first_mes: an immersive opening scene addressed to {{user}} in second person, ending on an open situation. Never act or speak for {{user}}.
-- system_prompt: short narrator instructions (optional).
+${WORLD_PROMPT_LINE_MIGRATIONS[0][1]}
+${WORLD_PROMPT_LINE_MIGRATIONS[1][1]}
 - tags: 3-8 genre/setting tags.
 
 Lorebook entries:
 - One topic per entry (one NPC, one place, one faction, one custom...). 50-180 words each, factual reference style, present tense. Refer to the persona as {{user}}.
-- NPC entries: full name, age, role, relationship to {{user}}, appearance, personality, speech style, current goal.
+${WORLD_PROMPT_LINE_MIGRATIONS[2][1]}
 - keys: 2-6 specific trigger words people would actually type in chat: names, nicknames, surnames, place names, distinctive terms, plus short/lowercase forms. Avoid generic words (the, home, he, she, mom when there are several moms) that would fire constantly.
 - secondary_keys: optional. When set, the entry only fires if a primary key AND a secondary key appear. Use them to disambiguate.
 - constant: true only for 1-3 essential entries (core world rules, {{user}}'s immediate circumstances). Everything else is keyword-triggered.
@@ -43,7 +65,7 @@ export const DEFAULT_WORLD_FORMAT = `Respond ONLY with one JSON object and nothi
   "scenario": "",
   "first_mes": "",
   "alternate_greetings": ["array of strings"],
-  "system_prompt": "",
+  "mes_example": "",
   "creator_notes": "",
   "tags": ["array of strings"],
   "entries": [
@@ -79,7 +101,7 @@ const CARD_FIELDS = [
     { key: 'scenario', label: 'Scenario', rows: 3 },
     { key: 'first_mes', label: 'First message', rows: 8 },
     { key: 'alternate_greetings', label: 'Alternate greetings (separate with a line containing only ---)', rows: 5, list: true },
-    { key: 'system_prompt', label: 'System prompt override', rows: 3 },
+    { key: 'mes_example', label: 'Example messages (narrator voicing NPCs)', rows: 6 },
     { key: 'tags', label: 'Tags (comma-separated)', rows: 1, tags: true },
     { key: 'creator_notes', label: "Creator's notes", rows: 2 },
     { key: 'image_prompt', label: 'Image prompt (for ComfyUI, not saved to the card)', rows: 4, imagePrompt: true },
@@ -129,7 +151,7 @@ export function normalizeWorld(obj = {}) {
         scenario: str(obj.scenario),
         first_mes: str(obj.first_mes ?? obj.first_message),
         alternate_greetings: api.toStringList(obj.alternate_greetings),
-        system_prompt: str(obj.system_prompt),
+        mes_example: str(obj.mes_example ?? obj.example_messages),
         creator_notes: str(obj.creator_notes),
         tags: keyList(obj.tags),
         image_prompt: str(obj.image_prompt),
@@ -277,7 +299,7 @@ function applyRename(world, oldName, newName) {
         .replace(new RegExp(`\\b${escapeRegex(from)}\\b`, 'g'), to)
         .replace(new RegExp(`\\b${escapeRegex(from.toLowerCase())}\\b`, 'g'), to.toLowerCase()), String(text ?? ''));
 
-    for (const key of ['name', 'description', 'scenario', 'first_mes', 'system_prompt', 'creator_notes']) {
+    for (const key of ['name', 'description', 'scenario', 'first_mes', 'mes_example', 'creator_notes']) {
         world[key] = replace(world[key]);
     }
     world.alternate_greetings = world.alternate_greetings.map(replace);
@@ -357,10 +379,9 @@ export async function saveWorldToST(world, imageBlob) {
         personality: '',
         scenario: world.scenario,
         first_mes: world.first_mes,
-        mes_example: '',
+        mes_example: world.mes_example,
         alternate_greetings: world.alternate_greetings,
         creator_notes: world.creator_notes,
-        system_prompt: world.system_prompt,
         post_history_instructions: '',
         tags: world.tags,
     };
