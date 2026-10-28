@@ -348,15 +348,15 @@ export async function saveWorldToST(world, imageBlob) {
 // ---------------------------------------------------------------------------
 
 function fieldHtml(f) {
-    const input = f.rows === 1
+    let input = f.rows === 1
         ? `<input id="stcg_w_${f.key}" data-card="${f.key}" class="text_pole" type="text">`
         : `<textarea id="stcg_w_${f.key}" data-card="${f.key}" class="text_pole" rows="${f.rows}" style="min-height: calc(${f.rows} * 1.5em + 12px)"></textarea>`;
+    if (f.key === 'name') input = `<div class="stcg-name-row">${input}${RENAME_CARD_HTML}</div>`;
     return `
         <div class="stcg-field-group">
             <div class="stcg-field-head">
                 <label class="stcg-field-label" for="stcg_w_${f.key}">${api.escapeHtml(f.label)}</label>
                 ${f.imagePrompt ? `<div class="menu_button menu_button_icon stcg-copy" title="Copy to clipboard"><i class="fa-solid fa-copy"></i> Copy</div>` : ''}
-                ${f.key === 'name' ? RENAME_CARD_HTML : ''}
                 ${f.rows > 1 && !f.imagePrompt ? fieldOpsHtml(`data-target="${f.key}"`) : ''}
             </div>
             ${input}

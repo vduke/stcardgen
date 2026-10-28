@@ -519,6 +519,7 @@ export async function openPersonaManager() {
             <div class="menu_button stcg-pm-dedupe" title="Find personas with the same name, description and avatar picture, and delete the extra copies. Copies used in chats are kept."><i class="fa-solid fa-clone"></i> Remove duplicates</div>
             <div class="menu_button stcg-pm-delete-selected" title="Delete the selected personas (asks first; the current and default personas are skipped)"><i class="fa-solid fa-trash"></i> Delete selected</div>
         </div>
+        <small class="notes">These are the personas installed in SillyTavern, the same list as its Persona Management panel. Drafts are not personas until you approve them; they stay in Card Drafts. Tip: search "unnamed", then Select all, to review or delete unnamed avatars in one go.</small>
         <div class="stcg-drafts-summary"></div>
         <div class="stcg-drafts-grid"></div>`;
 
@@ -576,6 +577,8 @@ export async function openPersonaManager() {
                 ? `<span class="stcg-badge stcg-badge-score stcg-score-${stored.stale ? 'none' : scoreClass(stored.review.overall)}" title="${esc(stored.stale ? 'Edited since this review' : (stored.review.summary || 'Quality score'))}">★ ${stored.review.overall}${stored.stale ? ' (old)' : ''}</span>`
                 : '';
             const overused = api.findOverusedParts(persona.name);
+            // SillyTavern lists every image in its User Avatars folder; one saved without a name shows as "[Unnamed Persona]".
+            const unnamed = /^\[.*\]$/.test(persona.name.trim());
             const $card = $(`
                 <div class="stcg-draft">
                     <label class="stcg-draft-check"><input type="checkbox"></label>
@@ -588,9 +591,10 @@ export async function openPersonaManager() {
                             ${score}
                             ${dupes?.has(persona.id) ? `<span class="stcg-badge stcg-badge-conflict" title="Same name, description and picture as other personas">Duplicate ×${dupes.get(persona.id)}</span>` : ''}
                             ${overused.length ? `<span class="stcg-badge stcg-badge-overused" title="On the overused names list">Overused: ${esc(overused.join(', '))}</span>` : ''}
+                            ${unnamed ? '<span class="stcg-badge stcg-badge-overused" title="An avatar in SillyTavern\'s User Avatars folder with no name, e.g. uploaded in the Persona panel with the name prompt cancelled. Review &amp; edit, then Regenerate and New name, turns it into a real persona.">Unnamed avatar</span>' : ''}
                         </div>
                         <div class="stcg-draft-name">${esc(persona.name || '(unnamed)')}${persona.title ? ` <small>${esc(persona.title)}</small>` : ''}</div>
-                        <div class="stcg-draft-preview">${esc(persona.description.slice(0, 220)) || '<i>No description</i>'}</div>
+                        <div class="stcg-draft-preview">${esc(persona.description.slice(0, 220)) || `<i>No description</i>${unnamed ? ` <small class="stcg-dupe-id">${esc(persona.id)}</small>` : ''}`}</div>
                         <div class="stcg-draft-buttons">
                             <div class="menu_button stcg-p-edit" title="Review, fix, enhance or optimize this persona"><i class="fa-solid fa-pen-to-square"></i> Review &amp; edit</div>
                             <div class="menu_button stcg-p-world" title="Create a sandbox world around this persona"><i class="fa-solid fa-earth-americas"></i></div>

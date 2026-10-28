@@ -971,10 +971,11 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
                         <div class="stcg-field-head">
                             <label class="stcg-field-label" for="stcg_f_${f.key}">${escapeHtml(f.label)}</label>
                             ${f.imagePrompt ? `<div class="menu_button menu_button_icon stcg-copy" data-copy="${f.key}" title="Copy to clipboard"><i class="fa-solid fa-copy"></i> Copy</div>` : ''}
-                            ${f.key === 'name' ? RENAME_CARD_HTML : ''}
                             ${f.rows > 1 && !f.imagePrompt ? fieldOpsHtml(`data-target="${f.key}"`) : ''}
                         </div>
-                        ${f.rows === 1
+                        ${f.key === 'name'
+                            ? `<div class="stcg-name-row"><input id="stcg_f_${f.key}" data-key="${f.key}" class="text_pole stcg-field" type="text">${RENAME_CARD_HTML}</div>`
+                            : f.rows === 1
                             ? `<input id="stcg_f_${f.key}" data-key="${f.key}" class="text_pole stcg-field" type="text">`
                             : `<textarea id="stcg_f_${f.key}" data-key="${f.key}" class="text_pole stcg-field" rows="${f.rows}" style="min-height: calc(${f.rows} * 1.5em + 12px)"></textarea>`}
                     </div>

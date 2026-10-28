@@ -108,6 +108,25 @@
     font-size: 0.85em;
 }
 
+/* The name box with its New name button right beside it. */
+.stcg-name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.stcg-name-row input {
+    flex: 1;
+    min-width: 0;
+}
+
+.stcg-name-row .stcg-rename-card {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 4px 10px;
+    white-space: nowrap;
+}
+
 .stcg-field-label {
     font-weight: bold;
     font-size: 0.9em;
