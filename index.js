@@ -6,8 +6,8 @@ import { power_user } from '../../../power-user.js';
 import { initPersona, getUserAvatars, user_avatar, setPersonaDescription } from '../../../personas.js';
 import { debounce } from '../../../utils.js';
 import {
-    initQuality, reviewCard, reviseCard, reviseField, qualityPass, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, scoreClass,
-    QUALITY_PANEL_HTML, fieldOpsHtml, wireIssueChecks, canFix, DEFAULT_REVIEW_PROMPT, DEFAULT_ENHANCE_PROMPT, DEFAULT_OPTIMIZE_PROMPT, migrateReviewPrompt,
+    initQuality, reviewCard, reviseCard, reviseField, renameCard, qualityPass, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, scoreClass,
+    QUALITY_PANEL_HTML, RENAME_CARD_HTML, fieldOpsHtml, wireIssueChecks, canFix, DEFAULT_REVIEW_PROMPT, DEFAULT_ENHANCE_PROMPT, DEFAULT_OPTIMIZE_PROMPT, migrateReviewPrompt,
 } from './quality.js';
 import { initWorld, openWorldBuilder, generateWorld, normalizeWorld, normalizeEntry, saveWorldToST, DEFAULT_WORLD_PROMPT, DEFAULT_WORLD_FORMAT, WORLD_PROMPT_LINE_MIGRATIONS, WORLD_FORMAT_LINE_MIGRATIONS } from './world.js';
 import { startTask, exclusive, guardClosing } from './tasks.js';
@@ -97,6 +97,11 @@ const DEFAULT_IMAGE_PROMPT_INSTRUCTION = `No reference image was provided. Add o
 - Comma-separated descriptive tags, most important first: subject (gender, apparent age, build), face, hair, eyes, skin, outfit, accessories, pose, expression, setting/background, lighting, art style, framing (upper body or cowboy shot, 2:3 portrait).
 - Describe only what is visible. No names, no backstory, no {{user}}/{{char}} macros.`;
 
+const DEFAULT_VISION_PROMPT = `You describe reference images for a writer who cannot see them. Your description will be used to create a {{type}} for roleplay.
+- If a person or creature is shown: apparent age, gender presentation, build, face, skin, hair, eyes, expression and posture, then clothing, accessories and anything held or worn.
+- Then the setting and background, any visible text or symbols, lighting, mood, colour palette and art style (photo, anime, painting, 3D render...).
+Describe only what is visible. Be specific about colours, materials and shapes. Do not invent names, backstory or personality. No preamble.`;
+
 function splitNames(text) {
     return String(text || '').split(/[\n,]/).map(x => x.trim()).filter(Boolean);
 }
@@ -108,6 +113,9 @@ const defaultSettings = Object.freeze({
     concurrency: 1,
     jailbreak: '',
     jailbreakEnabled: true,
+    // A separate vision-capable profile that describes images, so the generation model needs no vision.
+    visionProfileId: '',
+    visionPrompt: DEFAULT_VISION_PROMPT,
     personaPrompt: DEFAULT_PERSONA_PROMPT,
     personaFormat: DEFAULT_PERSONA_FORMAT,
     characterPrompt: DEFAULT_CHARACTER_PROMPT,
@@ -533,7 +541,44 @@ function nameWarningHtml(name, conflict) {
 // Generation
 // ---------------------------------------------------------------------------
 
-function buildMessages(type, imageDataUrl, details, bannedNames) {
+/** True when images go to a separate vision profile instead of the generation model. */
+function usesVisionProfile() {
+    const s = settings();
+    return !!s.visionProfileId && s.visionProfileId !== s.profileId;
+}
+
+/** Has the vision profile describe an image, so a generation model without vision can work from it. */
+async function describeImage(imageDataUrl, type, signal) {
+    const s = settings();
+    const result = await sendMessages([
+        { role: 'system', content: String(s.visionPrompt || DEFAULT_VISION_PROMPT).replace(/{{type}}/g, type) },
+        { role: 'user', content: [{ type: 'text', text: 'Describe this image.' }, { type: 'image_url', image_url: { url: imageDataUrl } }] },
+    ], signal, { profileId: s.visionProfileId });
+    const text = stripReasoning(result?.content);
+    if (!text) throw new Error('The vision profile returned an empty description. Check that its model supports images.');
+    return text;
+}
+
+/**
+ * Gets an image ready for a generation request: the image itself, or, with a separate vision profile,
+ * that model's description of it. A description already on hand (edited by the user, or from an
+ * earlier run) is reused instead of asking again.
+ * @returns {Promise<{dataUrl: string|null, description: string}>}
+ */
+async function prepareImage(imageBlob, type, { description = '', signal = null, onStatus = () => { } } = {}) {
+    if (!imageBlob) return { dataUrl: null, description: '' };
+    if (!usesVisionProfile()) return { dataUrl: await imageToPromptDataUrl(imageBlob), description: '' };
+    if (description.trim()) return { dataUrl: null, description: description.trim() };
+    onStatus('Describing the image with the vision profile…');
+    return { dataUrl: null, description: await describeImage(await imageToPromptDataUrl(imageBlob), type, signal) };
+}
+
+/** How a vision model's description reaches the generation model in place of the image. */
+function imageDescriptionText(description) {
+    return `The reference image is not attached; a vision model described it as follows. Treat this as what the image shows:\n<image_description>\n${description}\n</image_description>`;
+}
+
+function buildMessages(type, imageDataUrl, details, bannedNames, imageDescription = '') {
     const s = settings();
     const prompt = type === 'persona' ? s.personaPrompt : s.characterPrompt;
     const format = type === 'persona' ? s.personaFormat : s.characterFormat;
@@ -543,14 +588,18 @@ function buildMessages(type, imageDataUrl, details, bannedNames) {
             .replace(/{{bannedNames}}/g, bannedNames.join(', '))
             .replace(/{{type}}/g, type);
     }
-    if (!imageDataUrl && s.suggestImagePrompt && s.imagePromptInstruction) {
+    if (!imageDataUrl && !imageDescription && s.suggestImagePrompt && s.imagePromptInstruction) {
         system += '\n\n' + s.imagePromptInstruction.replace(/{{type}}/g, type);
     }
 
     const parts = [];
-    parts.push(imageDataUrl
-        ? `Create a new ${type} based on the attached image.`
-        : `Create a new ${type} based on the following details.`);
+    if (imageDataUrl) {
+        parts.push(`Create a new ${type} based on the attached image.`);
+    } else if (imageDescription) {
+        parts.push(`Create a new ${type} based on the reference image.`, imageDescriptionText(imageDescription));
+    } else {
+        parts.push(`Create a new ${type} based on the following details.`);
+    }
     if (details?.trim()) {
         parts.push(`Details from the user (these take priority):\n${details.trim()}`);
     }
@@ -692,19 +741,23 @@ function emptyData(type) {
 
 /**
  * Runs one generation.
- * @returns {Promise<{data: object, raw: string}>}
+ * @param {object} options
+ * @param {string} [options.imageDescription] A vision description to reuse instead of describing the image again
+ * @param {(text: string) => void} [options.onStatus] Progress messages
+ * @returns {Promise<{data: object, raw: string, imageDescription: string}>}
  */
-async function generateEntry({ type, imageBlob, details, excludeDraftId = null, excludePersonaId = null, signal = null }) {
-    const imageDataUrl = imageBlob ? await imageToPromptDataUrl(imageBlob) : null;
-    if (!imageDataUrl && !details?.trim()) {
+async function generateEntry({ type, imageBlob, details, excludeDraftId = null, excludePersonaId = null, imageDescription = '', signal = null, onStatus = () => { } }) {
+    if (!imageBlob && !details?.trim()) {
         throw new Error('Add an image or some details to generate from.');
     }
-    const messages = buildMessages(type, imageDataUrl, details, getBannedNames({ excludeDraftId, excludePersonaId }));
+    const image = await prepareImage(imageBlob, type, { description: imageDescription, signal, onStatus });
+    if (image.description) onStatus(`Writing the ${type}…`);
+    const messages = buildMessages(type, image.dataUrl, details, getBannedNames({ excludeDraftId, excludePersonaId }), image.description);
     const result = await sendMessages(messages, signal);
     const raw = String(result?.content ?? '');
     if (!raw.trim()) throw new Error('The model returned an empty response.');
     const data = normalizeData(type, parseJsonLoose(raw));
-    return { data, raw: stripReasoning(raw) };
+    return { data, raw: stripReasoning(raw), imageDescription: image.description };
 }
 
 // ---------------------------------------------------------------------------
@@ -827,6 +880,13 @@ function fieldsFor(type) {
     return type === 'persona' ? PERSONA_FIELDS : CHARACTER_FIELDS;
 }
 
+/** What the vision profile saw, editable; shown only when a vision profile is set. Shared with the world builder. */
+const VISION_DESCRIPTION_HTML = `
+    <details class="stcg-vision">
+        <summary title="Written by your vision profile on Generate, then sent to the generation model instead of the image">Image description (vision model)</summary>
+        <textarea class="text_pole stcg-image-description" rows="6" placeholder="Filled in on Generate. Edit it to correct what the vision model saw; clear it to have the image described again."></textarea>
+    </details>`;
+
 /** The stored review of an installed persona, unless it was edited since. */
 function freshPersonaReview(avatarId) {
     const stored = getPersonaReview(avatarId);
@@ -865,6 +925,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
         raw: draft?.raw ?? '',
         details: draft?.details ?? '',
         steer: draft?.steer ?? '',
+        imageDescription: draft?.imageDescription ?? '',
         imageBlob,
         originalImage: null,
         imageUrl: '',
@@ -895,6 +956,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
                     <div class="menu_button stcg-change-img"><i class="fa-solid fa-upload"></i> Image</div>
                     <div class="menu_button stcg-clear-img"><i class="fa-solid fa-xmark"></i> Remove</div>
                 </div>
+                ${VISION_DESCRIPTION_HTML}
                 <label>Optional details / requirements</label>
                 <textarea class="text_pole stcg-details" rows="5" placeholder="e.g. She's a 28 year old starship mechanic, sarcastic, from Mars..."></textarea>
                 <div class="menu_button stcg-generate" ${personaId ? 'title="Rewrites the persona from the image and details (Undo brings the old text back)"' : ''}><i class="fa-solid fa-wand-magic-sparkles"></i> <span>${personaId ? 'Regenerate' : 'Generate'}</span></div>
@@ -909,6 +971,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
                         <div class="stcg-field-head">
                             <label class="stcg-field-label" for="stcg_f_${f.key}">${escapeHtml(f.label)}</label>
                             ${f.imagePrompt ? `<div class="menu_button menu_button_icon stcg-copy" data-copy="${f.key}" title="Copy to clipboard"><i class="fa-solid fa-copy"></i> Copy</div>` : ''}
+                            ${f.key === 'name' ? RENAME_CARD_HTML : ''}
                             ${f.rows > 1 && !f.imagePrompt ? fieldOpsHtml(`data-target="${f.key}"`) : ''}
                         </div>
                         ${f.rows === 1
@@ -930,12 +993,20 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
     const $conflict = $root.find('.stcg-conflict');
     const $generate = $root.find('.stcg-generate');
 
-    function setImage(blob) {
+    function setImage(blob, changed = true) {
         if (state.imageUrl) URL.revokeObjectURL(state.imageUrl);
         state.imageBlob = blob || null;
         state.imageUrl = blob ? URL.createObjectURL(blob) : '';
         $img.attr('src', state.imageUrl).toggle(!!blob);
         $root.find('.stcg-dropzone').toggleClass('has-image', !!blob);
+        // A new image needs a new description.
+        if (changed) setImageDescription('');
+    }
+
+    function setImageDescription(text) {
+        state.imageDescription = text;
+        $root.find('.stcg-image-description').val(text);
+        $root.find('.stcg-vision').toggle(usesVisionProfile() || !!text);
     }
 
     function writeFields() {
@@ -953,6 +1024,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
         state.details = String($root.find('.stcg-details').val() ?? '');
         state.raw = String($root.find('.stcg-raw-text').val() ?? '');
         state.steer = String($root.find('.stcg-steer').val() ?? '');
+        state.imageDescription = String($root.find('.stcg-image-description').val() ?? '');
     }
 
     function isDirty() {
@@ -1064,10 +1136,13 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
                 type: state.type,
                 imageBlob: state.imageBlob,
                 details: state.details,
+                imageDescription: state.imageDescription,
                 ...nameScope,
                 signal,
+                onStatus: status,
             });
             if (snap.data.name || snap.data.description) pushHistory(snap);
+            setImageDescription(result.imageDescription);
             state.data = result.data;
             state.raw = result.raw;
             state.review = null;
@@ -1113,6 +1188,20 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
         });
     }
 
+    function runRenameCard() {
+        return runAi('Picking a new name…', async (signal) => {
+            const snap = snapshot();
+            const result = await renameCard({
+                type: state.type, data: state.data, steer: state.steer, details: state.details, signal,
+                isTaken: name => !!findNameConflict(name, nameScope),
+            });
+            pushHistory(snap);
+            state.data = result.data;
+            writeFields();
+            return `Renamed ${result.oldName} → ${result.newName} everywhere.`;
+        });
+    }
+
     function undo() {
         const previous = state.history.pop();
         if (!previous) return;
@@ -1126,7 +1215,8 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
     $root.find('.stcg-details').val(state.details);
     $root.find('.stcg-steer').val(state.steer).on('input', updateFixButton);
     wireIssueChecks($root, () => state.review, updateFixButton);
-    setImage(state.imageBlob);
+    setImage(state.imageBlob, false);
+    setImageDescription(state.imageDescription);
     writeFields();
     renderQuality();
 
@@ -1135,6 +1225,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
     $root.find('.stcg-q-enhance').on('click', () => runRevise('enhance'));
     $root.find('.stcg-q-optimize').on('click', () => runRevise('optimize'));
     $root.find('.stcg-q-undo').on('click', undo);
+    $root.find('.stcg-rename-card').on('click', runRenameCard);
     $root.find('.stcg-field-op').on('click', e => runFieldOp(String($(e.currentTarget).data('target')), String($(e.currentTarget).data('op'))));
     $root.find('.stcg-field').on('input', updateTokens);
 
@@ -1276,6 +1367,7 @@ async function saveEditorDraft(state, existing) {
     draft.raw = state.raw;
     draft.details = state.details;
     draft.steer = state.steer;
+    draft.imageDescription = state.imageDescription;
     draft.review = state.review;
     draft.error = '';
     draft.status = state.data.name?.trim() ? 'ready' : (draft.image || state.details ? 'queued' : 'ready');
@@ -1303,18 +1395,22 @@ async function processDraft(draft, onStatus = () => { }) {
     try {
         onStatus(`Generating ${draftLabel(draft)}…`);
         const imageBlob = draft.image ? await fetchBlob(draft.image) : null;
+        // Regenerating reuses the vision description from the last run (edit or clear it in the editor).
+        const shared = {
+            imageBlob,
+            details: draft.details,
+            excludeDraftId: draft.id,
+            imageDescription: draft.imageDescription || '',
+            signal: controller.signal,
+            onStatus: text => onStatus(`${draftLabel(draft)}: ${text}`),
+        };
         const result = draft.type === 'world'
-            ? await generateWorld({ source: draft.source, imageBlob, details: draft.details, excludeDraftId: draft.id, signal: controller.signal })
-            : await generateEntry({
-                type: draft.type,
-                imageBlob,
-                details: draft.details,
-                excludeDraftId: draft.id,
-                signal: controller.signal,
-            });
+            ? await generateWorld({ ...shared, source: draft.source })
+            : await generateEntry({ ...shared, type: draft.type });
         if (!getDraft(draft.id)) return; // deleted meanwhile
         draft.data = result.data;
         draft.raw = result.raw;
+        draft.imageDescription = result.imageDescription;
         draft.review = null;
         if (settings().autoReview) {
             const checked = await qualityPass({
@@ -1827,6 +1923,7 @@ async function importCardsAsPersonas() {
 function populateProfiles() {
     fillProfileSelect('#stcg_profile', 'profileId', '(Current connection)');
     fillProfileSelect('#stcg_review_profile', 'reviewProfileId', '(Same as generation)');
+    fillProfileSelect('#stcg_vision_profile', 'visionProfileId', '(Same as generation: send images directly)');
 }
 
 function fillProfileSelect(selector, key, emptyLabel) {
@@ -1872,6 +1969,7 @@ function refreshSettingsUI() {
     $('#stcg_review_prompt').val(s.reviewPrompt);
     $('#stcg_enhance_prompt').val(s.enhancePrompt);
     $('#stcg_optimize_prompt').val(s.optimizePrompt);
+    $('#stcg_vision_prompt').val(s.visionPrompt);
 }
 
 async function initSettingsUI() {
@@ -1887,6 +1985,11 @@ async function initSettingsUI() {
         settings().reviewProfileId = String($(this).val());
         saveSettingsDebounced();
     });
+    $('#stcg_vision_profile').on('focus', populateProfiles).on('change', function () {
+        settings().visionProfileId = String($(this).val());
+        saveSettingsDebounced();
+    });
+    bindSetting('#stcg_vision_prompt', 'visionPrompt');
     bindSetting('#stcg_max_tokens', 'maxTokens', { type: 'number' });
     bindSetting('#stcg_image_max', 'imageMaxSide', { type: 'number' });
     bindSetting('#stcg_concurrency', 'concurrency', { type: 'number' });
@@ -1948,6 +2051,7 @@ async function initSettingsUI() {
         s.reviewPrompt = DEFAULT_REVIEW_PROMPT;
         s.enhancePrompt = DEFAULT_ENHANCE_PROMPT;
         s.optimizePrompt = DEFAULT_OPTIMIZE_PROMPT;
+        s.visionPrompt = DEFAULT_VISION_PROMPT;
         refreshSettingsUI();
         saveSettingsDebounced();
     });
@@ -1983,7 +2087,7 @@ function addWandMenu() {
 jQuery(async () => {
     initWorld({
         settings, sendMessages, parseJsonLoose, stripReasoning, getBannedNames, findNameConflict, findOverusedParts, findOverusedNames,
-        escapeHtml, copyText, pickFiles, imageToPromptDataUrl, fetchBlob, storeFile, deleteStoredFile,
+        escapeHtml, copyText, pickFiles, imageToPromptDataUrl, prepareImage, imageDescriptionText, usesVisionProfile, visionDescriptionHtml: VISION_DESCRIPTION_HTML, fetchBlob, storeFile, deleteStoredFile,
         upsertDraft, getDraft, deleteDraft, uid, createCharacterInST, asText, toStringList,
     });
     initQuality({ settings, sendMessages, parseJsonLoose, escapeHtml, normalizeData, normalizeEntry, asText, toStringList, getBannedNames, findOverusedNames });

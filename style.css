@@ -179,6 +179,19 @@
     font-size: 0.9em;
 }
 
+.stcg-vision summary {
+    cursor: pointer;
+    font-size: 0.9em;
+    opacity: 0.85;
+}
+
+.stcg-vision textarea {
+    width: 100%;
+    margin-top: 4px;
+    font-size: 0.85em;
+    resize: vertical;
+}
+
 .stcg-raw summary {
     cursor: pointer;
     opacity: 0.8;
@@ -576,6 +589,7 @@
 
 .stcg-is-busy .stcg-quality-buttons .menu_button,
 .stcg-is-busy .stcg-field-op,
+.stcg-is-busy .stcg-rename-card,
 .stcg-quality-buttons .menu_button.disabled {
     opacity: 0.45;
     pointer-events: none;

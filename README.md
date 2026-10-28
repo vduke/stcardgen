@@ -14,7 +14,8 @@ Generate personas, character cards, and persona-centered sandbox worlds with a v
 - **Quality pass**: after generation, a second request scores the result 1–10 on specificity, consistency, playability, rules and efficiency (worlds also get keywords and coverage), and lists concrete issues.
   - Personas are judged as personas. The reviewer never asks for a first message, greetings or example dialogue, and such issues are dropped if it raises them anyway.
   - **Fix issues** sends back a patch of only the fields or entries that need to change, then re-reviews. Untick an issue to leave it alone; unticking a name issue keeps that name.
-  - **Your instructions** steer Fix, Enhance, Optimize and the per-field buttons (e.g. "keep her shy, no tragic backstory"). With no ticked issues, Fix applies just your instructions.
+  - **Your instructions** steer Fix, Enhance, Optimize, New name and the per-field buttons (e.g. "keep her shy, no tragic backstory"). With no ticked issues, Fix applies just your instructions.
+  - **New name** (next to the Name field) picks a fresh name and replaces the old one everywhere it appears, including first-name-only and surname-only mentions. Banned, overused and already-taken names are rejected. Undo brings the old name back.
   - **Enhance** and **Optimize** grow or trim the whole card, a single field, or a single lorebook entry. A rewrite that goes the wrong way is rejected.
   - **Undo** reverts any AI change.
   - Token counts are shown per field and in total. For worlds you also see the lorebook total and the always-on (constant) cost.
@@ -45,6 +46,10 @@ Generate personas, character cards, and persona-centered sandbox worlds with a v
 Find them under Extensions → Card Generator.
 
 - **Connection profile**: "Current connection" or any Chat Completion connection profile. The model and the preset's sampler settings are used; the preset's prompts are not.
+- **Vision profile**: a separate vision-capable profile that reads images, so your generation model doesn't need vision.
+  - It describes the image first (persona/character images and world art, bulk included), and the generation model writes from that description.
+  - The description appears in the editor under the image. Edit it to correct what the vision model saw; Regenerate reuses it. Clear it, or change the image, to have the image described again.
+  - "Same as generation" sends images straight to the generation model, as before. The description instruction is editable.
 - **Jailbreak / extra system instructions**: text appended to the end of the system prompt of every request the extension sends (generation, worlds, reviews, fixes, enhance/optimize, renames). Use it for content rules or a jailbreak your preset would normally carry. Untick "Append to every system prompt" to switch it off without losing the text.
 - **Generation prompt / rules** for personas, characters and worlds: your own guidelines.
 - **Output format**: the JSON shape the model must return. Keep the keys if you edit it.

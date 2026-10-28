@@ -3,7 +3,7 @@ import { Popup, POPUP_TYPE, POPUP_RESULT } from '../../../popup.js';
 import { power_user } from '../../../power-user.js';
 import { user_avatar } from '../../../personas.js';
 import { debounce } from '../../../utils.js';
-import { reviewCard, reviseCard, reviseField, renameNames, qualityPass, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, QUALITY_PANEL_HTML, fieldOpsHtml, wireIssueChecks, canFix } from './quality.js';
+import { reviewCard, reviseCard, reviseField, renameNames, renameCard, qualityPass, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, QUALITY_PANEL_HTML, RENAME_CARD_HTML, fieldOpsHtml, wireIssueChecks, canFix } from './quality.js';
 import { startTask, guardClosing } from './tasks.js';
 
 // [old line, new line] pairs applied to saved prompts on load; see PROMPT_LINE_MIGRATIONS in index.js.
@@ -214,10 +214,13 @@ function buildSystem({ includeImagePrompt, source, excludeDraftId }) {
     return parts.filter(Boolean).join('\n\n');
 }
 
-async function userContent(text, imageBlob) {
-    if (!imageBlob) return text;
-    const url = await api.imageToPromptDataUrl(imageBlob);
-    return [{ type: 'text', text: `${text}\n\nThe attached image is reference art for the world; use it for mood, setting and visual details.` }, { type: 'image_url', image_url: { url } }];
+/** The user message: text, plus the world art itself or (with a vision profile) its description. */
+function userContent(text, image) {
+    if (image.description) {
+        return `${text}\n\nThe user supplied reference art for the world; use it for mood, setting and visual details.\n${api.imageDescriptionText(image.description)}`;
+    }
+    if (!image.dataUrl) return text;
+    return [{ type: 'text', text: `${text}\n\nThe attached image is reference art for the world; use it for mood, setting and visual details.` }, { type: 'image_url', image_url: { url: image.dataUrl } }];
 }
 
 async function request(messages, signal) {
@@ -229,12 +232,16 @@ async function request(messages, signal) {
 
 /**
  * Generates a full world (sandbox card + lorebook) for a persona.
- * @returns {Promise<{data: object, raw: string}>}
+ * @param {object} options
+ * @param {string} [options.imageDescription] A vision description of the world art to reuse
+ * @returns {Promise<{data: object, raw: string, imageDescription: string}>}
  */
-export async function generateWorld({ source, imageBlob = null, details = '', excludeDraftId = null, signal = null }) {
+export async function generateWorld({ source, imageBlob = null, details = '', excludeDraftId = null, imageDescription = '', signal = null, onStatus = () => { } }) {
     if (!source?.name) throw new Error('Pick a persona to build the world around.');
     const s = api.settings();
     const count = clampInt(s.worldEntryCount, 3, 80, 20);
+    const image = await api.prepareImage(imageBlob, 'world', { description: imageDescription, signal, onStatus });
+    if (image.description) onStatus('Building the world… big worlds can take a few minutes.');
     const text = [
         `Build a living sandbox world around this persona.\n\n${sourceBlock(source)}`,
         details?.trim() ? `World notes from the user (these take priority):\n${details.trim()}` : '',
@@ -245,12 +252,12 @@ export async function generateWorld({ source, imageBlob = null, details = '', ex
 
     const messages = [
         { role: 'system', content: buildSystem({ includeImagePrompt: !imageBlob && s.suggestImagePrompt, source, excludeDraftId }) },
-        { role: 'user', content: await userContent(text, imageBlob) },
+        { role: 'user', content: userContent(text, image) },
     ];
     const raw = await request(messages, signal);
     const data = normalizeWorld(api.parseJsonLoose(raw));
     if (!data.entries.length) throw new Error('The model returned no lorebook entries. Check the raw output, or raise "World max tokens".');
-    return { data, raw: api.stripReasoning(raw) };
+    return { data, raw: api.stripReasoning(raw), imageDescription: image.description };
 }
 
 /** Asks for additional entries that fill gaps in an existing world. */
@@ -349,6 +356,7 @@ function fieldHtml(f) {
             <div class="stcg-field-head">
                 <label class="stcg-field-label" for="stcg_w_${f.key}">${api.escapeHtml(f.label)}</label>
                 ${f.imagePrompt ? `<div class="menu_button menu_button_icon stcg-copy" title="Copy to clipboard"><i class="fa-solid fa-copy"></i> Copy</div>` : ''}
+                ${f.key === 'name' ? RENAME_CARD_HTML : ''}
                 ${f.rows > 1 && !f.imagePrompt ? fieldOpsHtml(`data-target="${f.key}"`) : ''}
             </div>
             ${input}
@@ -406,6 +414,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
         raw: draft?.raw ?? '',
         details: draft?.details ?? '',
         steer: draft?.steer ?? '',
+        imageDescription: draft?.imageDescription ?? '',
         imageBlob: null,
         imageUrl: '',
         imageChanged: false,
@@ -439,6 +448,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
                     <div class="menu_button stcg-change-img"><i class="fa-solid fa-upload"></i> Image</div>
                     <div class="menu_button stcg-clear-img"><i class="fa-solid fa-xmark"></i> Remove</div>
                 </div>
+                ${api.visionDescriptionHtml}
                 <label>World notes (optional)</label>
                 <textarea class="text_pole stcg-details" rows="5" placeholder="e.g. Set in 2140 Neo-Seattle. His dad is a cop, his best friend runs an illegal racing crew..."></textarea>
                 <label>Entries per generation
@@ -497,9 +507,18 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
         if (state.imageUrl) URL.revokeObjectURL(state.imageUrl);
         state.imageBlob = blob || null;
         state.imageUrl = blob ? URL.createObjectURL(blob) : '';
-        if (changed) state.imageChanged = true;
         $img.attr('src', state.imageUrl).toggle(!!blob);
         $root.find('.stcg-dropzone').toggleClass('has-image', !!blob);
+        if (changed) {
+            state.imageChanged = true;
+            setImageDescription(''); // a new image needs a new description
+        }
+    }
+
+    function setImageDescription(text) {
+        state.imageDescription = text;
+        $root.find('.stcg-image-description').val(text);
+        $root.find('.stcg-vision').toggle(api.usesVisionProfile() || !!text);
     }
 
     function writeCard() {
@@ -521,6 +540,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
         state.details = String($root.find('.stcg-details').val() ?? '');
         state.raw = String($root.find('.stcg-raw-text').val() ?? '');
         state.steer = String($root.find('.stcg-steer').val() ?? '');
+        state.imageDescription = String($root.find('.stcg-image-description').val() ?? '');
     }
 
     function renderEntries({ openIndex = null } = {}) {
@@ -693,8 +713,11 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
                     imageBlob: state.imageBlob,
                     details: state.details,
                     excludeDraftId: draft?.id,
+                    imageDescription: state.imageDescription,
                     signal,
+                    onStatus: status,
                 });
+                setImageDescription(result.imageDescription);
                 if (snap.data.entries.length) pushHistory(snap);
                 state.data = result.data;
                 state.raw = result.raw;
@@ -724,6 +747,20 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
             $root.find('.stcg-raw-text').val(state.raw);
             renderEntries();
             return `Added ${result.entries.length} entries (${state.data.entries.length} total).`;
+        });
+    }
+
+    function runRenameCard() {
+        return runAi('Picking a new name…', async (signal) => {
+            const snap = snapshot();
+            const result = await renameCard({
+                ...quality(signal), data: state.data,
+                isTaken: name => !!api.findNameConflict(name, { excludeDraftId: draft?.id }),
+            });
+            pushHistory(snap);
+            state.data = result.data;
+            refresh();
+            return `Renamed ${result.oldName} → ${result.newName} everywhere.`;
         });
     }
 
@@ -762,6 +799,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
         renderPersonaPreview();
     });
     setImage(state.imageBlob, false);
+    setImageDescription(state.imageDescription);
     writeCard();
     renderEntries();
     renderPersonaPreview();
@@ -772,6 +810,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
     $root.find('.stcg-q-enhance').on('click', () => run('enhance'));
     $root.find('.stcg-q-optimize').on('click', () => run('optimize'));
     $root.find('.stcg-q-undo').on('click', undo);
+    $root.find('.stcg-rename-card').on('click', runRenameCard);
     $root.on('click', '.stcg-field-op', e => runFieldOp($(e.currentTarget)));
     $root.on('input', '[data-card], [data-field="content"]', updateTokens);
     $root.on('input', '[data-card], [data-field="content"]', debounce(updateOverusedWarning, 600));
@@ -912,6 +951,7 @@ async function saveWorldDraft(state, existing) {
     draft.raw = state.raw;
     draft.details = state.details;
     draft.steer = state.steer;
+    draft.imageDescription = state.imageDescription;
     draft.review = state.review;
     draft.error = '';
     draft.status = state.data.entries.length ? 'ready' : 'queued';

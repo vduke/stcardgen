@@ -33,7 +33,15 @@
             <h4>Connection</h4>
             <label for="stcg_profile">Connection profile</label>
             <select id="stcg_profile" class="text_pole"></select>
-            <small class="notes">"Current connection" uses whatever API/model and Chat Completion preset is active right now. A profile uses that profile's API, model and preset. Must be Chat Completion with a vision-capable model to send images.</small>
+            <small class="notes">"Current connection" uses whatever API/model and Chat Completion preset is active right now. A profile uses that profile's API, model and preset. Must be Chat Completion; it needs vision only if no vision profile is set below.</small>
+            <label for="stcg_vision_profile">Vision profile (reads images)</label>
+            <select id="stcg_vision_profile" class="text_pole"></select>
+            <small class="notes">Pick a vision-capable profile to have it describe each image first; your generation model then writes from that description, so it does not need vision. The description appears in the editor, where you can correct it. "Same as generation" sends images straight to the generation model.</small>
+            <details>
+                <summary>Image description instruction</summary>
+                <textarea id="stcg_vision_prompt" class="text_pole textarea_compact" rows="6"></textarea>
+                <small class="notes"><code>&#123;&#123;type&#125;&#125;</code> becomes persona, character or world.</small>
+            </details>
             <div class="stcg-row">
                 <label for="stcg_max_tokens">Max response tokens
                     <input id="stcg_max_tokens" class="text_pole" type="number" min="256" max="65536" step="256">

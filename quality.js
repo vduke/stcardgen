@@ -336,6 +336,50 @@ export async function renameNames({ type, data, names, source = null, signal = n
 }
 
 /**
+ * Gives the card itself a new name and replaces the old one everywhere it appears, including
+ * first-name-only and surname-only mentions. Suggestions that are banned, overused, already taken,
+ * unchanged, or shaped differently (so partial mentions could not be swapped) are rejected and asked again.
+ * @param {object} options
+ * @param {(name: string) => boolean} [options.isTaken] Whether another persona, character or draft uses the name
+ * @returns {Promise<{data: object, oldName: string, newName: string}>}
+ */
+export async function renameCard({ type, data, steer = '', details = '', source = null, signal = null, isTaken = () => false }) {
+    const oldName = String(data.name || '').trim();
+    if (!oldName) throw new Error('The card has no name yet. Generate it or type one first.');
+    // "[Unnamed Persona]" from SillyTavern's avatar upload: any full name will do, and nothing else mentions it.
+    const placeholder = /^\[.*\]$/.test(oldName);
+    const words = oldName.split(/\s+/).length;
+    const rejected = [];
+    const system = [
+        'You name characters, places and worlds for roleplay cards. Pick a name that fits the background, culture, era and setting the card describes, and avoid stock AI names.',
+        banLine(data, source),
+    ].filter(Boolean).join('\n\n');
+    for (let attempt = 0; attempt < 3; attempt++) {
+        const user = [
+            placeholder
+                ? `Suggest a name for this ${typeWord(type)}; it has none yet.`
+                : `Suggest a new name for this ${typeWord(type)} to replace "${oldName}". Use exactly ${words === 1 ? 'one word' : `${words} words, in the same structure (e.g. first name and surname)`}.`,
+            steerBlock(steer),
+            details?.trim() ? `The user's details:\n${details.trim()}` : '',
+            rejected.length ? `These were rejected (taken, banned, unchanged or the wrong shape); do not reuse them: ${rejected.join(', ')}` : '',
+            `The card:\n${serialize(type, data).slice(0, 4000)}`,
+            'Reply with JSON only: {"name": "New Name"}',
+        ].filter(Boolean).join('\n\n');
+        const parsed = await ask(type, system, user, signal);
+        const name = String(parsed.name ?? parsed.new_name ?? parsed.value ?? '').trim().replace(/^["']|["']$/g, '');
+        const sameShape = placeholder || name.split(/\s+/).length === words;
+        if (!name || name.toLowerCase() === oldName.toLowerCase() || !sameShape || isBannedName(name) || isTaken(name)) {
+            if (name) rejected.push(name);
+            continue;
+        }
+        const renamed = placeholder ? { ...data } : applyRename(data, oldName, name);
+        renamed.name = name; // also covers names a word-boundary match can't reach
+        return { data: renamed, oldName, newName: name };
+    }
+    throw new Error(`Could not get an allowed new name${rejected.length ? ` (rejected: ${rejected.join(', ')})` : ''}. Try again, or type one in.`);
+}
+
+/**
  * Revises the whole card with a patch.
  * @param {object} options
  * @param {'fix'|'enhance'|'optimize'} options.mode
@@ -559,6 +603,8 @@ export const QUALITY_PANEL_HTML = `
         <div class="stcg-tokens"></div>
         <div class="stcg-review"></div>
     </div>`;
+
+export const RENAME_CARD_HTML = '<div class="menu_button stcg-rename-card" title="Pick a new name and update it everywhere it appears in the card (Undo brings the old one back). Your instructions are used, e.g. &quot;make it Japanese&quot;."><i class="fa-solid fa-dice"></i> New name</div>';
 
 export function fieldOpsHtml(attrs) {
     return `
