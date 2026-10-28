@@ -106,6 +106,8 @@ const defaultSettings = Object.freeze({
     maxTokens: 4096,
     imageMaxSide: 1536,
     concurrency: 1,
+    jailbreak: '',
+    jailbreakEnabled: true,
     personaPrompt: DEFAULT_PERSONA_PROMPT,
     personaFormat: DEFAULT_PERSONA_FORMAT,
     characterPrompt: DEFAULT_CHARACTER_PROMPT,
@@ -565,6 +567,16 @@ function buildMessages(type, imageDataUrl, details, bannedNames) {
     ];
 }
 
+/** Appends the user's jailbreak / extra instructions to the system prompt. Every request goes through here. */
+function withJailbreak(messages) {
+    const s = settings();
+    const text = s.jailbreakEnabled ? String(s.jailbreak || '').trim() : '';
+    if (!text) return messages;
+    const index = messages.findIndex(m => m.role === 'system');
+    if (index === -1) return [{ role: 'system', content: text }, ...messages];
+    return messages.map((m, i) => (i === index ? { ...m, content: `${m.content}\n\n${text}` } : m));
+}
+
 /**
  * @param {object[]} messages Chat Completion messages
  * @param {AbortSignal} signal
@@ -577,6 +589,7 @@ async function sendMessages(messages, signal, { maxTokens = null, profileId = nu
     const context = SillyTavern.getContext();
     maxTokens = Number(maxTokens) || Number(s.maxTokens) || 4096;
     profileId = profileId || s.profileId;
+    messages = withJailbreak(messages);
 
     if (profileId) {
         try {
@@ -1315,7 +1328,7 @@ async function processDraft(draft, onStatus = () => { }) {
         draft.status = 'ready';
     } catch (error) {
         if (!getDraft(draft.id)) return;
-        console.error(`[${MODULE}] Draft ${draft.id} failed`, error);
+        if (!controller.signal.aborted) console.error(`[${MODULE}] Draft ${draft.id} failed`, error);
         draft.status = controller.signal.aborted ? 'queued' : 'error';
         draft.error = controller.signal.aborted ? '' : String(error?.message || error);
     } finally {
@@ -1324,10 +1337,44 @@ async function processDraft(draft, onStatus = () => { }) {
     upsertDraft(draft);
 }
 
-async function runQueue() {
+/**
+ * What the running queue may pick up: only these draft ids (Regenerate, a new bulk batch), or null for
+ * every queued draft (Run queue). Without this, regenerating one card after a Stop resumed the whole batch.
+ * @type {Set<string>|null}
+ */
+let queueScope = null;
+/** Drafts asked for while a stopped run was still winding down; they get their own run next. */
+const queueFollowUp = new Set();
+
+function inQueueScope(draft) {
+    return draft.status === 'queued' && (!queueScope || queueScope.has(draft.id));
+}
+
+/** Generates just these (already queued) drafts: joins the running queue, or starts a run limited to them. */
+function generateDrafts(ids) {
+    if (!ids.length) return;
+    if (!queueRunning) {
+        runQueue({ only: ids });
+    } else if (queueStopRequested) {
+        ids.forEach(id => queueFollowUp.add(id));
+    } else if (queueScope) {
+        ids.forEach(id => queueScope.add(id));
+    }
+}
+
+/**
+ * Processes queued drafts in the background.
+ * @param {object} [options]
+ * @param {string[]} [options.only] Only these drafts; by default every queued draft
+ */
+async function runQueue({ only = null } = {}) {
     if (queueRunning) return;
-    const pending = () => getDrafts().filter(d => d.status === 'queued').length;
-    if (!pending()) return;
+    queueScope = only ? new Set(only) : null;
+    const pending = () => getDrafts().filter(inQueueScope).length;
+    if (!pending()) {
+        queueScope = null;
+        return;
+    }
     queueRunning = true;
     queueStopRequested = false;
     notifyDrafts();
@@ -1335,7 +1382,7 @@ async function runQueue() {
     let failed = 0;
     /** @type {Map<string, string>} What each worker is doing right now. */
     const current = new Map();
-    const task = startTask('Bulk generation', { total: pending(), onStop: stopQueue });
+    const task = startTask(queueScope ? `Generating ${pending()} draft${pending() === 1 ? '' : 's'}` : 'Bulk generation', { total: pending(), onStop: stopQueue });
     const report = () => task.update({
         done: generated + failed,
         // Drafts queued while running (Regenerate, more bulk images) grow the total.
@@ -1345,7 +1392,7 @@ async function runQueue() {
     try {
         const workers = Math.min(4, Math.max(1, Number(settings().concurrency) || 1));
         // Drafts are stored newest-first; process oldest-first.
-        const next = () => getDrafts().findLast(d => d.status === 'queued');
+        const next = () => getDrafts().findLast(inQueueScope);
         const worker = async () => {
             while (!queueStopRequested) {
                 const draft = next();
@@ -1364,11 +1411,18 @@ async function runQueue() {
         await Promise.all(Array.from({ length: workers }, worker));
     } finally {
         queueRunning = false;
+        queueScope = null;
         notifyDrafts();
     }
-    const summary = `${queueStopRequested ? 'Stopped' : 'Finished'}: ${generated} generated${failed ? `, ${failed} failed (see Drafts)` : ''}${pending() ? `, ${pending()} still queued` : ''}.`;
+    const left = getDrafts().filter(d => d.status === 'queued').length;
+    const summary = `${queueStopRequested ? 'Stopped' : 'Finished'}: ${generated} generated${failed ? `, ${failed} failed (see Drafts)` : ''}${left ? `, ${left} still queued` : ''}.`;
     task.finish(summary, { error: failed > 0 });
     if (generated || failed) toastr.info(summary, 'Card Generator');
+    if (queueFollowUp.size) {
+        const ids = [...queueFollowUp];
+        queueFollowUp.clear();
+        runQueue({ only: ids });
+    }
 }
 
 function stopQueue() {
@@ -1478,6 +1532,7 @@ async function openBulk() {
                 try {
                     const image = await storeFile(item.file, id);
                     upsertDraft({ id, type, status: 'queued', image, details, data: emptyData(type), raw: '', error: '', createdAt: Date.now() });
+                    queuedIds.push(id);
                 } catch (error) {
                     toastr.error(`${item.file.name}: ${error.message}`, 'Card Generator');
                 }
@@ -1489,9 +1544,11 @@ async function openBulk() {
         onClose: () => items.forEach(i => URL.revokeObjectURL(i.url)),
     });
 
+    /** @type {string[]} This batch only; drafts left queued from an earlier, stopped batch stay put. */
+    const queuedIds = [];
     const result = await popup.show();
     if (result === POPUP_RESULT.AFFIRMATIVE) {
-        runQueue();
+        generateDrafts(queuedIds);
         openDrafts();
     }
 }
@@ -1619,16 +1676,19 @@ async function openDrafts() {
         }
     }
 
+    /** Regenerates just these drafts; other queued drafts (e.g. a stopped batch) wait for Run queue. */
     function requeue(ids) {
+        const queued = [];
         for (const id of ids) {
             const draft = getDraft(id);
-            if (!draft || draft.status === 'generating') continue;
+            if (!draft || draft.status === 'generating' || savingDrafts.has(id)) continue;
             if (draft.type === 'world' ? !draft.source : (!draft.image && !draft.details?.trim())) continue;
             draft.status = 'queued';
             draft.error = '';
             upsertDraft(draft);
+            queued.push(id);
         }
-        runQueue();
+        generateDrafts(queued);
     }
 
     $root.find('.stcg-drafts-filter').on('change', e => { filter = String($(e.target).val()); render(); });
@@ -1830,6 +1890,8 @@ async function initSettingsUI() {
     bindSetting('#stcg_max_tokens', 'maxTokens', { type: 'number' });
     bindSetting('#stcg_image_max', 'imageMaxSide', { type: 'number' });
     bindSetting('#stcg_concurrency', 'concurrency', { type: 'number' });
+    bindSetting('#stcg_jailbreak', 'jailbreak');
+    bindSetting('#stcg_jailbreak_enabled', 'jailbreakEnabled', { type: 'checkbox' });
     bindSetting('#stcg_persona_prompt', 'personaPrompt');
     bindSetting('#stcg_persona_format', 'personaFormat');
     bindSetting('#stcg_character_prompt', 'characterPrompt');

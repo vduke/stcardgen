@@ -719,7 +719,8 @@
 .stcg-running-delete .stcg-delete-selected,
 .stcg-running-import #stcg_btn_import,
 .stcg-running-persona-review .stcg-pm-review-selected,
-.stcg-running-dedupe .stcg-pm-dedupe {
+.stcg-running-dedupe .stcg-pm-dedupe,
+.stcg-running-persona-delete .stcg-pm-delete-selected {
     opacity: 0.45;
     pointer-events: none;
 }

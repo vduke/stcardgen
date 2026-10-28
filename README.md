@@ -21,13 +21,14 @@ Generate personas, character cards, and persona-centered sandbox worlds with a v
   - Banned names are detected in code anywhere in the text. They are renamed by a dedicated step that rejects banned suggestions, not by the model's general fix.
   - **Auto mode** reviews every generation, including bulk, and fixes once when the score is below a threshold or banned names are found. Drafts show a ★ score badge.
   - A **reviewer connection profile** lets a different model do the grading. Self-review is lenient.
-- **Bulk Create**: queue many images at once, with shared and per-image details. The queue runs in the background and every result lands in **Drafts**.
+- **Bulk Create**: queue many images at once, with shared and per-image details. The queue runs in the background and every result lands in **Drafts**. **Run queue** processes everything queued; **Regenerate** on a card (or on the selected cards) generates only those, so drafts left queued by a stopped batch stay put.
 - **Drafts**: review, edit, regenerate, approve (one or many), or delete personas, characters and worlds. Drafts and their images persist across reloads. Images are stored in `data/<user>/user/files/stcardgen_*`.
 - **Import Card as Persona**: pick `.png`/`.json` character cards. One file opens the editor; several go straight to Drafts.
 - **Manage Personas**: your installed personas, with score badges.
   - **Review & edit** opens the same editor with review, fix, enhance, optimize, instructions and undo. **Save Persona** writes the changes back to that persona.
   - The globe button builds a world around that persona.
   - **Review selected** scores many personas at once without changing them.
+  - **Delete selected** deletes the ticked personas after a confirmation. The current and default personas are skipped.
   - **Remove duplicates** finds personas with the same name, the same description and the same avatar picture, and deletes the extra copies.
     - Pictures are compared by how they look, not by file, so a copy that SillyTavern cropped, resized and renamed on upload still matches. Bulk-uploaded "[Unnamed Persona]" entries are told apart by picture alone.
     - Copies used in any chat, linked to a character, holding a lorebook, or set as current or default are always kept.
@@ -44,6 +45,7 @@ Generate personas, character cards, and persona-centered sandbox worlds with a v
 Find them under Extensions → Card Generator.
 
 - **Connection profile**: "Current connection" or any Chat Completion connection profile. The model and the preset's sampler settings are used; the preset's prompts are not.
+- **Jailbreak / extra system instructions**: text appended to the end of the system prompt of every request the extension sends (generation, worlds, reviews, fixes, enhance/optimize, renames). Use it for content rules or a jailbreak your preset would normally carry. Untick "Append to every system prompt" to switch it off without losing the text.
 - **Generation prompt / rules** for personas, characters and worlds: your own guidelines.
 - **Output format**: the JSON shape the model must return. Keep the keys if you edit it.
 - **Entries per generation / World max tokens**: the size of each world generation.

@@ -45,6 +45,10 @@
                     <input id="stcg_concurrency" class="text_pole" type="number" min="1" max="4" step="1">
                 </label>
             </div>
+            <label for="stcg_jailbreak">Jailbreak / extra system instructions</label>
+            <textarea id="stcg_jailbreak" class="text_pole textarea_compact" rows="4" placeholder="Anything you want every request to carry, e.g. your NSFW/content rules or a jailbreak."></textarea>
+            <label class="checkbox_label"><input id="stcg_jailbreak_enabled" type="checkbox"> Append to every system prompt</label>
+            <small class="notes">Added to the end of the system prompt of every request this extension sends: personas, characters, worlds, reviews, fixes, enhance/optimize and renames. Your Chat Completion preset's prompts are not sent, so anything you rely on from them belongs here. Sent as written; macros are not replaced.</small>
 
             <hr class="sysHR">
             <h4>Persona generation</h4>

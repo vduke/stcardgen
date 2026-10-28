@@ -434,6 +434,36 @@ async function deletePersonas(ids, task) {
     return { deleted, failed };
 }
 
+/** Deletes the personas you picked, after a confirmation. The current and default personas are skipped. */
+function deleteSelected(ids, onChange) {
+    return exclusive('persona-delete', async () => {
+        const esc = api.escapeHtml;
+        const isProtected = id => id === user_avatar || id === power_user.default_persona;
+        const targets = ids.filter(id => !isProtected(id));
+        const skipped = ids.filter(isProtected);
+        const nameList = list => {
+            const names = list.map(id => esc(personaData(id).name || id));
+            return names.length > 15 ? `${names.slice(0, 15).join(', ')} and ${names.length - 15} more` : names.join(', ');
+        };
+        if (!targets.length) {
+            toastr.warning('The current and default personas can\'t be deleted here. Switch to another persona first.', 'Card Generator');
+            return;
+        }
+        const ok = await Popup.show.confirm(
+            `Delete ${targets.length} persona${targets.length === 1 ? '' : 's'}?`,
+            `${nameList(targets)}<br><br>Their avatars and descriptions are removed for good. Chats are kept, but messages sent as these personas lose their avatar.`
+            + (skipped.length ? `<br><br>Skipped (current or default persona): ${nameList(skipped)}` : ''),
+        );
+        if (!ok) return;
+        const task = startTask(`Deleting ${targets.length} persona${targets.length === 1 ? '' : 's'}`, { total: targets.length });
+        const { deleted, failed } = await deletePersonas(targets, task);
+        task.finish(`Deleted ${deleted}${failed.length ? `, failed ${failed.length}` : ''}.`, { error: failed.length > 0 });
+        if (deleted) toastr.success(`Deleted ${deleted} persona${deleted === 1 ? '' : 's'}.`, 'Card Generator');
+        if (failed.length) toastr.warning(`Not deleted: ${failed.join(', ')}`, 'Card Generator', { timeOut: 10000 });
+        onChange();
+    });
+}
+
 function removeDuplicates(onChange) {
     return exclusive('dedupe', async () => {
         if (!findTextGroups().length) {
@@ -487,6 +517,7 @@ export async function openPersonaManager() {
             <label class="checkbox_label"><input type="checkbox" class="stcg-select-all"> Select all</label>
             <div class="menu_button stcg-pm-review-selected" title="Score the selected personas against the rubric (nothing is changed)"><i class="fa-solid fa-clipboard-check"></i> Review selected</div>
             <div class="menu_button stcg-pm-dedupe" title="Find personas with the same name, description and avatar picture, and delete the extra copies. Copies used in chats are kept."><i class="fa-solid fa-clone"></i> Remove duplicates</div>
+            <div class="menu_button stcg-pm-delete-selected" title="Delete the selected personas (asks first; the current and default personas are skipped)"><i class="fa-solid fa-trash"></i> Delete selected</div>
         </div>
         <div class="stcg-drafts-summary"></div>
         <div class="stcg-drafts-grid"></div>`;
@@ -534,7 +565,7 @@ export async function openPersonaManager() {
         const dupeText = dupes === null
             ? ' — checking for duplicates…'
             : extra ? ` — ${extra} extra cop${extra === 1 ? 'y' : 'ies'} of ${sets.length} persona${sets.length === 1 ? '' : 's'} (Remove duplicates cleans them up)` : '';
-        $root.find('.stcg-drafts-summary').text(`${ids.size} personas${dupeText}`);
+        $root.find('.stcg-drafts-summary').text(`${ids.size} persona${ids.size === 1 ? '' : 's'}${dupeText}`);
 
         $grid.empty();
         const list = visible();
@@ -593,6 +624,13 @@ export async function openPersonaManager() {
         reviewPersonas([...selected], render);
     });
     $root.find('.stcg-pm-dedupe').on('click', () => removeDuplicates(refreshDuplicates));
+    $root.find('.stcg-pm-delete-selected').on('click', () => {
+        if (!selected.size) { toastr.info('Tick the personas to delete first.', 'Card Generator'); return; }
+        deleteSelected([...selected], () => {
+            $root.find('.stcg-select-all').prop('checked', false);
+            refreshDuplicates();
+        });
+    });
     render();
     refreshDuplicates();
 
