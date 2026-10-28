@@ -48,11 +48,19 @@
     flex: 1;
 }
 
+/* Scrolls on its own like the fields column, so a long review never squashes or cuts off the image. */
 .stcg-editor-side {
     flex: 0 0 300px;
     display: flex;
     flex-direction: column;
     gap: 6px;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.stcg-editor-side > * {
+    flex-shrink: 0;
 }
 
 .stcg-editor-fields {
@@ -195,6 +203,8 @@
 
     .stcg-editor-side {
         flex: 0 0 auto;
+        overflow-y: visible;
+        padding-right: 0;
     }
 
     .stcg-editor-fields {
