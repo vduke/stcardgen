@@ -213,17 +213,6 @@ const NO_QUESTION_ENDING = 'End on a concrete beat (an action, a line of dialogu
 
 // [old line, new line] pairs. Saved prompts get the new line only if the old one is still there verbatim,
 // so any other edits the user made are kept.
-const PROMPT_LINE_MIGRATIONS = [
-    [
-        '- first_mes: an engaging opening message written as {{char}}, in roleplay prose with actions in *asterisks*. Never act or speak for {{user}}.',
-        `- first_mes: an engaging opening message written as {{char}}, in roleplay prose with actions in *asterisks*. Never act or speak for {{user}}. ${NO_QUESTION_ENDING}`,
-    ],
-    [
-        '- alternate_greetings: 1-2 alternative opening messages.',
-        '- alternate_greetings: 1-2 alternative opening messages, following the same rules as first_mes.',
-    ],
-];
-
 const PERSONA_LINE_MIGRATIONS = [
     // Persona-only lines. They used to sit in PROMPT_LINE_MIGRATIONS, which is applied to the
     // character prompt — so no saved persona prompt ever received any of them.
@@ -305,6 +294,17 @@ decorate it with similes instead of committing to a fact.
 - Cut these on sight: tends to, somewhat, a little, slightly, almost, rather, faintly,
   quietly, carefully. Each one hedges a claim. Say the thing.
 - Commit to one line the character would hate to hear and cannot deny.`,
+    ],
+];
+
+const PROMPT_LINE_MIGRATIONS = [
+    [
+        '- first_mes: an engaging opening message written as {{char}}, in roleplay prose with actions in *asterisks*. Never act or speak for {{user}}.',
+        `- first_mes: an engaging opening message written as {{char}}, in roleplay prose with actions in *asterisks*. Never act or speak for {{user}}. ${NO_QUESTION_ENDING}`,
+    ],
+    [
+        '- alternate_greetings: 1-2 alternative opening messages.',
+        '- alternate_greetings: 1-2 alternative opening messages, following the same rules as first_mes.',
     ],
 ];
 
@@ -455,6 +455,10 @@ function loadSettings() {
     // Separate table: the character prompt must not receive persona-only lines.
     s.characterPrompt = applyLineMigrations(s.characterPrompt, PROMPT_LINE_MIGRATIONS);
     s.personaPrompt = applyLineMigrations(s.personaPrompt, PERSONA_LINE_MIGRATIONS);
+    // 0.6.0 interpolated the persona table into the character prompt by index, so characters saved
+    // during that version carry the whole pre-roll block. A table pair cannot fix it: its replacement
+    // text (the scenario line) is already present, and the growth guard would skip it forever.
+    s.characterPrompt = s.characterPrompt.replace('\n' + PERSONA_LINE_MIGRATIONS[0][1], '');
     s.characterFormat = applyLineMigrations(s.characterFormat, CHARACTER_FORMAT_LINE_MIGRATIONS);
     s.worldPrompt = applyLineMigrations(s.worldPrompt, WORLD_PROMPT_LINE_MIGRATIONS);
     s.worldFormat = applyLineMigrations(s.worldFormat, WORLD_FORMAT_LINE_MIGRATIONS);

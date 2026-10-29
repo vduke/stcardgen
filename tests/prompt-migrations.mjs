@@ -139,6 +139,15 @@ test('deleting pairs still delete, and stay deleted', () => {
     assert.strictEqual(t, '');
     assert.strictEqual(quality.applyLineMigrations(t, tables.CHARACTER_FORMAT_LINE_MIGRATIONS), '');
 });
+test('a character prompt saved during 0.6.0 is cleaned of the leaked persona block', () => {
+    const block = tables.PERSONA_LINE_MIGRATIONS[0][1];
+    const scenario = '- scenario: the starting situation between {{char}} and {{user}}.';
+    const clean = defaults.PROMPT_LINE_MIGRATIONS;
+    const dirty = clean.replace(scenario, scenario + '\n' + block);
+    assert.ok(dirty.includes(block), 'the block was not injected into the test prompt');
+    assert.strictEqual(dirty.replace('\n' + block, ''), clean);
+});
+
 test('a line the user edited is left alone', () => {
     const edited = 'my own playability wording, untouched';
     assert.strictEqual(quality.applyLineMigrations(edited, reviewPairs), edited);
