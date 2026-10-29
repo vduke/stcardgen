@@ -39,6 +39,7 @@ const reviewPairs = new Function(...Object.keys(reviewScope), 'return ' + extrac
 
 const tables = {
     PROMPT_LINE_MIGRATIONS: eval(extractArray(indexSrc, 'PROMPT_LINE_MIGRATIONS')),
+    PERSONA_LINE_MIGRATIONS: eval(extractArray(indexSrc, 'PERSONA_LINE_MIGRATIONS')),
     CHARACTER_FORMAT_LINE_MIGRATIONS: eval(extractArray(indexSrc, 'CHARACTER_FORMAT_LINE_MIGRATIONS')),
     WORLD_PROMPT_LINE_MIGRATIONS: eval(extractArray(worldSrc, 'WORLD_PROMPT_LINE_MIGRATIONS')),
     WORLD_FORMAT_LINE_MIGRATIONS: eval(extractArray(worldSrc, 'WORLD_FORMAT_LINE_MIGRATIONS')),
@@ -53,6 +54,7 @@ const build = (src, defName) => new Function(...scopeNames, 'return `' + extract
 
 const defaults = {
     PROMPT_LINE_MIGRATIONS: build(indexSrc, 'DEFAULT_CHARACTER_PROMPT'),
+    PERSONA_LINE_MIGRATIONS: build(indexSrc, 'DEFAULT_PERSONA_PROMPT'),
     CHARACTER_FORMAT_LINE_MIGRATIONS: build(indexSrc, 'DEFAULT_CHARACTER_FORMAT'),
     WORLD_PROMPT_LINE_MIGRATIONS: build(worldSrc, 'DEFAULT_WORLD_PROMPT'),
     WORLD_FORMAT_LINE_MIGRATIONS: build(worldSrc, 'DEFAULT_WORLD_FORMAT'),
@@ -99,6 +101,20 @@ for (const name of Object.keys(defaults)) {
 }
 
 console.log('specific regressions');
+// personaPrompt is migrated separately from characterPrompt. Forgetting to apply the table meant no
+// saved persona prompt ever received a persona-only fix, while this suite still passed.
+test('loadSettings migrates the persona prompt, not just the character prompt', () => {
+    assert.match(indexSrc, /applyLineMigrations\(s\.personaPrompt, PERSONA_LINE_MIGRATIONS\)/);
+    assert.match(indexSrc, /applyLineMigrations\(s\.characterPrompt, PROMPT_LINE_MIGRATIONS\)/);
+});
+// The character prompt interpolates PROMPT_LINE_MIGRATIONS by index, so a pair inserted at the front
+// silently rewrote it: it started demanding a pre-rolled block that character generation never sends.
+test('the character prompt is not sent persona-only migration text', () => {
+    const character = defaults.PROMPT_LINE_MIGRATIONS;
+    assert.ok(!character.includes('PRE-ROLLED FOR THIS SESSION'), 'character prompt mentions the pre-roll block');
+    assert.ok(!character.includes('FRICTION DIRECTION'), 'character prompt mentions persona channels');
+    assert.ok(character.includes('Never end with a question to the player'), 'first_mes rule lost its ending');
+});
 // Derives the marker from the table itself rather than hardcoding prose, so this keeps working when
 // the wording changes and cannot accidentally test a phrase no migration actually inserts.
 test('a pair that extends its own match text appends the extension exactly once', () => {

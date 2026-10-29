@@ -90,6 +90,22 @@ somewhere else — in the body, the family, the situation, what the character wa
 what they admit. Do not default to sunny-mask/dark-core. The mask and the engine do not
 have to contrast in the same direction every time.
 
+### BREVITY AND APPETITE (most cards fail here)
+A wordy card is not a deep one. The failure is 600 words that say one thing four times and
+decorate it with similes instead of committing to a fact.
+- Keep the whole description under 450 words. Over that, cut adjectives, not observations.
+- One simile in the entire card. "Her gaze lands and stays, doing sums, giving nothing back
+  — like a shopkeeper counting your change" carries the sums, the shopkeeper and the gaze;
+  keep one of them and delete the rest.
+- A Like or Dislike is one clause under 15 words, and it is a fact, not a reason. "Loud
+  chewing." is a dislike. "Loud chewing, because it means no one is thinking about her." is
+  a paragraph in a bullet's clothes. Put the reason in the Core if it matters that much.
+- Never use the same image or metaphor twice for one character. If arithmetic appears in the
+  Face, it cannot appear in the Core. The second time, say the plain thing or nothing.
+- Cut these on sight: tends to, somewhat, a little, slightly, almost, rather, faintly,
+  quietly, carefully. Each one hedges a claim. Say the thing.
+- Commit to one line the character would hate to hear and cannot deny.
+
 ### STRUCTURAL RULES
 - WRAP ALL CONTENT IN \`<FirstName> ... </FirstName>\` tags.
 - Third person, present tense. Refer to the persona by name or as {{user}}.
@@ -122,8 +138,8 @@ recycle the same three adjectives.
 
 **Extreme Kinks:**
 Three specific, visceral fantasies tied to the Core. The primary one is pre-rolled; invent
-two more that arise from the character's body and situation. Each gets a physical
-description and the psychological need it satisfies.
+two more that arise from the character's body and situation. Each line is the act and one
+clause of what it gets them: one explanation, not two, and no summary sentence afterwards.
 
 ---
 
@@ -134,15 +150,15 @@ description and the psychological need it satisfies.
 <FirstName>
 Name: (First Name Only)
 Nickname: (What others call the character)
-Age: (the pre-rolled age)
+Age: (the age the image shows)
 Species: (detailed species/hybrid status)
 Height: (X ft XX in)
 Weight: (xxx lbs)
-Build: (physique from the pre-rolled BODY, plus muscle/fat distribution)
+Build: (physique from the image, plus muscle/fat distribution. Do not restate the Body line.)
 Appearance:
-    - Complexion: [skin tone, texture, markings — from pre-rolled SKIN & HAIR]
+    - Complexion: [skin tone, texture, markings — from the image]
     - Face: [shape, jawline, features, lips — be specific, no stock phrases]
-    - Hair: [color, texture, style — from pre-rolled SKIN & HAIR]
+    - Hair: [color, texture, style — from the image]
     - Eyes: [color, shape, gaze — describe the gaze without "unblinking"]
     - Body: [breast/chest, waist, hips, unique anatomy — vary the lens]
     - Genitals: [visceral, crude. Shape, size, scent, color, grooming. Fresh prose.]
@@ -165,14 +181,14 @@ Attraction & Relationships:
 - Intimacy Style: [Behavior during sex, energy, turn-ons tied to the character's psychology.]
 
 Likes:
-- (Sensory preference — tied to the pre-rolled MOTIF)
+- (Sensory preference — the pre-rolled MOTIF, named once, as an ordinary fact)
 - (Arousal trigger)
 - (Comfort object/action)
-- (Taste or scent — tied to the MOTIF, not chlorine unless the motif is water)
+- (Taste or scent — not the motif again)
 - (Something the character craves)
 
 Dislikes:
-- (Sensory aversion — tied to the MOTIF)
+- (Sensory aversion — not the motif again)
 - (Psychological trigger)
 - (Type of person they hate)
 - (Physical turn-off)
@@ -198,6 +214,19 @@ const NO_QUESTION_ENDING = 'End on a concrete beat (an action, a line of dialogu
 // [old line, new line] pairs. Saved prompts get the new line only if the old one is still there verbatim,
 // so any other edits the user made are kept.
 const PROMPT_LINE_MIGRATIONS = [
+    [
+        '- first_mes: an engaging opening message written as {{char}}, in roleplay prose with actions in *asterisks*. Never act or speak for {{user}}.',
+        `- first_mes: an engaging opening message written as {{char}}, in roleplay prose with actions in *asterisks*. Never act or speak for {{user}}. ${NO_QUESTION_ENDING}`,
+    ],
+    [
+        '- alternate_greetings: 1-2 alternative opening messages.',
+        '- alternate_greetings: 1-2 alternative opening messages, following the same rules as first_mes.',
+    ],
+];
+
+const PERSONA_LINE_MIGRATIONS = [
+    // Persona-only lines. They used to sit in PROMPT_LINE_MIGRATIONS, which is applied to the
+    // character prompt — so no saved persona prompt ever received any of them.
     // The binding block now names the channels that are actually pre-rolled; it used to claim AGE,
     // BODY and SKIN & HAIR, which come from the image, and never mentioned FRICTION DIRECTION.
     [
@@ -220,12 +249,62 @@ and nothing in the block overrides them. If the pre-rolled CORE sits badly with 
 a patient cruelty on a laughing face — that clash is the point. Write it, don't smooth it out.`,
     ],
     [
-        '- first_mes: an engaging opening message written as {{char}}, in roleplay prose with actions in *asterisks*. Never act or speak for {{user}}.',
-        `- first_mes: an engaging opening message written as {{char}}, in roleplay prose with actions in *asterisks*. Never act or speak for {{user}}. ${NO_QUESTION_ENDING}`,
+        `Age: (the pre-rolled age)`,
+        `Age: (the age the image shows)`,
     ],
     [
-        '- alternate_greetings: 1-2 alternative opening messages.',
-        '- alternate_greetings: 1-2 alternative opening messages, following the same rules as first_mes.',
+        `Build: (physique from the pre-rolled BODY, plus muscle/fat distribution)`,
+        `Build: (physique from the image, plus muscle/fat distribution. Do not restate the Body line.)`,
+    ],
+    [
+        `    - Complexion: [skin tone, texture, markings — from pre-rolled SKIN & HAIR]`,
+        `    - Complexion: [skin tone, texture, markings — from the image]`,
+    ],
+    [
+        `    - Hair: [color, texture, style — from pre-rolled SKIN & HAIR]`,
+        `    - Hair: [color, texture, style — from the image]`,
+    ],
+    [
+        `two more that arise from the character's body and situation. Each gets a physical
+description and the psychological need it satisfies.`,
+        `two more that arise from the character's body and situation. Each line is the act and one
+clause of what it gets them: one explanation, not two, and no summary sentence afterwards.`,
+    ],
+    [
+        `Likes:
+- (Sensory preference — tied to the pre-rolled MOTIF)
+- (Arousal trigger)
+- (Comfort object/action)
+- (Taste or scent — tied to the MOTIF, not chlorine unless the motif is water)`,
+        `Likes:
+- (Sensory preference — the pre-rolled MOTIF, named once, as an ordinary fact)
+- (Arousal trigger)
+- (Comfort object/action)
+- (Taste or scent — not the motif again)`,
+    ],
+    [
+        `- (Sensory aversion — tied to the MOTIF)`,
+        `- (Sensory aversion — not the motif again)`,
+    ],
+    [
+        `have to contrast in the same direction every time.`,
+        `have to contrast in the same direction every time.
+
+### BREVITY AND APPETITE (most cards fail here)
+A wordy card is not a deep one. The failure is 600 words that say one thing four times and
+decorate it with similes instead of committing to a fact.
+- Keep the whole description under 450 words. Over that, cut adjectives, not observations.
+- One simile in the entire card. "Her gaze lands and stays, doing sums, giving nothing back
+  — like a shopkeeper counting your change" carries the sums, the shopkeeper and the gaze;
+  keep one of them and delete the rest.
+- A Like or Dislike is one clause under 15 words, and it is a fact, not a reason. "Loud
+  chewing." is a dislike. "Loud chewing, because it means no one is thinking about her." is
+  a paragraph in a bullet's clothes. Put the reason in the Core if it matters that much.
+- Never use the same image or metaphor twice for one character. If arithmetic appears in the
+  Face, it cannot appear in the Core. The second time, say the plain thing or nothing.
+- Cut these on sight: tends to, somewhat, a little, slightly, almost, rather, faintly,
+  quietly, carefully. Each one hedges a claim. Say the thing.
+- Commit to one line the character would hate to hear and cannot deny.`,
     ],
 ];
 
@@ -373,7 +452,9 @@ function loadSettings() {
     }
     if (s.banPrompt === LEGACY_BAN_PROMPT) s.banPrompt = DEFAULT_BAN_PROMPT;
     // Idempotent: this runs on every load, so a pair never re-applies once its replacement is present.
+    // Separate table: the character prompt must not receive persona-only lines.
     s.characterPrompt = applyLineMigrations(s.characterPrompt, PROMPT_LINE_MIGRATIONS);
+    s.personaPrompt = applyLineMigrations(s.personaPrompt, PERSONA_LINE_MIGRATIONS);
     s.characterFormat = applyLineMigrations(s.characterFormat, CHARACTER_FORMAT_LINE_MIGRATIONS);
     s.worldPrompt = applyLineMigrations(s.worldPrompt, WORLD_PROMPT_LINE_MIGRATIONS);
     s.worldFormat = applyLineMigrations(s.worldFormat, WORLD_FORMAT_LINE_MIGRATIONS);
