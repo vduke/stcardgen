@@ -67,3 +67,13 @@ Install it from the repo URL with SillyTavern's built-in extension installer, or
 ```bash
 cp manifest.json index.js world.js quality.js tasks.js manager.js style.css settings.html /c/Users/vduke/dockerapps/SillyTavern/extensions/stcardgen/
 ```
+
+## Development
+
+There is no build step. The extension is plain ES modules loaded by SillyTavern.
+
+```bash
+node tests/prompt-migrations.mjs
+```
+
+Saved prompts are migrated on load, and that migration must stay idempotent: it runs on every settings load, so a migration that re-matches its own output grows the prompt a little on each reload. The test runs the real modules and fails if any migration stops being idempotent.

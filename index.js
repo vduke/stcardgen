@@ -7,7 +7,7 @@ import { initPersona, getUserAvatars, user_avatar, setPersonaDescription } from 
 import { debounce } from '../../../utils.js';
 import {
     initQuality, reviewCard, reviseCard, reviseField, renameCard, qualityPass, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, scoreClass,
-    QUALITY_PANEL_HTML, RENAME_CARD_HTML, fieldOpsHtml, wireIssueChecks, canFix, DEFAULT_REVIEW_PROMPT, DEFAULT_ENHANCE_PROMPT, DEFAULT_OPTIMIZE_PROMPT, migrateReviewPrompt,
+    QUALITY_PANEL_HTML, RENAME_CARD_HTML, fieldOpsHtml, wireIssueChecks, canFix, DEFAULT_REVIEW_PROMPT, DEFAULT_ENHANCE_PROMPT, DEFAULT_OPTIMIZE_PROMPT, migrateReviewPrompt, applyLineMigrations,
 } from './quality.js';
 import { initWorld, openWorldBuilder, generateWorld, normalizeWorld, normalizeEntry, saveWorldToST, DEFAULT_WORLD_PROMPT, DEFAULT_WORLD_FORMAT, WORLD_PROMPT_LINE_MIGRATIONS, WORLD_FORMAT_LINE_MIGRATIONS } from './world.js';
 import { startTask, exclusive, guardClosing } from './tasks.js';
@@ -344,11 +344,11 @@ function loadSettings() {
         }
     }
     if (s.banPrompt === LEGACY_BAN_PROMPT) s.banPrompt = DEFAULT_BAN_PROMPT;
-    const migrate = (text, pairs) => pairs.reduce((acc, [oldLine, newLine]) => acc.replace(oldLine, newLine), String(text));
-    s.characterPrompt = migrate(s.characterPrompt, PROMPT_LINE_MIGRATIONS);
-    s.characterFormat = migrate(s.characterFormat, CHARACTER_FORMAT_LINE_MIGRATIONS);
-    s.worldPrompt = migrate(s.worldPrompt, WORLD_PROMPT_LINE_MIGRATIONS);
-    s.worldFormat = migrate(s.worldFormat, WORLD_FORMAT_LINE_MIGRATIONS);
+    // Idempotent: this runs on every load, so a pair never re-applies once its replacement is present.
+    s.characterPrompt = applyLineMigrations(s.characterPrompt, PROMPT_LINE_MIGRATIONS);
+    s.characterFormat = applyLineMigrations(s.characterFormat, CHARACTER_FORMAT_LINE_MIGRATIONS);
+    s.worldPrompt = applyLineMigrations(s.worldPrompt, WORLD_PROMPT_LINE_MIGRATIONS);
+    s.worldFormat = applyLineMigrations(s.worldFormat, WORLD_FORMAT_LINE_MIGRATIONS);
     s.reviewPrompt = migrateReviewPrompt(s.reviewPrompt);
     // Drafts that were mid-generation when the page closed go back to the queue.
     for (const draft of s.drafts) {

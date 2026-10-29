@@ -31,8 +31,29 @@ const REVIEW_LINE_MIGRATIONS = [
     ],
 ];
 
+/**
+ * Applies [old line, new line] replacement pairs to saved prompt text.
+ *
+ * This runs on every loadSettings(), so it has to be idempotent. A pair whose replacement contains
+ * the line it replaces (an old line plus an extra sentence) would otherwise match inside its own
+ * output and append that sentence again on every load, growing the prompt without bound and
+ * silently re-weighting a rubric. So a pair is skipped when its replacement is already present.
+ * Pairs that delete a line (empty replacement) are safe to re-run and need no guard.
+ *
+ * @param {string} text Saved prompt text.
+ * @param {[string, string][]} pairs Replacements to apply.
+ * @returns {string}
+ */
+export function applyLineMigrations(text, pairs) {
+    return (pairs || []).reduce((acc, [oldLine, newLine]) => {
+        if (!oldLine || oldLine === newLine) return acc;
+        if (newLine && acc.includes(newLine)) return acc;
+        return acc.replace(oldLine, newLine);
+    }, String(text));
+}
+
 export function migrateReviewPrompt(text) {
-    return REVIEW_LINE_MIGRATIONS.reduce((acc, [oldLine, newLine]) => acc.replace(oldLine, newLine), String(text));
+    return applyLineMigrations(text, REVIEW_LINE_MIGRATIONS);
 }
 
 export const DEFAULT_REVIEW_PROMPT = migrateReviewPrompt(`You are a strict editor reviewing a SillyTavern {{type}} before it is published. ${REVIEW_CALIBRATION} A good card is vivid and specific without bloat, and it is written for the player to inhabit.
