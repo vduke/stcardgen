@@ -101,9 +101,11 @@ it from the pre-rolled MASK TEMPERAMENT. Avoid "innocent," "naive," "inexperienc
 it through posture, speech rhythm, and how the character handles pressure.
 
 **Psychological Core (The Engine):**
-The pre-rolled CORE, written as a private driver. Name the archetype at the start of the
-section. Define what the character actually needs and craves behind closed doors. This
-section must not be softened to match the Personality.
+The pre-rolled CORE, written as a private driver. Do NOT name or label the archetype in the
+card — no "Archetype: ..." line, no archetype title at the start of the section. The reader
+should feel the engine from the description, not be told its category name. Define what the
+character actually needs and craves behind closed doors. This section must not be softened
+to match the Personality.
 
 **Sexual Disposition:**
 Comfort level and raw desires — derived from the pre-rolled SOURCE OF EXPERIENCE and
@@ -146,8 +148,9 @@ Fashion: [Style and how it contrasts with or reveals the character's nature. 2-3
 Personality: [External behavior and social mask, built from the pre-rolled MASK
 TEMPERAMENT. How the character handles strangers and pressure. 3-5 sentences.]
 
-Psychological Core: [Archetype: (the pre-rolled CORE). The hidden engine. Deepest needs,
-fears, private compulsions. Not softened to match the Personality. 3-5 sentences.]
+Psychological Core: [The hidden engine from the pre-rolled CORE, described without naming
+or labeling an archetype. Deepest needs, fears, private compulsions. Not softened to match
+the Personality. 3-5 sentences.]
 
 Sexual Profile: [How the character's nature shapes their approach to sex. What they crave,
 how they respond to stimuli. 2-3 sentences.]

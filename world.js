@@ -22,6 +22,27 @@ export const WORLD_PROMPT_LINE_MIGRATIONS = [
         '- NPC entries: full name, age, role, relationship to {{user}}, appearance, personality, speech style, current goal.',
         '- NPC entries: full name, age, role, relationship to {{user}}, appearance, personality, speech style, current goal. For important NPCs (family, close friends, love interests, rivals, bosses, crew), end the content with "Example dialogue:" followed by 2-3 short lines in their own voice, showing how they talk to {{user}}. These lines may push the entry past 180 words.',
     ],
+    // The world must not pander to the persona. Saved prompts get the new preamble if the old opening line is intact.
+    [
+        'Build the world around who {{user}} is. Work out what their life needs and fill it in:',
+        `Build a world that would exist whether or not {{user}} had ever been born, then place {{user}} inside it. Do NOT build a world out of the persona's traits, kinks or psychology.
+
+The persona's inner life is not the setting. Their personality, fears, cravings and kinks shape how they experience the world, not what the world contains. If {{user}} is hungry for attention, that does not mean every NPC dotes on them; it means they notice who does not. If {{user}} is a hedonist, the world is not a buffet; it is ordinary and they are greedy in it. A sweet, passive, obedient persona does not need a kind world. A prickly persona does not need a hostile one.
+
+Rules for a non-pandering world:
+- People have their own lives, goals, loyalties and problems that have nothing to do with {{user}}. Most of them are busy with something else.
+- Institutions are indifferent or self-interested. Schools, jobs, families and authorities have their own rules and pressures, and they do not reorganise themselves around one person.
+- The world is not a paradise made for {{user}}, and not a grim dystopia either. It is ordinary, mixed, and mostly indifferent: some warmth, some friction, some luck, some boredom.
+- Do not make every NPC a mirror of {{user}}'s traits or a supplier of what {{user}} craves. At least some NPCs should be uninterested, incompatible or a little disappointing.
+- Conflict comes from ordinary friction (money, time, obligation, other people's plans) more than from {{user}}'s psychology made manifest.
+
+What the world does need to cover is {{user}}'s practical circumstances. Work out what their life needs and fill it in:`,
+    ],
+    // The setting is not a stage built for the persona.
+    [
+        '- description: setting overview, tone, and the narrator\'s role (voices all NPCs, describes the world, keeps continuity, lets {{user}} drive). 300-600 words.',
+        '- description: setting overview, tone, and the narrator\'s role (voices all NPCs, describes the world, keeps continuity, lets {{user}} drive). The setting is an ordinary world with its own momentum, not a stage built for {{user}}: it does not flatter them, and it does not punish them. 300-600 words.',
+    ],
 ];
 
 export const WORLD_FORMAT_LINE_MIGRATIONS = [
@@ -32,7 +53,18 @@ export const DEFAULT_WORLD_PROMPT = `You are a world-builder for SillyTavern rol
 
 The persona is the character the USER plays. Refer to them as {{user}} everywhere. The sandbox card ({{char}}) is not one person: it is the narrator / game master who describes the world and voices every NPC.
 
-Build the world around who {{user}} is. Work out what their life needs and fill it in:
+Build a world that would exist whether or not {{user}} had ever been born, then place {{user}} inside it. Do NOT build a world out of the persona's traits, kinks or psychology.
+
+The persona's inner life is not the setting. Their personality, fears, cravings and kinks shape how they experience the world, not what the world contains. If {{user}} is hungry for attention, that does not mean every NPC dotes on them; it means they notice who does not. If {{user}} is a hedonist, the world is not a buffet; it is ordinary and they are greedy in it. A sweet, passive, obedient persona does not need a kind world. A prickly persona does not need a hostile one.
+
+Rules for a non-pandering world:
+- People have their own lives, goals, loyalties and problems that have nothing to do with {{user}}. Most of them are busy with something else.
+- Institutions are indifferent or self-interested. Schools, jobs, families and authorities have their own rules and pressures, and they do not reorganise themselves around one person.
+- The world is not a paradise made for {{user}}, and not a grim dystopia either. It is ordinary, mixed, and mostly indifferent: some warmth, some friction, some luck, some boredom.
+- Do not make every NPC a mirror of {{user}}'s traits or a supplier of what {{user}} craves. At least some NPCs should be uninterested, incompatible or a little disappointing.
+- Conflict comes from ordinary friction (money, time, obligation, other people's plans) more than from {{user}}'s psychology made manifest.
+
+What the world does need to cover is {{user}}'s practical circumstances. Work out what their life needs and fill it in:
 - Home and family: where they live, parents/siblings/partner, household dynamics.
 - Work or school: the institution, its culture, bosses/teachers/classmates/crew.
 - Social circle: friends, rivals, love interests, enemies, each with their own goals.
@@ -43,14 +75,14 @@ Build the world around who {{user}} is. Work out what their life needs and fill 
 Examples: a college student needs the campus, their dorm or apartment, parents, roommate, friend group, professors, a part-time job, parties and local spots. A starship captain needs the ship, the crew, the star system being traveled, political powers and alliances, rivals, ports of call and the current mission.
 
 Sandbox card:
-- description: setting overview, tone, and the narrator's role (voices all NPCs, describes the world, keeps continuity, lets {{user}} drive). 300-600 words.
+- description: setting overview, tone, and the narrator's role (voices all NPCs, describes the world, keeps continuity, lets {{user}} drive). The setting is an ordinary world with its own momentum, not a stage built for {{user}}: it does not flatter them, and it does not punish them. 300-600 words.
 - scenario: where {{user}}'s story starts.
 ${WORLD_PROMPT_LINE_MIGRATIONS[0][1]}
 ${WORLD_PROMPT_LINE_MIGRATIONS[1][1]}
 - tags: 3-8 genre/setting tags.
 
 Lorebook entries:
-- One topic per entry (one NPC, one place, one faction, one custom...). 50-180 words each, factual reference style, present tense. Refer to the persona as {{user}}.
+- One topic per entry (one NPC, one place, one faction, one custom...). 50-180 words each, factual reference style, present tense. Refer to the persona as {{user}}. Each NPC's goal should make sense without {{user}} in the room; not every NPC needs to care about them.
 ${WORLD_PROMPT_LINE_MIGRATIONS[2][1]}
 - keys: 2-6 specific trigger words people would actually type in chat: names, nicknames, surnames, place names, distinctive terms, plus short/lowercase forms. Avoid generic words (the, home, he, she, mom when there are several moms) that would fire constantly.
 - secondary_keys: optional. When set, the entry only fires if a primary key AND a secondary key appear. Use them to disambiguate.

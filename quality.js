@@ -11,28 +11,48 @@ const RULES_LINE = '- rules: correct {{char}}/{{user}} macros, never acts or spe
 const REVIEW_LINE_MIGRATIONS = [
     [LEGACY_REVIEW_CALIBRATION, REVIEW_CALIBRATION],
     [PLAYABILITY_LINE, `${PLAYABILITY_LINE} For personas: gives other characters concrete things to notice and react to (look, manner, habits, history) without scripting what {{user}} does.`],
-    [RULES_LINE, '- rules: characters and worlds use correct {{char}}/{{user}} macros, never act or speak for {{user}}, end opening messages on an in-world beat (never "What do you do?"), use <START> and name prefixes in example messages, and have no Main Prompt content. Personas are third person, have no dialogue, and never describe or speak for {{char}}.'],
+    [RULES_LINE, '- rules: characters and worlds use correct {{char}}/{{user}} macros, never act or speak for {{user}}, end opening messages on an in-world beat (never "What do you do?"), use <START> and name prefixes in example messages, and have no Main Prompt content. Personas are third person, have no dialogue, never describe or speak for {{char}}, and do not label an archetype (no "Archetype: ..." line).'],
+    // Personas are written for the player to inhabit, not for an editor to admire.
+    [
+        '- specificity: concrete, original details (names, habits, history, sensory specifics) instead of generic tropes, cliches or purple prose.',
+        '- specificity: concrete details (habits, history, sensory facts) instead of generic tropes, cliches or purple prose. Specificity means facts about THIS character, not decorative quirks added to seem original.',
+    ],
+    // Appearance comes from the image; everything else comes from the steering prompt.
+    // Anchored through the next line: the old line is a prefix of the new one, so matching it
+    // alone would re-append on every load. With the anchor, a migrated rubric no longer matches.
+    [
+        '- consistency: fields agree with each other and with the user\'s details; no contradictions in ages, relationships, timeline or appearance; names used consistently.\n' + PLAYABILITY_LINE,
+        '- consistency: fields agree with each other and respect the source of truth. Appearance (age, species, gender, body, skin, hair, eyes) must match the image. Personality, background, setting and tone must match the steering prompt if one was given, even when they clash with the image\'s mood. Do not call a steering-driven personality "inconsistent with the image." Pronouns and anatomy must match the character\'s sex and species.\n' + PLAYABILITY_LINE,
+    ],
+    // Contradiction and discomfort are content, not padding, and older rubrics lack these criteria.
+    [
+        '- efficiency: no filler, repetition or padding, and no lazy, thin fields either. Length fits the content.\nFor worlds, also score:',
+        '- efficiency: no filler, repetition or padding, and no lazy, thin fields either. Length fits the content. Do not flag internal contradiction or an uncomfortable detail as padding: those are the point.\n- edge (personas): the character has a real gap between what they believe and what is true, shown through behavior, not announced. A sweet, passive or obedient character is not a flaw. A card with no friction at all is. Score low for a character who is only a trait list, or whose "edge" is attitude rather than contradiction.\n- restraint (personas): the narrator does not explain the character, summarize them, or prove their depth in every sentence. Gaze and stillness are not substitutes for character.\n- world independence (worlds): the world is not built to flatter or feed {{user}}. People, places and factions have their own goals and pressures that would exist if {{user}} had never been born.\nFor worlds, also score:',
+    ],
 ];
 
 export function migrateReviewPrompt(text) {
     return REVIEW_LINE_MIGRATIONS.reduce((acc, [oldLine, newLine]) => acc.replace(oldLine, newLine), String(text));
 }
 
-export const DEFAULT_REVIEW_PROMPT = migrateReviewPrompt(`You are a strict editor reviewing a SillyTavern {{type}} before it is published. ${REVIEW_CALIBRATION} A good card is vivid and specific without bloat: every sentence should change how the AI plays it.
+export const DEFAULT_REVIEW_PROMPT = migrateReviewPrompt(`You are a strict editor reviewing a SillyTavern {{type}} before it is published. ${REVIEW_CALIBRATION} A good card is vivid and specific without bloat, and it is written for the player to inhabit.
 
 Score each criterion from 1 to 10:
-- specificity: concrete, original details (names, habits, history, sensory specifics) instead of generic tropes, cliches or purple prose.
-- consistency: fields agree with each other and with the user's details; no contradictions in ages, relationships, timeline or appearance; names used consistently.
+- specificity: concrete details (habits, history, sensory facts) instead of generic tropes, cliches or purple prose. Specificity means facts about THIS character, not decorative quirks added to seem original.
+- consistency: fields agree with each other and respect the source of truth. Appearance (age, species, gender, body, skin, hair, eyes) must match the image. Personality, background, setting and tone must match the steering prompt if one was given, even when they clash with the image's mood. Do not call a steering-driven personality "inconsistent with the image." Pronouns and anatomy must match the character's sex and species.
 ${PLAYABILITY_LINE}
 ${RULES_LINE}
-- efficiency: no filler, repetition or padding, and no lazy, thin fields either. Length fits the content.
+- efficiency: no filler, repetition or padding, and no lazy, thin fields either. Length fits the content. Do not flag internal contradiction or an uncomfortable detail as padding: those are the point.
+- edge (personas): the character has a real gap between what they believe and what is true, shown through behavior, not announced. A sweet, passive or obedient character is not a flaw. A card with no friction at all is. Score low for a character who is only a trait list, or whose "edge" is attitude rather than contradiction.
+- restraint (personas): the narrator does not explain the character, summarize them, or prove their depth in every sentence. Gaze and stillness are not substitutes for character.
+- world independence (worlds): the world is not built to flatter or feed {{user}}. People, places and factions have their own goals and pressures that would exist if {{user}} had never been born.
 For worlds, also score:
 - keywords: lorebook keys are specific trigger words (names, places, distinctive terms), not generic words that would fire constantly; secondary keys are used where disambiguation helps.
 - coverage: the world covers what this persona's life needs (home, work or school, people, places, factions, hooks) without overlapping entries.
 
 List concrete issues, most important first. Tie each one to a single field (or lorebook entry index) and give a specific fix. Always list at least the 3 most impactful improvements, even for a good card; skip pure nitpicks; list at most 8.`);
 
-export const DEFAULT_ENHANCE_PROMPT = `Enhance the {{type}}: add concrete, specific details that make it better to roleplay with (history, habits, relationships, sensory details, speech quirks, conflicts, story hooks). Stay consistent with everything already established. Grow the text by roughly 30-60%. No filler, no purple prose, no repetition.`;
+export const DEFAULT_ENHANCE_PROMPT = `Enhance the {{type}}: add concrete, specific details that make it better to roleplay with (history, habits, relationships, sensory details, speech quirks, conflicts, story hooks). Stay consistent with everything already established. Grow the text by roughly 30-60%. No filler, no purple prose, no repetition. Every detail you add must be a fact about the character or the world, not an adjective about them. Do not soften, explain, summarize or tidy the character, and do not smooth over contradictions: deepen them if anything. Keep the voice.`;
 
 export const DEFAULT_OPTIMIZE_PROMPT = `Optimize the {{type}} for token efficiency: cut filler, repetition, purple prose and anything that does not change how the AI plays it. Keep every fact, name, relationship and behavior that matters, and keep the voice. Use tight prose (do not switch to W++ or bullet lists unless the text already uses them). Aim for roughly 30-50% fewer tokens.`;
 
