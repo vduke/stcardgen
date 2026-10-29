@@ -5,6 +5,7 @@ Generate personas, character cards, and persona-centered sandbox worlds with a v
 ## Features
 
 - **Create Persona / Create Character**: drop in an image, add optional details, click Generate, edit the result, then create it or save it to Drafts. With no image, the model also suggests an **image prompt** that you can copy into ComfyUI.
+- **Pre-rolled personalities**: before each persona is written, a core need, a surface manner, a friction direction, a setting, a source of experience, a motif and a primary kink are drawn and sent as binding constraints. Batch generation otherwise converges — six images, six warm and chatty characters with a secret — because each run sees only its own image and knows nothing about the others. The draw steers away from values the rest of the batch already used, is kept with the draft so **Regenerate** does not silently give the card a different personality, and appears in the editor where you can edit or clear it. Appearance is never pre-rolled: age, body, skin and hair come from the image. Turn it off in Settings.
 - **Create World for Persona**: builds a living sandbox around one of your personas:
   - a narrator/game-master **sandbox character card** (setting overview, scenario, opening scene);
   - a **lorebook** of NPCs, places, factions, customs and story hooks, with keywords, secondary keywords, constants, priorities, positions and probabilities;
@@ -65,7 +66,7 @@ The wand menu also has Create Persona, Create Character, Create World for Person
 Install it from the repo URL with SillyTavern's built-in extension installer, or copy this folder to `public/scripts/extensions/third-party/` and reload SillyTavern. For the local Docker setup, run:
 
 ```bash
-cp manifest.json index.js world.js quality.js tasks.js manager.js style.css settings.html /c/Users/vduke/dockerapps/SillyTavern/extensions/stcardgen/
+cp manifest.json index.js world.js quality.js tasks.js manager.js preroll.js style.css settings.html /c/Users/vduke/dockerapps/SillyTavern/extensions/stcardgen/
 ```
 
 ## Development
@@ -73,7 +74,9 @@ cp manifest.json index.js world.js quality.js tasks.js manager.js style.css sett
 There is no build step. The extension is plain ES modules loaded by SillyTavern.
 
 ```bash
-node tests/prompt-migrations.mjs
+npm test
 ```
 
-Saved prompts are migrated on load, and that migration must stay idempotent: it runs on every settings load, so a migration that re-matches its own output grows the prompt a little on each reload. The test runs the real modules and fails if any migration stops being idempotent.
+`tests/prompt-migrations.mjs` covers the saved-prompt migrations. Those run on every settings load, so they must stay idempotent: a migration that re-matches its own output grows the prompt a little on each reload. The test runs the real modules and fails if one stops being idempotent.
+
+`tests/preroll.mjs` covers the pre-roll tables and block. It checks that every channel has enough values to fill a batch without repeating, that the tables do not reuse phrases the persona prompt bans, and that the prompt and the code agree about which channels are pre-rolled.

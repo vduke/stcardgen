@@ -10,71 +10,16 @@ import fs from 'node:fs';
 import assert from 'node:assert';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { extractArray, extractTemplate } from './extract.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const scratch = path.join(root, '.local');
-fs.mkdirSync(scratch, { recursive: true });
 
-// quality.js is a browser ES module and this repo has no package.json, so Node would treat .js as
-// CommonJS. Copy it to .mjs so the real file can be imported rather than a reimplementation.
-const qualityCopy = path.join(scratch, 'quality.mjs');
-fs.copyFileSync(path.join(root, 'quality.js'), qualityCopy);
-const quality = await import('file://' + qualityCopy + '?t=' + Date.now());
+// package.json sets "type": "module", so the real module can be imported directly.
+const quality = await import('../quality.js');
 
 const NO_QUESTION_ENDING = 'End on a concrete beat (an action, a line of dialogue, or something happening) that {{user}} can react to. Never end with a question to the player such as "What do you do?", "What\'s your next move?" or "How do you respond?".';
 
-/**
- * Extracts the source of `NAME = [...]` / `NAME = `...`` from a module, scanning past brackets and
- * backticks that appear inside string literals. A naive bracket counter stops early on text like
- * `"...[old line, new line]..."`, which silently truncated the world table to two of its entries.
- * @param {string} src Module source.
- * @param {string} name Declaration name.
- * @param {'array'|'template'} kind What to extract.
- * @returns {string|null} The literal source, ready for eval or template interpolation.
- */
-function extractLiteral(src, name, kind) {
-    const decl = new RegExp(`(?:^|\\n)\\s*(?:export\\s+)?const ${name} = `);
-    const found = decl.exec(src);
-    if (!found) return null;
-    let i = found.index + found[0].length;
 
-    // Skip to the opening token, allowing wrappers such as migrateReviewPrompt(`...`).
-    while (i < src.length && src[i] !== '[' && src[i] !== '`') i++;
-    if (i >= src.length) return null;
-
-    const open = src[i];
-    const close = open === '[' ? ']' : '`';
-    const start = i + 1;
-    let depth = 1;
-    i = start;
-    while (i < src.length) {
-        const c = src[i];
-        if (c === '\\') { i += 2; continue; }
-        if (open === '`' && c === '`') break;           // end of template
-        if (open === '[') {
-            if (c === "'" || c === '"' || c === '`') {  // skip string contents
-                const quote = c;
-                i++;
-                while (i < src.length && src[i] !== quote) { if (src[i] === '\\') i++; i++; }
-                i++;
-                continue;
-            }
-            if (c === '/' && src[i + 1] === '/') { while (i < src.length && src[i] !== '\n') i++; continue; }
-            if (c === '/' && src[i + 1] === '*') { i = src.indexOf('*/', i) + 2; continue; }
-            if (c === '[') depth++;
-            else if (c === ']') { depth--; if (depth === 0) break; }
-        }
-        i++;
-    }
-    if (kind === 'template') return src.slice(start, i);
-    return src.slice(start, i);
-}
-
-const extractArray = (src, name) => {
-    const body = extractLiteral(src, name, 'array');
-    return body === null ? null : '[' + body + ']';
-};
-const extractTemplate = (src, defName) => extractLiteral(src, defName, 'template');
 
 const indexSrc = fs.readFileSync(path.join(root, 'index.js'), 'utf8');
 const worldSrc = fs.readFileSync(path.join(root, 'world.js'), 'utf8');

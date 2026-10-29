@@ -12,6 +12,7 @@ import {
 import { initWorld, openWorldBuilder, generateWorld, normalizeWorld, normalizeEntry, saveWorldToST, DEFAULT_WORLD_PROMPT, DEFAULT_WORLD_FORMAT, WORLD_PROMPT_LINE_MIGRATIONS, WORLD_FORMAT_LINE_MIGRATIONS } from './world.js';
 import { startTask, exclusive, guardClosing } from './tasks.js';
 import { initManager, openPersonaManager, personaData, getPersonaReview, setPersonaReview, personaAvatarPath } from './manager.js';
+import { rollPreRoll, formatPreRoll, parsePreRoll } from './preroll.js';
 
 const MODULE = 'stcardgen';
 // The installer names the folder after the git repo, so derive it instead of assuming "stcardgen".
@@ -42,11 +43,14 @@ grounded personality — choose one and commit. Do not derive it from the image'
 
 ### BINDING SESSION CONSTRAINTS (READ FIRST — these override your instincts)
 A "PRE-ROLLED FOR THIS SESSION" block appears above this prompt. Every value in it is
-binding. Use the pre-rolled AGE, CORE, MASK TEMPERAMENT, BODY, SKIN & HAIR, MOTIF,
-SOURCE OF EXPERIENCE, SETTING, and PRIMARY KINK exactly as given. Do not override them,
-do not "improve" them, and do not add a second archetype for extra nuance. If the
-pre-rolled CORE feels like it clashes with the age or the image, that clash is the point —
-write it, don't smooth it out.
+binding: CORE, MASK TEMPERAMENT, FRICTION DIRECTION, SETTING, MOTIF, SOURCE OF EXPERIENCE
+and PRIMARY KINK. Use each one exactly as given. Do not override them, do not "improve"
+them, and do not add a second version of any of them for extra nuance. They were drawn
+before you saw the image and they are not up for negotiation.
+
+Appearance is not pre-rolled. Age, species, gender, body, skin and hair come from the image,
+and nothing in the block overrides them. If the pre-rolled CORE sits badly with the image —
+a patient cruelty on a laughing face — that clash is the point. Write it, don't smooth it out.
 
 ### THE CONVERGENCE PROBLEM (READ SECOND)
 You are one run in a batch. You cannot see the other runs. The other runs are therefore
@@ -194,6 +198,27 @@ const NO_QUESTION_ENDING = 'End on a concrete beat (an action, a line of dialogu
 // [old line, new line] pairs. Saved prompts get the new line only if the old one is still there verbatim,
 // so any other edits the user made are kept.
 const PROMPT_LINE_MIGRATIONS = [
+    // The binding block now names the channels that are actually pre-rolled; it used to claim AGE,
+    // BODY and SKIN & HAIR, which come from the image, and never mentioned FRICTION DIRECTION.
+    [
+        `### BINDING SESSION CONSTRAINTS (READ FIRST — these override your instincts)
+A "PRE-ROLLED FOR THIS SESSION" block appears above this prompt. Every value in it is
+binding. Use the pre-rolled AGE, CORE, MASK TEMPERAMENT, BODY, SKIN & HAIR, MOTIF,
+SOURCE OF EXPERIENCE, SETTING, and PRIMARY KINK exactly as given. Do not override them,
+do not "improve" them, and do not add a second archetype for extra nuance. If the
+pre-rolled CORE feels like it clashes with the age or the image, that clash is the point —
+write it, don't smooth it out.`,
+        `### BINDING SESSION CONSTRAINTS (READ FIRST — these override your instincts)
+A "PRE-ROLLED FOR THIS SESSION" block appears above this prompt. Every value in it is
+binding: CORE, MASK TEMPERAMENT, FRICTION DIRECTION, SETTING, MOTIF, SOURCE OF EXPERIENCE
+and PRIMARY KINK. Use each one exactly as given. Do not override them, do not "improve"
+them, and do not add a second version of any of them for extra nuance. They were drawn
+before you saw the image and they are not up for negotiation.
+
+Appearance is not pre-rolled. Age, species, gender, body, skin and hair come from the image,
+and nothing in the block overrides them. If the pre-rolled CORE sits badly with the image —
+a patient cruelty on a laughing face — that clash is the point. Write it, don't smooth it out.`,
+    ],
     [
         '- first_mes: an engaging opening message written as {{char}}, in roleplay prose with actions in *asterisks*. Never act or speak for {{user}}.',
         `- first_mes: an engaging opening message written as {{char}}, in roleplay prose with actions in *asterisks*. Never act or speak for {{user}}. ${NO_QUESTION_ENDING}`,
@@ -270,6 +295,9 @@ const defaultSettings = Object.freeze({
     visionPrompt: DEFAULT_VISION_PROMPT,
     personaPrompt: DEFAULT_PERSONA_PROMPT,
     personaFormat: DEFAULT_PERSONA_FORMAT,
+    // Draws the non-appearance channels before the model sees the request, so a batch stops
+    // converging on the same person. See preroll.js.
+    preRoll: true,
     characterPrompt: DEFAULT_CHARACTER_PROMPT,
     characterFormat: DEFAULT_CHARACTER_FORMAT,
     bannedNames: '',
@@ -730,11 +758,14 @@ function imageDescriptionText(description) {
     return `The reference image is not attached; a vision model described it as follows. Treat this as what the image shows:\n<image_description>\n${description}\n</image_description>`;
 }
 
-function buildMessages(type, imageDataUrl, details, bannedNames, imageDescription = '') {
+function buildMessages(type, imageDataUrl, details, bannedNames, imageDescription = '', preRollBlock = '') {
     const s = settings();
     const prompt = type === 'persona' ? s.personaPrompt : s.characterPrompt;
     const format = type === 'persona' ? s.personaFormat : s.characterFormat;
     let system = `${prompt.trim()}\n\n${format.trim()}`;
+    // The persona prompt tells the model to expect this block above itself. Nothing else supplies it,
+    // so without this the "binding" values it claims to have are simply absent.
+    if (preRollBlock.trim()) system = `${preRollBlock.trim()}\n\n${system}`;
     if (bannedNames.length && s.banPrompt) {
         system += '\n\n' + s.banPrompt
             .replace(/{{bannedNames}}/g, bannedNames.join(', '))
@@ -754,6 +785,11 @@ function buildMessages(type, imageDataUrl, details, bannedNames, imageDescriptio
     }
     if (details?.trim()) {
         parts.push(`Details from the user (these take priority):\n${details.trim()}`);
+    }
+    // A ban list of ~100 names buried in a long system prompt gets ignored: the same trope name came
+    // back on every card of a batch. Restating it as the last thing read is what changed that.
+    if (bannedNames.length && s.banPrompt) {
+        parts.push('The name must not be any of the banned names listed above, nor a close variant of one.');
     }
     parts.push('Reply with the JSON object only.');
     const text = parts.join('\n\n');
@@ -847,7 +883,13 @@ function parseJsonLoose(text) {
             } catch { /* try next */ }
         }
     }
-    throw new Error('The model response was not valid JSON. Check the raw output, fix it, and use "Parse raw".');
+    // A reply that stops mid-object is almost always the token limit, not a formatting failure, and
+    // saying so saves guessing. Reasoning models spend a large part of Max response tokens on
+    // reasoning before they write any JSON at all.
+    const cutOff = !/[}\]]\s*$/.test(cleaned);
+    throw new Error(cutOff
+        ? `The model's reply stopped before the JSON closed, so it probably ran out of room. Max response tokens is ${settings().maxTokens}; raise it in Card Generator settings and try again.`
+        : 'The model response was not valid JSON. Check the raw output, fix it, and use "Parse raw".');
 }
 
 function toStringList(value) {
@@ -892,24 +934,56 @@ function emptyData(type) {
 }
 
 /**
+ * Values already used by other persona drafts, so the next draw steers away from them.
+ *
+ * Only the most recent drafts are consulted: a batch is what converges, and a card drawn weeks ago
+ * should not veto a good value forever.
+ * @param {string|null} excludeDraftId The draft being generated, which must not steer itself.
+ * @returns {Record<string, string[]>}
+ */
+function preRollAvoid(excludeDraftId = null) {
+    const draws = [];
+    for (const draft of settings().drafts || []) {
+        if (draft.id === excludeDraftId || draft.type !== 'persona' || !draft.preRoll) continue;
+        draws.push(draft.preRoll);
+    }
+    const avoid = {};
+    for (const text of draws.slice(-12)) {
+        const values = parsePreRoll(text);
+        if (!values) continue;
+        for (const [key, value] of Object.entries(values)) {
+            if (!avoid[key]) avoid[key] = [];
+            avoid[key].push(value);
+        }
+    }
+    return avoid;
+}
+
+/**
  * Runs one generation.
  * @param {object} options
  * @param {string} [options.imageDescription] A vision description to reuse instead of describing the image again
+ * @param {string} [options.preRoll] A pre-rolled session block to reuse, instead of drawing a fresh one
  * @param {(text: string) => void} [options.onStatus] Progress messages
- * @returns {Promise<{data: object, raw: string, imageDescription: string}>}
+ * @returns {Promise<{data: object, raw: string, imageDescription: string, preRoll: string}>}
  */
-async function generateEntry({ type, imageBlob, details, excludeDraftId = null, excludePersonaId = null, imageDescription = '', signal = null, onStatus = () => { } }) {
+async function generateEntry({ type, imageBlob, details, excludeDraftId = null, excludePersonaId = null, imageDescription = '', preRoll = '', signal = null, onStatus = () => { } }) {
     if (!imageBlob && !details?.trim()) {
         throw new Error('Add an image or some details to generate from.');
     }
     const image = await prepareImage(imageBlob, type, { description: imageDescription, signal, onStatus });
+    // Personas get a block unless the caller supplied one; characters do not, the prompt has no such concept.
+    let block = preRoll;
+    if (type === 'persona' && settings().preRoll && !block.trim()) {
+        block = formatPreRoll(rollPreRoll({ avoid: preRollAvoid(excludeDraftId) }).values);
+    }
     if (image.description) onStatus(`Writing the ${type}…`);
-    const messages = buildMessages(type, image.dataUrl, details, getBannedNames({ excludeDraftId, excludePersonaId }), image.description);
+    const messages = buildMessages(type, image.dataUrl, details, getBannedNames({ excludeDraftId, excludePersonaId }), image.description, block);
     const result = await sendMessages(messages, signal);
     const raw = String(result?.content ?? '');
     if (!raw.trim()) throw new Error('The model returned an empty response.');
     const data = normalizeData(type, parseJsonLoose(raw));
-    return { data, raw: stripReasoning(raw), imageDescription: image.description };
+    return { data, raw: stripReasoning(raw), imageDescription: image.description, preRoll: block };
 }
 
 // ---------------------------------------------------------------------------
@@ -1039,6 +1113,17 @@ const VISION_DESCRIPTION_HTML = `
         <textarea class="text_pole stcg-image-description" rows="6" placeholder="Filled in on Generate. Edit it to correct what the vision model saw; clear it to have the image described again."></textarea>
     </details>`;
 
+/**
+ * The pre-rolled values this card was written from. Editable, because the roll can land on something
+ * wrong for the image — and keeping it visible is the only way to tell whether a card's personality
+ * came from the batch or from the picture.
+ */
+const PRE_ROLL_HTML = `
+    <details class="stcg-preroll">
+        <summary title="Drawn before the model saw the image, and sent to it as binding. Kept with this draft so Regenerating does not rewrite the personality.">Pre-rolled for this session</summary>
+        <textarea class="text_pole stcg-pre-roll" rows="8" placeholder="Filled in on Generate. Edit any line to change what the card is built on; clear it to draw a fresh roll."></textarea>
+    </details>`;
+
 /** The stored review of an installed persona, unless it was edited since. */
 function freshPersonaReview(avatarId) {
     const stored = getPersonaReview(avatarId);
@@ -1078,6 +1163,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
         details: draft?.details ?? '',
         steer: draft?.steer ?? '',
         imageDescription: draft?.imageDescription ?? '',
+        preRoll: draft?.preRoll ?? '',
         imageBlob,
         originalImage: null,
         imageUrl: '',
@@ -1109,6 +1195,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
                     <div class="menu_button stcg-clear-img"><i class="fa-solid fa-xmark"></i> Remove</div>
                 </div>
                 ${VISION_DESCRIPTION_HTML}
+                ${state.type === 'persona' ? PRE_ROLL_HTML : ''}
                 <label>Optional details / requirements</label>
                 <textarea class="text_pole stcg-details" rows="5" placeholder="e.g. She's a 28 year old starship mechanic, sarcastic, from Mars..."></textarea>
                 <div class="menu_button stcg-generate" ${personaId ? 'title="Rewrites the persona from the image and details (Undo brings the old text back)"' : ''}><i class="fa-solid fa-wand-magic-sparkles"></i> <span>${personaId ? 'Regenerate' : 'Generate'}</span></div>
@@ -1162,6 +1249,13 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
         $root.find('.stcg-vision').toggle(usesVisionProfile() || !!text);
     }
 
+    function setPreRoll(text) {
+        state.preRoll = text;
+        const $panel = $root.find('.stcg-pre-roll');
+        $panel.val(text);
+        $root.find('.stcg-preroll').toggle(!!text || settings().preRoll);
+    }
+
     function writeFields() {
         for (const f of fields) {
             $root.find(`[data-key="${f.key}"]`).val(renderFieldValue(f, state.data[f.key]));
@@ -1178,6 +1272,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
         state.raw = String($root.find('.stcg-raw-text').val() ?? '');
         state.steer = String($root.find('.stcg-steer').val() ?? '');
         state.imageDescription = String($root.find('.stcg-image-description').val() ?? '');
+        state.preRoll = String($root.find('.stcg-pre-roll').val() ?? '');
     }
 
     function isDirty() {
@@ -1290,12 +1385,15 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
                 imageBlob: state.imageBlob,
                 details: state.details,
                 imageDescription: state.imageDescription,
+                // Regenerating keeps the personality it was built on; clear the block to draw a new one.
+                preRoll: state.preRoll,
                 ...nameScope,
                 signal,
                 onStatus: status,
             });
             if (snap.data.name || snap.data.description) pushHistory(snap);
             setImageDescription(result.imageDescription);
+            setPreRoll(result.preRoll);
             state.data = result.data;
             state.raw = result.raw;
             state.review = null;
@@ -1370,6 +1468,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
     wireIssueChecks($root, () => state.review, updateFixButton);
     setImage(state.imageBlob, false);
     setImageDescription(state.imageDescription);
+    setPreRoll(state.preRoll);
     writeFields();
     renderQuality();
 
@@ -1521,6 +1620,7 @@ async function saveEditorDraft(state, existing) {
     draft.details = state.details;
     draft.steer = state.steer;
     draft.imageDescription = state.imageDescription;
+    draft.preRoll = state.preRoll;
     draft.review = state.review;
     draft.error = '';
     draft.status = state.data.name?.trim() ? 'ready' : (draft.image || state.details ? 'queued' : 'ready');
@@ -1554,6 +1654,7 @@ async function processDraft(draft, onStatus = () => { }) {
             details: draft.details,
             excludeDraftId: draft.id,
             imageDescription: draft.imageDescription || '',
+            preRoll: draft.preRoll || '',
             signal: controller.signal,
             onStatus: text => onStatus(`${draftLabel(draft)}: ${text}`),
         };
@@ -1564,6 +1665,7 @@ async function processDraft(draft, onStatus = () => { }) {
         draft.data = result.data;
         draft.raw = result.raw;
         draft.imageDescription = result.imageDescription;
+        draft.preRoll = result.preRoll;
         draft.review = null;
         if (settings().autoReview) {
             const checked = await qualityPass({
@@ -2150,6 +2252,7 @@ async function initSettingsUI() {
     bindSetting('#stcg_jailbreak_enabled', 'jailbreakEnabled', { type: 'checkbox' });
     bindSetting('#stcg_persona_prompt', 'personaPrompt');
     bindSetting('#stcg_persona_format', 'personaFormat');
+    bindSetting('#stcg_preroll', 'preRoll', { type: 'checkbox' });
     bindSetting('#stcg_character_prompt', 'characterPrompt');
     bindSetting('#stcg_character_format', 'characterFormat');
     bindSetting('#stcg_banned', 'bannedNames');

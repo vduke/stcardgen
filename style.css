@@ -211,6 +211,20 @@
     resize: vertical;
 }
 
+.stcg-preroll summary {
+    cursor: pointer;
+    font-size: 0.9em;
+    opacity: 0.85;
+}
+
+.stcg-preroll textarea {
+    width: 100%;
+    margin-top: 4px;
+    font-size: 0.85em;
+    font-family: var(--mono-font, monospace);
+    resize: vertical;
+}
+
 .stcg-raw summary {
     cursor: pointer;
     opacity: 0.8;

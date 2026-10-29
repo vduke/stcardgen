@@ -1,0 +1,9 @@
+{
+  "name": "stcardgen",
+  "private": true,
+  "type": "module",
+  "description": "SillyTavern card generator extension. The browser loads the modules directly; this file exists so Node can import them for tests, since they are ES modules.",
+  "scripts": {
+    "test": "node tests/prompt-migrations.mjs && node tests/preroll.mjs"
+  }
+}
