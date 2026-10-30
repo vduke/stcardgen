@@ -6,7 +6,7 @@ import { power_user } from '../../../power-user.js';
 import { initPersona, getUserAvatars, user_avatar, setPersonaDescription } from '../../../personas.js';
 import { debounce } from '../../../utils.js';
 import {
-    initQuality, reviewCard, reviseCard, reviseField, renameCard, qualityPass, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, scoreClass,
+    initQuality, reviewCard, reviseCard, reviseField, renameCard, qualityPass, autoFixCard, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, scoreClass,
     QUALITY_PANEL_HTML, RENAME_CARD_HTML, fieldOpsHtml, wireIssueChecks, canFix, DEFAULT_REVIEW_PROMPT, DEFAULT_ENHANCE_PROMPT, DEFAULT_OPTIMIZE_PROMPT, migrateReviewPrompt, applyLineMigrations,
 } from './quality.js';
 import { initWorld, openWorldBuilder, generateWorld, normalizeWorld, normalizeEntry, saveWorldToST, DEFAULT_WORLD_PROMPT, DEFAULT_WORLD_FORMAT, WORLD_PROMPT_STAMP, WORLD_PROMPT_HEADER, WORLD_PROMPT_LINE_MIGRATIONS, WORLD_FORMAT_LINE_MIGRATIONS } from './world.js';
@@ -462,6 +462,8 @@ const defaultSettings = Object.freeze({
     worldTokenBump: false,
     autoReview: true,
     autoFixBelow: 7,
+    // How many fix rounds a draft's Auto Fix button may spend before it hands back the best version.
+    autoFixRounds: 3,
     reviewProfileId: '',
     reviewPrompt: DEFAULT_REVIEW_PROMPT,
     enhancePrompt: DEFAULT_ENHANCE_PROMPT,
@@ -1887,6 +1889,80 @@ async function processDraft(draft, onStatus = () => { }) {
     upsertDraft(draft);
 }
 
+/** Drafts whose Auto Fix loop is running; the grid disables their buttons and says so. */
+const autoFixingDrafts = new Set();
+
+/** The Quality pass target Auto Fix aims at. 0 means the user never set one. */
+function autoFixThreshold() {
+    return Number(settings().autoFixBelow) || 0;
+}
+
+/** How many fix rounds Auto Fix may spend. Capped so a stubborn card cannot run for an hour. */
+function autoFixCap() {
+    return Math.min(8, Math.max(1, Number(settings().autoFixRounds) || 3));
+}
+
+/**
+ * Reviews a draft and fixes it, on repeat, until it reaches the Quality pass threshold, the round cap
+ * runs out, or a fix stops improving the score. Writes each accepted fix to the draft as it goes, so a
+ * Stop keeps the work already done, and always leaves the best-scoring version in the draft.
+ */
+async function autoFixDraft(draft) {
+    if (autoFixingDrafts.has(draft.id)) return;
+    const threshold = autoFixThreshold();
+    if (!threshold) {
+        toastr.info('Set "Auto-fix when the score is below" in Quality pass settings first.', 'Card Generator');
+        return;
+    }
+    autoFixingDrafts.add(draft.id);
+    const controller = new AbortController();
+    const task = startTask(`Auto-fixing ${draftLabel(draft)}`, {
+        total: autoFixCap(),
+        detail: `Reviewing against a ${threshold}/10 target`,
+        onStop: () => controller.abort(),
+    });
+    notifyDrafts();
+    try {
+        const result = await autoFixCard({
+            type: draft.type, data: draft.data, details: draft.details, source: draft.source, signal: controller.signal,
+            onStatus: text => task.update({ detail: text }),
+            onProgress: ({ data, fixes }) => {
+                const live = getDraft(draft.id);
+                if (!live) return;
+                live.data = data;
+                // The old score belongs to the old text; drop it rather than show a number that is wrong.
+                live.review = null;
+                live.status = 'ready';
+                upsertDraft(live);
+                task.update({ done: fixes });
+            },
+        });
+        const live = getDraft(draft.id);
+        if (!live) return;
+        live.data = result.data;
+        live.review = result.review;
+        live.status = 'ready';
+        live.error = '';
+        upsertDraft(live);
+        const summary = result.reached
+            ? `Reached ${result.review.overall}/10 in ${result.fixes} fix${result.fixes === 1 ? '' : 'es'}.`
+            : `Best ${result.review.overall}/10 after ${result.fixes} fix${result.fixes === 1 ? '' : 'es'}; ${threshold}/10 was not reached.`;
+        task.finish(summary);
+        toastr.success(summary, 'Card Generator');
+    } catch (error) {
+        const aborted = error?.name === 'AbortError' || controller.signal.aborted;
+        const text = aborted ? 'Stopped. The fixes that finished are kept.' : `Error: ${error?.message || error}`;
+        task.finish(text, { error: !aborted });
+        if (!aborted) {
+            console.error(`[${MODULE}] Auto Fix failed`, error);
+            toastr.error(String(error?.message || error), 'Card Generator');
+        }
+    } finally {
+        autoFixingDrafts.delete(draft.id);
+        notifyDrafts();
+    }
+}
+
 /**
  * What the running queue may pick up: only these draft ids (Regenerate, a new bulk batch), or null for
  * every queued draft (Run queue). Without this, regenerating one card after a Stop resumed the whole batch.
@@ -2192,7 +2268,7 @@ async function openDrafts() {
                     <div class="stcg-draft-body">
                         <div class="stcg-draft-head">
                             <span class="stcg-badge stcg-badge-${draft.type}">${typeLabel(draft.type)}</span>
-                            <span class="stcg-badge stcg-badge-status">${savingDrafts.has(draft.id) ? 'Saving…' : (STATUS_LABELS[draft.status] || draft.status)}</span>
+                            <span class="stcg-badge stcg-badge-status">${autoFixingDrafts.has(draft.id) ? 'Auto-fixing…' : savingDrafts.has(draft.id) ? 'Saving…' : (STATUS_LABELS[draft.status] || draft.status)}</span>
                             ${worldInfo}
                             ${score}
                             ${conflict ? `<span class="stcg-badge stcg-badge-conflict" title="Name used by ${escapeHtml(conflict)}">Name conflict</span>` : ''}
@@ -2202,6 +2278,7 @@ async function openDrafts() {
                         <div class="stcg-draft-preview">${escapeHtml(draft.status === 'error' ? draft.error : (preview || draft.details || '')).slice(0, 220)}</div>
                         <div class="stcg-draft-buttons">
                             <div class="menu_button stcg-d-review" title="Review & edit"><i class="fa-solid fa-pen-to-square"></i> Review</div>
+                            <div class="menu_button stcg-d-auto" title="Review and fix this draft until it reaches the Auto-fix threshold in Quality pass settings (up to ${autoFixCap()} fixes)"><i class="fa-solid fa-wand-magic-sparkles"></i> Auto Fix</div>
                             ${!draft.image && draft.data?.image_prompt ? '<div class="menu_button stcg-d-copy-prompt" title="Copy image prompt (for ComfyUI)"><i class="fa-solid fa-image"></i></div>' : ''}
                             <div class="menu_button stcg-d-approve" title="Create without review"><i class="fa-solid fa-check"></i></div>
                             <div class="menu_button stcg-d-retry" title="Regenerate"><i class="fa-solid fa-rotate"></i></div>
@@ -2209,12 +2286,19 @@ async function openDrafts() {
                         </div>
                     </div>
                 </div>`);
-            const busy = draft.status === 'generating' || savingDrafts.has(draft.id);
+            const busy = draft.status === 'generating' || savingDrafts.has(draft.id) || autoFixingDrafts.has(draft.id);
             $card.toggleClass('stcg-status-saving', savingDrafts.has(draft.id));
             $card.find('input[type=checkbox]').prop('checked', selected.has(draft.id)).on('change', e => {
                 if ($(e.target).prop('checked')) selected.add(draft.id); else selected.delete(draft.id);
             });
             $card.find('.stcg-d-review').toggleClass('disabled', busy).on('click', () => !busy && openEditor({ type: draft.type, draft }));
+            // Auto Fix needs a target: with the threshold at 0 there is nothing to reach, so the button says so.
+            $card.find('.stcg-d-auto')
+                .toggleClass('disabled', busy || draft.status !== 'ready' || !autoFixThreshold())
+                .attr('title', autoFixThreshold()
+                    ? `Review and fix this draft until it reaches ${autoFixThreshold()}/10 (up to ${autoFixCap()} fixes)`
+                    : 'Set "Auto-fix when the score is below" in Quality pass settings first')
+                .on('click', () => !busy && autoFixThreshold() && autoFixDraft(draft));
             $card.find('.stcg-d-copy-prompt').on('click', () => copyText(draft.data.image_prompt));
             $card.find('.stcg-d-approve').toggleClass('disabled', busy || draft.status !== 'ready').on('click', () => !busy && approveDrafts([draft.id]));
             $card.find('.stcg-d-retry').toggleClass('disabled', busy).on('click', () => !busy && requeue([draft.id]));
@@ -2477,6 +2561,7 @@ async function initSettingsUI() {
     bindSetting('#stcg_world_max_tokens', 'worldMaxTokens', { type: 'number' });
     bindSetting('#stcg_auto_review', 'autoReview', { type: 'checkbox' });
     bindSetting('#stcg_auto_fix_below', 'autoFixBelow', { type: 'number' });
+    bindSetting('#stcg_auto_fix_rounds', 'autoFixRounds', { type: 'number' });
     bindSetting('#stcg_review_prompt', 'reviewPrompt');
     bindSetting('#stcg_enhance_prompt', 'enhancePrompt');
     bindSetting('#stcg_optimize_prompt', 'optimizePrompt');

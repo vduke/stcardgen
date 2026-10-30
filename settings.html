@@ -102,7 +102,11 @@
                 <label for="stcg_auto_fix_below">Auto-fix when the score is below (0 = never)
                     <input id="stcg_auto_fix_below" class="text_pole" type="number" min="0" max="10" step="0.5">
                 </label>
+                <label for="stcg_auto_fix_rounds">Auto Fix rounds before it gives up (1-8)
+                    <input id="stcg_auto_fix_rounds" class="text_pole" type="number" min="1" max="8" step="1">
+                </label>
             </div>
+            <small class="notes">The threshold is the target for the drafts' <b>Auto Fix</b> button: it reviews, fixes, and reviews again on its own until the draft reaches that score or runs out of rounds. It keeps the best-scoring version it saw.</small>
             <label for="stcg_review_prompt">Review rubric (<code>&#123;&#123;type&#125;&#125;</code>)</label>
             <textarea id="stcg_review_prompt" class="text_pole textarea_compact" rows="8"></textarea>
             <label for="stcg_enhance_prompt">Enhance instruction</label>

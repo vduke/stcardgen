@@ -559,6 +559,69 @@ export async function qualityPass({ type, data, details = '', source = null, sig
 }
 
 // ---------------------------------------------------------------------------
+// Auto Fix loop (the drafts button)
+// ---------------------------------------------------------------------------
+
+/**
+ * The next thing an Auto Fix round should do. Pure, so the stopping rules can be tested without a
+ * model: a loop that only stops at the cap would spend minutes and then quietly hand back a worse card.
+ * @returns {'done'|'fix'|'stop'} done = the card is at or over the threshold; fix = another round is
+ * worth it; stop = no further round can help, hand back the best version.
+ */
+export function autoFixStep({ score, threshold, hasBannedNames = false, fixableIssues = 0, round = 0, maxRounds = 3, bestScore = null }) {
+    if (score >= threshold && !hasBannedNames) return 'done';
+    if (fixableIssues <= 0) return 'stop';
+    if (round >= maxRounds) return 'stop';
+    if (bestScore !== null && score < bestScore) return 'stop';
+    return 'fix';
+}
+
+/**
+ * Reviews and fixes until the card reaches the Auto-fix threshold in Quality pass settings, the
+ * configured round cap runs out, or a fix stops helping. The best-scoring version is what comes back,
+ * so a fix that makes things worse never costs the caller the card they had.
+ * @returns {Promise<{data: object, review: object, fixes: number, threshold: number, reached: boolean}>}
+ */
+export async function autoFixCard({ type, data, details = '', source = null, signal = null, onStatus = () => { }, onProgress = () => { }, maxRounds = null }) {
+    const s = api.settings();
+    const threshold = Number(s.autoFixBelow) || 0;
+    if (threshold <= 0) throw new Error('Set "Auto-fix when the score is below" in Quality pass settings first.');
+    const cap = Math.min(8, Math.max(1, Number(maxRounds ?? s.autoFixRounds) || 3));
+    let current = data;
+    let next = null;
+    let best = null;
+    let fixes = 0;
+    for (;;) {
+        onStatus(fixes === 0 ? 'Reviewing…' : `Reviewing after fix ${fixes}/${cap}…`);
+        const review = await reviewCard({ type, data: current, details, source, signal, previousIssues: next?.issues || [] });
+        if (next) review.previous = next.overall;
+        const banned = review.issues.some(i => i.field === 'names');
+        if (!best || review.overall > best.review.overall) best = { data: current, review };
+        if (best.review !== review) {
+            // A fix that scored worse than what we already had: keep the old card and stop.
+            onStatus(`Fix ${fixes} scored ${review.overall}/10, below the ${best.review.overall}/10 we already had. Keeping that.`);
+        }
+        const fixable = review.issues.filter(i => !i.skip).length;
+        const step = autoFixStep({ score: review.overall, threshold, hasBannedNames: banned, fixableIssues: fixable, round: fixes, maxRounds: cap, bestScore: best.review === review ? null : best.review.overall });
+        if (step !== 'fix') {
+            if (best.data !== current) onStatus(`Keeping the ${best.review.overall}/10 version.`);
+            return { data: best.data, review: best.review, fixes, threshold, reached: best.review.overall >= threshold && !best.review.issues.some(i => i.field === 'names') };
+        }
+        onStatus(`Score ${review.overall}/10, under ${threshold}. Fixing issues (round ${fixes + 1}/${cap})…`);
+        const fixed = await reviseCard({ type, data: current, mode: 'fix', issues: review.issues, details, source, signal });
+        if (!fixed.changed.length) {
+            onStatus('The model made no changes; keeping the card.');
+            return { data: best.data, review: best.review, fixes, threshold, reached: best.review.overall >= threshold && !best.review.issues.some(i => i.field === 'names') };
+        }
+        current = fixed.data;
+        next = review;
+        fixes++;
+        // Persist each accepted fix, so a Stop halfway through still keeps the work.
+        onProgress({ data: current, fixes });
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Tokens & rendering
 // ---------------------------------------------------------------------------
 

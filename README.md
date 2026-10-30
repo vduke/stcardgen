@@ -25,9 +25,10 @@ Generate personas, character cards, and persona-centered sandbox worlds with a v
   - Token counts are shown per field and in total. For worlds you also see the lorebook total and the always-on (constant) cost.
   - Banned names are detected in code anywhere in the text. They are renamed by a dedicated step that rejects banned suggestions, not by the model's general fix.
   - **Auto mode** reviews every generation, including bulk, and fixes once when the score is below a threshold or banned names are found. Drafts show a ★ score badge.
+- **Auto Fix** (on each ready draft) is the manual version without a limit of one pass: it reviews, fixes, and reviews again on its own until the draft reaches the Auto-fix threshold from Quality pass settings, the round cap runs out, or a fix stops improving the score. It keeps the best-scoring version it saw, writes each accepted fix to the draft as it goes (so Stop keeps the work), and shows the round, score and target in the task panel. With the target at 0 the button says so and stays disabled: there is no score to reach.
   - A **reviewer connection profile** lets a different model do the grading. Self-review is lenient.
 - **Bulk Create**: queue many images at once, with shared and per-image details. The queue runs in the background and every result lands in **Drafts**. **Run queue** processes everything queued; **Regenerate** on a card (or on the selected cards) generates only those, so drafts left queued by a stopped batch stay put.
-- **Drafts**: review, edit, regenerate, approve (one or many), or delete personas, characters and worlds. Drafts and their images persist across reloads. Images are stored in `data/<user>/user/files/stcardgen_*`.
+- **Drafts**: review, edit, regenerate, **Auto Fix**, approve (one or many), or delete personas, characters and worlds. Drafts and their images persist across reloads. Images are stored in `data/<user>/user/files/stcardgen_*`.
 - **Import Card as Persona**: pick `.png`/`.json` character cards. One file opens the editor; several go straight to Drafts.
 - **Manage Personas**: your installed personas, with score badges.
   - **Review & edit** opens the same editor with review, fix, enhance, optimize, instructions and undo. **Save Persona** writes the changes back to that persona.
@@ -58,7 +59,7 @@ Find them under Extensions → Card Generator.
 - **Generation prompt / rules** for personas, characters and worlds: your own guidelines.
 - **Output format**: the JSON shape the model must return. Keep the keys if you edit it.
 - **Entries per generation / World max tokens**: the size of each world generation. The default is 24000 because a reasoning model spends 10–13k of it before it writes any JSON; lower it only if your model's context is small.
-- **Quality pass**: the reviewer profile, auto-review, the auto-fix threshold, and the review rubric and Enhance/Optimize instructions.
+- **Quality pass**: the reviewer profile, auto-review, the auto-fix threshold, how many Auto Fix rounds a draft may spend (1–8, default 3), and the review rubric and Enhance/Optimize instructions.
 - **Image prompts**: turn suggestions on or off, and edit the instruction.
 - **Ban instruction**: a template that supports `{{bannedNames}}` and `{{type}}`.
 
