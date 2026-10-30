@@ -464,16 +464,19 @@
 
 .stcg-draft-buttons {
     display: flex;
+    /* Five actions do not fit in a narrow card: wrap the row instead of squeezing labels onto two
+       lines inside a button. */
+    flex-wrap: wrap;
     gap: 4px;
+    align-items: center;
 }
 
 .stcg-draft-buttons .menu_button {
     margin: 0;
     padding: 3px 8px;
-}
-
-.stcg-d-review {
-    flex: 1;
+    /* Never shrink a button below its label; the row wraps first. */
+    flex: 0 0 auto;
+    white-space: nowrap;
 }
 
 /* ---------- World builder ---------- */
