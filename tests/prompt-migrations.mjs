@@ -89,6 +89,7 @@ console.log('real migrations still fire on genuinely old prompts');
 for (const name of Object.keys(defaults)) {
     // Reconstruct a pre-migration prompt by reversing each pair, then migrate it forward.
     test(`${name}: an old prompt is migrated to the current default`, () => {
+        if (!(tables[name] || []).length) return;   // retired table: nothing to reverse-map
         const current = migrate(defaults[name], name);
         let old = current;
         for (const [o, n] of [...(tables[name] || [])].reverse()) {
@@ -139,13 +140,19 @@ test('deleting pairs still delete, and stay deleted', () => {
     assert.strictEqual(t, '');
     assert.strictEqual(quality.applyLineMigrations(t, tables.CHARACTER_FORMAT_LINE_MIGRATIONS), '');
 });
+// 0.8.0 retired the persona pairs, so the cleanup is a regex anchored on the block's own heading
+// and closing sentence. The test pulls that regex out of the source rather than restating it.
+const leaked = eval(indexSrc.match(/const LEAKED_PERSONA_BLOCK = (\/.*\/);/)[1]);
 test('a character prompt saved during 0.6.0 is cleaned of the leaked persona block', () => {
-    const block = tables.PERSONA_LINE_MIGRATIONS[0][1];
+    const block = '### BINDING SESSION CONSTRAINTS (READ FIRST — these override your instincts)\n'
+        + 'A "PRE-ROLLED FOR THIS SESSION" block appears above this prompt.\n'
+        + 'nothing in the block overrides them. Write it, don\'t smooth it out.';
     const scenario = '- scenario: the starting situation between {{char}} and {{user}}.';
     const clean = defaults.PROMPT_LINE_MIGRATIONS;
     const dirty = clean.replace(scenario, scenario + '\n' + block);
-    assert.ok(dirty.includes(block), 'the block was not injected into the test prompt');
-    assert.strictEqual(dirty.replace('\n' + block, ''), clean);
+    assert.ok(dirty.includes('BINDING SESSION CONSTRAINTS'), 'the block was not injected into the test prompt');
+    assert.strictEqual(dirty.replace(leaked, ''), clean);
+    assert.strictEqual(clean.replace(leaked, ''), clean, 'cleanup is not idempotent');
 });
 
 test('a line the user edited is left alone', () => {
