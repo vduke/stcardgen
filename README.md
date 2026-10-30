@@ -18,7 +18,7 @@ Generate personas, character cards, and persona-centered sandbox worlds with a v
 - **Quality pass**: after generation, a second request scores the result 1–10 on specificity, consistency, playability, rules and efficiency (worlds also get keywords and coverage), and lists concrete issues.
   - Personas are judged as personas. The reviewer never asks for a first message, greetings or example dialogue, and such issues are dropped if it raises them anyway.
   - **Fix issues** sends back a patch of only the fields or entries that need to change, then re-reviews. Untick an issue to leave it alone; unticking a name issue keeps that name.
-  - **Your instructions** steer Fix, Enhance, Optimize, New name and the per-field buttons (e.g. "keep her shy, no tragic backstory"). With no ticked issues, Fix applies just your instructions.
+  - **Your instructions** steer Fix, Enhance, Optimize, New name and the per-field buttons (e.g. "keep her shy, no tragic backstory"). With no ticked issues, Fix applies just your instructions. **Fix clears the box once it has run**, so the next Fix starts from the new review instead of replaying the previous ask; a failed Fix keeps them so you can retry.
   - **New name** (next to the Name field) picks a fresh name and replaces the old one everywhere it appears, including first-name-only and surname-only mentions. Banned, overused and already-taken names are rejected. Undo brings the old name back.
   - **Enhance** and **Optimize** grow or trim the whole card, a single field, or a single lorebook entry. A rewrite that goes the wrong way is rejected.
   - **Undo** reverts any AI change.

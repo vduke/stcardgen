@@ -1613,6 +1613,11 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
             state.data = result.data;
             writeFields();
             if (mode === 'fix') {
+                // The fix consumed these instructions. Left in the box they would be sent again with
+                // the next Fix, against a fresh review, where the previous ask reads as new steer and
+                // can undo what the re-review is now asking for.
+                state.steer = '';
+                $root.find('.stcg-steer').val('').trigger('input');
                 status('Re-reviewing…');
                 const before = state.review;
                 const fixed = (before?.issues || []).filter(i => !i.skip);

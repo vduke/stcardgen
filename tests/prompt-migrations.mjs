@@ -221,6 +221,22 @@ test('getBannedNames expands before it de-duplicates', () => {
     assert.match(indexSrc, /for \(const name of expandBannedNames\(names\)\)/);
 });
 
+// The instructions box is sent with Fix. If it survives the fix, the next Fix replays the old ask
+// against a fresh review, where it reads as new steer.
+test('Fix clears the instructions it just applied', () => {
+    const fixBlock = indexSrc.match(/if \(mode === 'fix'\) \{[\s\S]*?\n            \}/)[0];
+    assert.match(fixBlock, /state\.steer = '';/);
+    assert.match(fixBlock, /find\('\.stcg-steer'\)\.val\(''\)/);
+});
+test('a failed Fix keeps the instructions so they can be retried', () => {
+    const fixBlock = indexSrc.match(/if \(mode === 'fix'\) \{[\s\S]*?\n            \}/)[0];
+    // The clear sits after the reviseCard await, so a throw never reaches it.
+    const reviseIndex = indexSrc.indexOf('const result = await reviseCard({ type: state.type, data: state.data, mode, issues:');
+    const clearIndex = indexSrc.indexOf("state.steer = '';");
+    assert.ok(reviseIndex !== -1 && clearIndex > reviseIndex, 'clear must follow the request');
+    assert.ok(fixBlock.indexOf("state.steer = '';") !== -1);
+});
+
 test('a line the user edited is left alone', () => {
     const edited = 'my own playability wording, untouched';
     assert.strictEqual(quality.applyLineMigrations(edited, reviewPairs), edited);
