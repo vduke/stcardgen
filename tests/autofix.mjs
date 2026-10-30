@@ -8,7 +8,7 @@
 // Run from the repo root: node tests/autofix.mjs
 
 import assert from 'node:assert';
-import { autoFixStep } from '../quality.js';
+import { autoFixStep, QUALITY_PANEL_HTML } from '../quality.js';
 
 let failures = 0;
 function test(name, fn) {
@@ -55,6 +55,11 @@ test('the threshold is never bypassed by the cap', () => {
     // At the cap with the score under the threshold, the loop stops but the caller still returns the
     // best version it saw; no round may be skipped while rounds remain.
     assert.equal(autoFixStep({ ...base, round: 2, maxRounds: 3, score: 7.9 }), 'fix');
+});
+
+test('the quality panel offers Auto Fix next to Fix issues', () => {
+    assert.match(QUALITY_PANEL_HTML, /stcg-q-autofix/);
+    assert.match(QUALITY_PANEL_HTML, /Review and fix on repeat/);
 });
 
 console.log(failures ? `\n${failures} test(s) failed` : '\nall tests passed');

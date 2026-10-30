@@ -6,7 +6,7 @@ import { power_user } from '../../../power-user.js';
 import { initPersona, getUserAvatars, user_avatar, setPersonaDescription } from '../../../personas.js';
 import { debounce } from '../../../utils.js';
 import {
-    initQuality, reviewCard, reviseCard, reviseField, renameCard, qualityPass, autoFixCard, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, scoreClass,
+    initQuality, reviewCard, reviseCard, reviseField, renameCard, qualityPass, autoFixCard, autoFixTarget, autoFixRoundCap, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, scoreClass,
     QUALITY_PANEL_HTML, RENAME_CARD_HTML, fieldOpsHtml, wireIssueChecks, canFix, DEFAULT_REVIEW_PROMPT, DEFAULT_ENHANCE_PROMPT, DEFAULT_OPTIMIZE_PROMPT, migrateReviewPrompt, applyLineMigrations,
 } from './quality.js';
 import { initWorld, openWorldBuilder, generateWorld, normalizeWorld, normalizeEntry, saveWorldToST, DEFAULT_WORLD_PROMPT, DEFAULT_WORLD_FORMAT, WORLD_PROMPT_STAMP, WORLD_PROMPT_HEADER, WORLD_PROMPT_LINE_MIGRATIONS, WORLD_FORMAT_LINE_MIGRATIONS } from './world.js';
@@ -1507,6 +1507,12 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
 
     function updateFixButton() {
         $root.find('.stcg-q-fix').toggleClass('disabled', !canFix(state.review, $root.find('.stcg-steer').val()));
+        // Auto Fix needs a target score; with the threshold at 0 there is nothing to reach.
+        $root.find('.stcg-q-autofix')
+            .toggleClass('disabled', !autoFixTarget())
+            .attr('title', autoFixTarget()
+                ? `Review and fix on repeat until the card reaches ${autoFixTarget()}/10 in Quality pass settings (up to ${autoFixRoundCap()} fixes)`
+                : 'Set "Auto-fix when the score is below" in Quality pass settings first');
     }
 
     function renderQuality() {
@@ -1629,6 +1635,43 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
         });
     }
 
+    /** Auto Fix: review and patch on repeat until the card reaches the Quality pass target. */
+    function runAutoFix() {
+        const threshold = autoFixTarget();
+        if (!threshold) {
+            toastr.info('Set "Auto-fix when the score is below" in Quality pass settings first.', 'Card Generator');
+            return;
+        }
+        return runAi('Reviewing…', async (signal) => {
+            const snap = snapshot();
+            let result;
+            try {
+                result = await autoFixCard({
+                    type: state.type, data: state.data, details: state.details, steer: state.steer, signal,
+                    onStatus: status,
+                    onProgress: ({ data }) => {
+                        state.data = data;
+                        writeFields();
+                    },
+                });
+            } catch (error) {
+                // A Stop keeps the fixes that already landed; make them undoable in one step too.
+                if (JSON.stringify(state.data) !== JSON.stringify(snap.data)) pushHistory(snap);
+                throw error;
+            }
+            pushHistory(snap);
+            state.data = result.data;
+            state.review = result.review;
+            // The loop applied the instructions, so they are consumed like they are after Fix issues.
+            state.steer = '';
+            $root.find('.stcg-steer').val('').trigger('input');
+            writeFields();
+            return result.reached
+                ? `Reached ${result.review.overall}/10 in ${result.fixes} fix${result.fixes === 1 ? '' : 'es'}.`
+                : `Best ${result.review.overall}/10 after ${result.fixes} fix${result.fixes === 1 ? '' : 'es'}; ${threshold}/10 was not reached.`;
+        });
+    }
+
     function runFieldOp(field, mode) {
         return runAi(`${mode === 'enhance' ? 'Enhancing' : 'Optimizing'} ${field}…`, async (signal) => {
             const snap = snapshot();
@@ -1675,6 +1718,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
 
     $root.find('.stcg-q-review').on('click', runReview);
     $root.find('.stcg-q-fix').on('click', () => runRevise('fix'));
+    $root.find('.stcg-q-autofix').on('click', runAutoFix);
     $root.find('.stcg-q-enhance').on('click', () => runRevise('enhance'));
     $root.find('.stcg-q-optimize').on('click', () => runRevise('optimize'));
     $root.find('.stcg-q-undo').on('click', undo);
@@ -1892,16 +1936,6 @@ async function processDraft(draft, onStatus = () => { }) {
 /** Drafts whose Auto Fix loop is running; the grid disables their buttons and says so. */
 const autoFixingDrafts = new Set();
 
-/** The Quality pass target Auto Fix aims at. 0 means the user never set one. */
-function autoFixThreshold() {
-    return Number(settings().autoFixBelow) || 0;
-}
-
-/** How many fix rounds Auto Fix may spend. Capped so a stubborn card cannot run for an hour. */
-function autoFixCap() {
-    return Math.min(8, Math.max(1, Number(settings().autoFixRounds) || 3));
-}
-
 /**
  * Reviews a draft and fixes it, on repeat, until it reaches the Quality pass threshold, the round cap
  * runs out, or a fix stops improving the score. Writes each accepted fix to the draft as it goes, so a
@@ -1909,7 +1943,7 @@ function autoFixCap() {
  */
 async function autoFixDraft(draft) {
     if (autoFixingDrafts.has(draft.id)) return;
-    const threshold = autoFixThreshold();
+    const threshold = autoFixTarget();
     if (!threshold) {
         toastr.info('Set "Auto-fix when the score is below" in Quality pass settings first.', 'Card Generator');
         return;
@@ -1917,7 +1951,7 @@ async function autoFixDraft(draft) {
     autoFixingDrafts.add(draft.id);
     const controller = new AbortController();
     const task = startTask(`Auto-fixing ${draftLabel(draft)}`, {
-        total: autoFixCap(),
+        total: autoFixRoundCap(),
         detail: `Reviewing against a ${threshold}/10 target`,
         onStop: () => controller.abort(),
     });
@@ -2278,7 +2312,7 @@ async function openDrafts() {
                         <div class="stcg-draft-preview">${escapeHtml(draft.status === 'error' ? draft.error : (preview || draft.details || '')).slice(0, 220)}</div>
                         <div class="stcg-draft-buttons">
                             <div class="menu_button stcg-d-review" title="Review & edit"><i class="fa-solid fa-pen-to-square"></i> Review</div>
-                            <div class="menu_button stcg-d-auto" title="Review and fix this draft until it reaches the Auto-fix threshold in Quality pass settings (up to ${autoFixCap()} fixes)"><i class="fa-solid fa-wand-magic-sparkles"></i> Auto Fix</div>
+                            <div class="menu_button stcg-d-auto" title="Review and fix this draft until it reaches the Auto-fix threshold in Quality pass settings (up to ${autoFixRoundCap()} fixes)"><i class="fa-solid fa-wand-magic-sparkles"></i> Auto Fix</div>
                             ${!draft.image && draft.data?.image_prompt ? '<div class="menu_button stcg-d-copy-prompt" title="Copy image prompt (for ComfyUI)"><i class="fa-solid fa-image"></i></div>' : ''}
                             <div class="menu_button stcg-d-approve" title="Create without review"><i class="fa-solid fa-check"></i></div>
                             <div class="menu_button stcg-d-retry" title="Regenerate"><i class="fa-solid fa-rotate"></i></div>
@@ -2294,11 +2328,11 @@ async function openDrafts() {
             $card.find('.stcg-d-review').toggleClass('disabled', busy).on('click', () => !busy && openEditor({ type: draft.type, draft }));
             // Auto Fix needs a target: with the threshold at 0 there is nothing to reach, so the button says so.
             $card.find('.stcg-d-auto')
-                .toggleClass('disabled', busy || draft.status !== 'ready' || !autoFixThreshold())
-                .attr('title', autoFixThreshold()
-                    ? `Review and fix this draft until it reaches ${autoFixThreshold()}/10 (up to ${autoFixCap()} fixes)`
+                .toggleClass('disabled', busy || draft.status !== 'ready' || !autoFixTarget())
+                .attr('title', autoFixTarget()
+                    ? `Review and fix this draft until it reaches ${autoFixTarget()}/10 (up to ${autoFixRoundCap()} fixes)`
                     : 'Set "Auto-fix when the score is below" in Quality pass settings first')
-                .on('click', () => !busy && autoFixThreshold() && autoFixDraft(draft));
+                .on('click', () => !busy && autoFixTarget() && autoFixDraft(draft));
             $card.find('.stcg-d-copy-prompt').on('click', () => copyText(draft.data.image_prompt));
             $card.find('.stcg-d-approve').toggleClass('disabled', busy || draft.status !== 'ready').on('click', () => !busy && approveDrafts([draft.id]));
             $card.find('.stcg-d-retry').toggleClass('disabled', busy).on('click', () => !busy && requeue([draft.id]));

@@ -562,6 +562,16 @@ export async function qualityPass({ type, data, details = '', source = null, sig
 // Auto Fix loop (the drafts button)
 // ---------------------------------------------------------------------------
 
+/** The Quality pass target Auto Fix aims at (0 = none set). */
+export function autoFixTarget() {
+    return Math.max(0, Math.min(10, Number(api.settings().autoFixBelow) || 0));
+}
+
+/** How many fix rounds Auto Fix may spend: the settings field, clamped to 1-8. */
+export function autoFixRoundCap() {
+    return Math.min(8, Math.max(1, Number(api.settings().autoFixRounds) || 3));
+}
+
 /**
  * The next thing an Auto Fix round should do. Pure, so the stopping rules can be tested without a
  * model: a loop that only stops at the cap would spend minutes and then quietly hand back a worse card.
@@ -582,11 +592,10 @@ export function autoFixStep({ score, threshold, hasBannedNames = false, fixableI
  * so a fix that makes things worse never costs the caller the card they had.
  * @returns {Promise<{data: object, review: object, fixes: number, threshold: number, reached: boolean}>}
  */
-export async function autoFixCard({ type, data, details = '', source = null, signal = null, onStatus = () => { }, onProgress = () => { }, maxRounds = null }) {
-    const s = api.settings();
-    const threshold = Number(s.autoFixBelow) || 0;
+export async function autoFixCard({ type, data, details = '', source = null, steer = '', signal = null, onStatus = () => { }, onProgress = () => { }, maxRounds = null }) {
+    const threshold = autoFixTarget();
     if (threshold <= 0) throw new Error('Set "Auto-fix when the score is below" in Quality pass settings first.');
-    const cap = Math.min(8, Math.max(1, Number(maxRounds ?? s.autoFixRounds) || 3));
+    const cap = maxRounds === null ? autoFixRoundCap() : Math.min(8, Math.max(1, Number(maxRounds) || 3));
     let current = data;
     let next = null;
     let best = null;
@@ -608,7 +617,7 @@ export async function autoFixCard({ type, data, details = '', source = null, sig
             return { data: best.data, review: best.review, fixes, threshold, reached: best.review.overall >= threshold && !best.review.issues.some(i => i.field === 'names') };
         }
         onStatus(`Score ${review.overall}/10, under ${threshold}. Fixing issues (round ${fixes + 1}/${cap})…`);
-        const fixed = await reviseCard({ type, data: current, mode: 'fix', issues: review.issues, details, source, signal });
+        const fixed = await reviseCard({ type, data: current, mode: 'fix', issues: review.issues, details, source, steer, signal });
         if (!fixed.changed.length) {
             onStatus('The model made no changes; keeping the card.');
             return { data: best.data, review: best.review, fixes, threshold, reached: best.review.overall >= threshold && !best.review.issues.some(i => i.field === 'names') };
@@ -705,6 +714,7 @@ export const QUALITY_PANEL_HTML = `
         <div class="stcg-quality-buttons">
             <div class="menu_button stcg-q-review" title="Score the card against the rubric and list issues"><i class="fa-solid fa-clipboard-check"></i> Review</div>
             <div class="menu_button stcg-q-fix" title="Patch the card to fix the ticked issues, following your instructions"><i class="fa-solid fa-screwdriver-wrench"></i> Fix issues</div>
+            <div class="menu_button stcg-q-autofix" title="Review and fix on repeat until the score reaches the Auto-fix threshold in Quality pass settings"><i class="fa-solid fa-wand-magic-sparkles"></i> Auto Fix</div>
             <div class="menu_button stcg-q-enhance" title="Expand the whole card with richer, specific detail"><i class="fa-solid fa-up-right-and-down-left-from-center"></i> Enhance</div>
             <div class="menu_button stcg-q-optimize" title="Trim the whole card to fewer tokens, keeping what matters"><i class="fa-solid fa-scissors"></i> Optimize</div>
             <div class="menu_button stcg-q-undo" title="Undo the last AI change"><i class="fa-solid fa-rotate-left"></i> Undo</div>

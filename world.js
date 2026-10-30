@@ -3,7 +3,7 @@ import { Popup, POPUP_TYPE, POPUP_RESULT } from '../../../popup.js';
 import { power_user } from '../../../power-user.js';
 import { user_avatar } from '../../../personas.js';
 import { debounce } from '../../../utils.js';
-import { reviewCard, reviseCard, reviseField, renameNames, renameCard, qualityPass, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, QUALITY_PANEL_HTML, RENAME_CARD_HTML, fieldOpsHtml, wireIssueChecks, canFix } from './quality.js';
+import { reviewCard, reviseCard, reviseField, renameNames, renameCard, qualityPass, autoFixCard, autoFixTarget, autoFixRoundCap, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, QUALITY_PANEL_HTML, RENAME_CARD_HTML, fieldOpsHtml, wireIssueChecks, canFix } from './quality.js';
 import { startTask, guardClosing } from './tasks.js';
 import { rollPreRoll, formatPreRoll } from './preroll.js';
 
@@ -641,6 +641,12 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
 
     function updateFixButton() {
         $root.find('.stcg-q-fix').toggleClass('disabled', !canFix(state.review, $root.find('.stcg-steer').val()));
+        // Auto Fix needs a target score; with the threshold at 0 there is nothing to reach.
+        $root.find('.stcg-q-autofix')
+            .toggleClass('disabled', !autoFixTarget())
+            .attr('title', autoFixTarget()
+                ? `Review and fix on repeat until the world reaches ${autoFixTarget()}/10 in Quality pass settings (up to ${autoFixRoundCap()} fixes)`
+                : 'Set "Auto-fix when the score is below" in Quality pass settings first');
     }
 
     function renderQuality() {
@@ -721,6 +727,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
             rename: 'Finding new names…',
             review: 'Reviewing…',
             fix: 'Fixing issues…',
+            autofix: 'Auto-fixing…',
             enhance: 'Enhancing…',
             optimize: 'Optimizing…',
         };
@@ -738,6 +745,35 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
                 refresh();
                 const unresolved = result.unresolved.length ? ` Could not find an allowed name for: ${result.unresolved.join(', ')}.` : '';
                 return result.applied.length ? `Renamed: ${result.applied.join(', ')}.${unresolved}` : `No usable new names.${unresolved} Edit them by hand.`;
+            }
+            if (kind === 'autofix') {
+                const threshold = autoFixTarget();
+                if (!threshold) {
+                    toastr.info('Set "Auto-fix when the score is below" in Quality pass settings first.', 'Card Generator');
+                    return 'No Auto Fix target set.';
+                }
+                let result;
+                try {
+                    result = await autoFixCard({
+                        ...quality(signal), data: state.data,
+                        onStatus: status,
+                        onProgress: ({ data }) => { state.data = data; refresh(); },
+                    });
+                } catch (error) {
+                    // A Stop keeps the fixes that already landed; make them undoable in one step too.
+                    if (JSON.stringify(state.data) !== JSON.stringify(snap.data)) pushHistory(snap);
+                    throw error;
+                }
+                pushHistory(snap);
+                state.data = result.data;
+                state.review = result.review;
+                // The loop applied the instructions, so they are consumed like they are after Fix issues.
+                state.steer = '';
+                $root.find('.stcg-steer').val('').trigger('input');
+                refresh();
+                return result.reached
+                    ? `Reached ${result.review.overall}/10 in ${result.fixes} fix${result.fixes === 1 ? '' : 'es'}.`
+                    : `Best ${result.review.overall}/10 after ${result.fixes} fix${result.fixes === 1 ? '' : 'es'}; ${threshold}/10 was not reached.`;
             }
             if (kind === 'fix' || kind === 'enhance' || kind === 'optimize') {
                 const result = await reviseCard({ ...quality(signal), data: state.data, mode: kind, issues: state.review?.issues || [] });
@@ -856,6 +892,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
 
     $root.find('.stcg-q-review').on('click', () => run('review'));
     $root.find('.stcg-q-fix').on('click', () => run('fix'));
+    $root.find('.stcg-q-autofix').on('click', () => run('autofix'));
     $root.find('.stcg-q-enhance').on('click', () => run('enhance'));
     $root.find('.stcg-q-optimize').on('click', () => run('optimize'));
     $root.find('.stcg-q-undo').on('click', undo);
