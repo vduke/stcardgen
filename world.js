@@ -5,66 +5,56 @@ import { user_avatar } from '../../../personas.js';
 import { debounce } from '../../../utils.js';
 import { reviewCard, reviseCard, reviseField, renameNames, renameCard, qualityPass, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, QUALITY_PANEL_HTML, RENAME_CARD_HTML, fieldOpsHtml, wireIssueChecks, canFix } from './quality.js';
 import { startTask, guardClosing } from './tasks.js';
+import { rollPreRoll, formatPreRoll } from './preroll.js';
 
 // [old line, new line] pairs applied to saved prompts on load; see PROMPT_LINE_MIGRATIONS in index.js.
-export const WORLD_PROMPT_LINE_MIGRATIONS = [
-    [
-        '- first_mes: an immersive opening scene addressed to {{user}} in second person, ending on an open situation. Never act or speak for {{user}}.',
-        `- first_mes: an immersive opening scene addressed to {{user}} in second person. Never act or speak for {{user}}. End on a concrete beat (an NPC speaking or acting, or something happening) that {{user}} can react to. Never end with a question to the player such as "What do you do?", "What's your next move?" or "Where do you go from here?".
-- alternate_greetings: 1-2 alternative opening scenes set at different places or moments in {{user}}'s life, following the same rules as first_mes.`,
-    ],
-    // No Main Prompt override on cards; narrator example messages instead.
-    [
-        '- system_prompt: short narrator instructions (optional).',
-        '- mes_example: 2-3 short example exchanges, each starting with <START> and using {{user}}: and {{char}}: prefixes, where {{char}} narrates and voices different NPCs so their distinct speech styles show.',
-    ],
-    [
-        '- NPC entries: full name, age, role, relationship to {{user}}, appearance, personality, speech style, current goal.',
-        '- NPC entries: full name, age, role, relationship to {{user}}, appearance, personality, speech style, current goal. For important NPCs (family, close friends, love interests, rivals, bosses, crew), end the content with "Example dialogue:" followed by 2-3 short lines in their own voice, showing how they talk to {{user}}. These lines may push the entry past 180 words.',
-    ],
-    // The world must not pander to the persona. Saved prompts get the new preamble if the old opening line is intact.
-    [
-        'Build the world around who {{user}} is. Work out what their life needs and fill it in:',
-        `Build a world that would exist whether or not {{user}} had ever been born, then place {{user}} inside it. Do NOT build a world out of the persona's traits, kinks or psychology.
-
-The persona's inner life is not the setting. Their personality, fears, cravings and kinks shape how they experience the world, not what the world contains. If {{user}} is hungry for attention, that does not mean every NPC dotes on them; it means they notice who does not. If {{user}} is a hedonist, the world is not a buffet; it is ordinary and they are greedy in it. A sweet, passive, obedient persona does not need a kind world. A prickly persona does not need a hostile one.
-
-Rules for a non-pandering world:
-- People have their own lives, goals, loyalties and problems that have nothing to do with {{user}}. Most of them are busy with something else.
-- Institutions are indifferent or self-interested. Schools, jobs, families and authorities have their own rules and pressures, and they do not reorganise themselves around one person.
-- The world is not a paradise made for {{user}}, and not a grim dystopia either. It is ordinary, mixed, and mostly indifferent: some warmth, some friction, some luck, some boredom.
-- Do not make every NPC a mirror of {{user}}'s traits or a supplier of what {{user}} craves. At least some NPCs should be uninterested, incompatible or a little disappointing.
-- Conflict comes from ordinary friction (money, time, obligation, other people's plans) more than from {{user}}'s psychology made manifest.
-
-What the world does need to cover is {{user}}'s practical circumstances. Work out what their life needs and fill it in:`,
-    ],
-    // The setting is not a stage built for the persona.
-    [
-        '- description: setting overview, tone, and the narrator\'s role (voices all NPCs, describes the world, keeps continuity, lets {{user}} drive). 300-600 words.',
-        '- description: setting overview, tone, and the narrator\'s role (voices all NPCs, describes the world, keeps continuity, lets {{user}} drive). The setting is an ordinary world with its own momentum, not a stage built for {{user}}: it does not flatter them, and it does not punish them. 300-600 words.',
-    ],
-];
+export const WORLD_PROMPT_LINE_MIGRATIONS = [];
 
 export const WORLD_FORMAT_LINE_MIGRATIONS = [
     ['  "system_prompt": "",\n', '  "mes_example": "",\n'],
 ];
 
+// Shipped-prompt identity: a saved world prompt that still opens with this line and lacks the stamp is
+// the shipped text, and gets replaced when the shape changes. Anything rewritten from line one is kept.
+export const WORLD_PROMPT_STAMP = '### THE WORLD IS NOT BUILT AROUND THE PERSONA';
+export const WORLD_PROMPT_HEADER = 'You are a world-builder for SillyTavern roleplay.';
+
 export const DEFAULT_WORLD_PROMPT = `You are a world-builder for SillyTavern roleplay. You turn a user persona into a living sandbox: a world/narrator character card plus a lorebook (World Info) that makes the setting feel real and reactive.
 
 The persona is the character the USER plays. Refer to them as {{user}} everywhere. The sandbox card ({{char}}) is not one person: it is the narrator / game master who describes the world and voices every NPC.
 
+### THE WORLD IS NOT BUILT AROUND THE PERSONA
 Build a world that would exist whether or not {{user}} had ever been born, then place {{user}} inside it. Do NOT build a world out of the persona's traits, kinks or psychology.
 
 The persona's inner life is not the setting. Their personality, fears, cravings and kinks shape how they experience the world, not what the world contains. If {{user}} is hungry for attention, that does not mean every NPC dotes on them; it means they notice who does not. If {{user}} is a hedonist, the world is not a buffet; it is ordinary and they are greedy in it. A sweet, passive, obedient persona does not need a kind world. A prickly persona does not need a hostile one.
 
-Rules for a non-pandering world:
 - People have their own lives, goals, loyalties and problems that have nothing to do with {{user}}. Most of them are busy with something else.
 - Institutions are indifferent or self-interested. Schools, jobs, families and authorities have their own rules and pressures, and they do not reorganise themselves around one person.
-- The world is not a paradise made for {{user}}, and not a grim dystopia either. It is ordinary, mixed, and mostly indifferent: some warmth, some friction, some luck, some boredom.
+- The world is not a paradise made for {{user}}, and not a grim dystopia either. It is ordinary, mixed and mostly indifferent: some warmth, some friction, some luck, some boredom.
 - Do not make every NPC a mirror of {{user}}'s traits or a supplier of what {{user}} craves. At least some NPCs should be uninterested, incompatible or a little disappointing.
 - Conflict comes from ordinary friction (money, time, obligation, other people's plans) more than from {{user}}'s psychology made manifest.
 
-What the world does need to cover is {{user}}'s practical circumstances. Work out what their life needs and fill it in:
+### NOBODY IN THIS WORLD HAS READ THE PERSONA'S CARD
+The persona's card explains how they experience the world. It is not a fact sheet the world has memorised.
+- Default to ignorance. An NPC knows only what they could plausibly have seen, been told, heard second-hand or guessed. They do not know what {{user}} wants, fears or is like when nobody is watching unless {{user}} has shown it, said it, or been seen doing it.
+- Kinks and private appetites are the most private thing on that card. Most people never find out. At most one or two NPCs know anything specific, and they know it as an anecdote rather than a label. Nobody introduces {{user}} as "the one who likes being tied up".
+- Reputation is local and narrow: the neighbour knows the hours {{user}} keeps, the colleague knows how they work, the sister knows what they were like at nine. None of them holds the whole card.
+- When word travels, name the channel: who saw it, who they told, how it got distorted.
+
+### THE NARRATOR NEVER SPEAKS FOR {{user}}
+The narrator is the room, the weather and the NPCs, not {{user}}'s inner voice.
+- Describe what happens, what people do, what can be seen, heard and smelled. Never what {{user}} thinks, decides, remembers or feels.
+- Do not assign motives to {{user}}. "She can tell he is lying" is allowed only if it is visible; "she does not trust him" is not.
+- Never end a beat with a question to the player. End on something concrete they can react to.
+
+### LEAVE ROOM TO REVEAL
+The point of a sandbox is that the player finds out who their persona is by acting. Build places and people that offer choices, not verdicts.
+- NPCs get opinions, questions, offers, mistakes and small demands that {{user}} can answer however they like.
+- At least a third of the entries should be open-ended: a conversation that could go several ways, a problem nobody has solved, a person with an unstated reason to be interested.
+- Never pre-answer what {{user}} will do about anything.
+
+### WHAT THE WORLD MUST COVER
+{{user}}'s practical circumstances. Work out what their life needs and fill it in:
 - Home and family: where they live, parents/siblings/partner, household dynamics.
 - Work or school: the institution, its culture, bosses/teachers/classmates/crew.
 - Social circle: friends, rivals, love interests, enemies, each with their own goals.
@@ -74,16 +64,23 @@ What the world does need to cover is {{user}}'s practical circumstances. Work ou
 - Hooks: tensions, secrets and upcoming events that can start stories.
 Examples: a college student needs the campus, their dorm or apartment, parents, roommate, friend group, professors, a part-time job, parties and local spots. A starship captain needs the ship, the crew, the star system being traveled, political powers and alliances, rivals, ports of call and the current mission.
 
-Sandbox card:
-- description: setting overview, tone, and the narrator's role (voices all NPCs, describes the world, keeps continuity, lets {{user}} drive). The setting is an ordinary world with its own momentum, not a stage built for {{user}}: it does not flatter them, and it does not punish them. 300-600 words.
-- scenario: where {{user}}'s story starts.
-${WORLD_PROMPT_LINE_MIGRATIONS[0][1]}
-${WORLD_PROMPT_LINE_MIGRATIONS[1][1]}
+### BINDING SESSION CONSTRAINTS
+If a binding block appears above this prompt it is pre-rolled for this world: PLACE, PRESSURE, POWER, TEXTURE, SEASON and OPENING. Use them as given. The world is built out of those six, not out of the persona. OPENING is where {{user}}'s story starts.
+Because they are binding, the setting has an identity of its own that a batch of worlds from the same persona cannot converge on.
+
+### SANDWICH CARD
+- name: the world's name, not a person's.
+- description: setting overview, tone, and the narrator's role (voices all NPCs, describes the world, keeps continuity, lets {{user}} drive). The setting is an ordinary world with its own momentum, not a stage built for {{user}}: it does not flatter them and it does not punish them. 300-600 words. Include one line on what the world does not care about, and one line on what nobody here knows about {{user}} yet.
+- scenario: where {{user}}'s story starts, on a live moment with something already unresolved.
+- first_mes: an immersive opening scene addressed to {{user}} in second person, 180-300 words. At most one short paragraph of setting before someone moves or speaks. Never act or speak for {{user}}. End on a concrete beat (an NPC speaking or acting, or something happening) that {{user}} can react to. Never end with a question to the player such as "What do you do?", "What's your next move?" or "Where do you go from here?".
+- alternate_greetings: 1-2 alternative opening scenes set at different places or moments in {{user}}'s life, following the same rules as first_mes.
+- mes_example: 2-3 short example exchanges, each starting with <START> and using {{user}}: and {{char}}: prefixes, where {{char}} narrates and voices different NPCs so their distinct speech styles show.
 - tags: 3-8 genre/setting tags.
 
-Lorebook entries:
-- One topic per entry (one NPC, one place, one faction, one custom...). 50-180 words each, factual reference style, present tense. Refer to the persona as {{user}}. Each NPC's goal should make sense without {{user}} in the room; not every NPC needs to care about them.
-${WORLD_PROMPT_LINE_MIGRATIONS[2][1]}
+### LOREBOOK ENTRIES
+- One topic per entry (one NPC, one place, one faction, one custom...). 50-140 words each, factual reference style, present tense. Refer to the persona as {{user}}. Short entries are better than truncated JSON: close every brace.
+- Each NPC's goal must make sense without {{user}} in the room, and must state what that NPC does and does not know about {{user}}.
+- NPC entries: full name, age, role, relationship to {{user}}, appearance, personality, speech style, current goal. For important NPCs (family, close friends, love interests, rivals, bosses, crew), end the content with "Example dialogue:" followed by 2-3 short lines in their own voice, showing how they talk to {{user}}. These lines may push the entry past 160 words.
 - keys: 2-6 specific trigger words people would actually type in chat: names, nicknames, surnames, place names, distinctive terms, plus short/lowercase forms. Avoid generic words (the, home, he, she, mom when there are several moms) that would fire constantly.
 - secondary_keys: optional. When set, the entry only fires if a primary key AND a secondary key appear. Use them to disambiguate.
 - constant: true only for 1-3 essential entries (core world rules, {{user}}'s immediate circumstances). Everything else is keyword-triggered.
@@ -239,9 +236,9 @@ function banText(source, excludeDraftId) {
         .replace(/{{type}}/g, "world's NPCs, places and factions");
 }
 
-function buildSystem({ includeImagePrompt, source, excludeDraftId }) {
+function buildSystem({ includeImagePrompt, source, excludeDraftId, preRollBlock = '' }) {
     const s = api.settings();
-    const parts = [s.worldPrompt.trim(), s.worldFormat.trim(), banText(source, excludeDraftId)];
+    const parts = [String(preRollBlock || '').trim(), s.worldPrompt.trim(), s.worldFormat.trim(), banText(source, excludeDraftId)];
     if (includeImagePrompt) parts.push(WORLD_IMAGE_PROMPT_INSTRUCTION);
     return parts.filter(Boolean).join('\n\n');
 }
@@ -268,35 +265,37 @@ async function request(messages, signal) {
  * @param {string} [options.imageDescription] A vision description of the world art to reuse
  * @returns {Promise<{data: object, raw: string, imageDescription: string}>}
  */
-export async function generateWorld({ source, imageBlob = null, details = '', excludeDraftId = null, imageDescription = '', signal = null, onStatus = () => { } }) {
-    if (!source?.name) throw new Error('Pick a persona to build the world around.');
+export async function generateWorld({ source, imageBlob = null, details = '', excludeDraftId = null, imageDescription = '', preRoll = '', signal = null, onStatus = () => { } }) {
+    if (!source?.name) throw new Error('Pick a persona to live in this world.');
     const s = api.settings();
     const count = clampInt(s.worldEntryCount, 3, 80, 20);
+    // Worlds converge the same way cards do: the same persona and the same prompt, batch after batch.
+    const preRollBlock = preRoll.trim() || (s.preRoll ? formatPreRoll(rollPreRoll({ type: 'world' }).values, 'world') : '');
     const image = await api.prepareImage(imageBlob, 'world', { description: imageDescription, signal, onStatus });
     if (image.description) onStatus('Building the world… big worlds can take a few minutes.');
     const text = [
-        `Build a living sandbox world around this persona.\n\n${sourceBlock(source)}`,
+        `Build a living sandbox world that this persona happens to live in.\n\n${sourceBlock(source)}\n\nThe persona's card describes how they experience the world. It is not a list of things the world must provide, and nobody in the world has read it.`,
         details?.trim() ? `World notes from the user (these take priority):\n${details.trim()}` : '',
-        `Create around ${count} lorebook entries.`,
+        `Create exactly ${count} lorebook entries, 50-140 words each, plus the sandbox card. Keep the card's description to 600 words.`,
         BAN_REMINDER,
         'Reply with the JSON object only.',
     ].filter(Boolean).join('\n\n');
 
     const messages = [
-        { role: 'system', content: buildSystem({ includeImagePrompt: !imageBlob && s.suggestImagePrompt, source, excludeDraftId }) },
+        { role: 'system', content: buildSystem({ includeImagePrompt: !imageBlob && s.suggestImagePrompt, source, excludeDraftId, preRollBlock }) },
         { role: 'user', content: userContent(text, image) },
     ];
     const raw = await request(messages, signal);
-    const data = normalizeWorld(api.parseJsonLoose(raw));
+    const data = normalizeWorld(api.parseJsonLoose(raw, s.worldMaxTokens));
     if (!data.entries.length) throw new Error('The model returned no lorebook entries. Check the raw output, or raise "World max tokens".');
-    return { data, raw: api.stripReasoning(raw), imageDescription: image.description };
+    return { data, raw: api.stripReasoning(raw), imageDescription: image.description, preRoll: preRollBlock };
 }
 
 /** Asks for additional entries that fill gaps in an existing world. */
-async function generateMoreEntries({ source, world, details, count, excludeDraftId, signal }) {
+async function generateMoreEntries({ source, world, details, count, excludeDraftId, preRoll = '', signal }) {
     const existing = world.entries.map(e => `- ${e.title} [${e.category}] keys: ${e.keys.join(', ')}`).join('\n');
     const text = [
-        `This world already exists for the persona below. Add ${count} NEW lorebook entries that fill gaps: more NPCs, places, factions, customs, events and story hooks. Do not repeat or rewrite existing topics, but you may connect new entries to them.`,
+        `This world already exists and the persona below already lives in it. Add ${count} NEW lorebook entries that fill gaps: more NPCs, places, factions, customs, events and story hooks. Do not repeat or rewrite existing topics, but you may connect new entries to them.`,
         sourceBlock(source),
         `World name: ${world.name}\nWorld description:\n${world.description}`,
         `Existing entries:\n${existing || '(none)'}`,
@@ -306,11 +305,11 @@ async function generateMoreEntries({ source, world, details, count, excludeDraft
     ].filter(Boolean).join('\n\n');
 
     const messages = [
-        { role: 'system', content: buildSystem({ includeImagePrompt: false, source, excludeDraftId }) },
+        { role: 'system', content: buildSystem({ includeImagePrompt: false, source, excludeDraftId, preRollBlock: preRoll }) },
         { role: 'user', content: text },
     ];
     const raw = await request(messages, signal);
-    const parsed = api.parseJsonLoose(raw);
+    const parsed = api.parseJsonLoose(raw, api.settings().worldMaxTokens);
     const entries = (Array.isArray(parsed.entries) ? parsed.entries : []).map(normalizeEntry).filter(e => e.title || e.content);
     if (!entries.length) throw new Error('The model returned no new entries.');
     const known = new Set(world.entries.map(e => e.title.toLowerCase()));
@@ -436,7 +435,7 @@ function entryHtml(entry, index) {
 /**
  * @param {object} [options]
  * @param {object} [options.draft] World draft to review
- * @param {string} [options.personaId] Persona to build around (defaults to the current one)
+ * @param {string} [options.personaId] Persona who lives in the world (defaults to the current one)
  */
 export async function openWorldBuilder({ draft = null, personaId = null } = {}) {
     const personas = listPersonas();
@@ -447,6 +446,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
         details: draft?.details ?? '',
         steer: draft?.steer ?? '',
         imageDescription: draft?.imageDescription ?? '',
+        preRoll: draft?.preRoll ?? '',
         imageBlob: null,
         imageUrl: '',
         imageChanged: false,
@@ -469,7 +469,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
         <h3 class="stcg-editor-title">${draft ? 'Review world draft' : 'Create World for Persona'}</h3>
         <div class="stcg-editor-body">
             <div class="stcg-editor-side">
-                <label>Build the world around</label>
+                <label>The persona who lives in it</label>
                 <select class="text_pole stcg-w-persona"></select>
                 <div class="stcg-w-persona-preview"></div>
                 <div class="stcg-dropzone stcg-dropzone-small" title="Optional world art. Click or drop an image">
@@ -486,6 +486,10 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
                 <label>Entries per generation
                     <input class="text_pole stcg-w-count" type="number" min="3" max="80">
                 </label>
+                <details class="stcg-w-preroll">
+                    <summary>Pre-rolled for this world</summary>
+                    <textarea class="text_pole stcg-w-pre-roll" rows="7" placeholder="Rolled on Generate. Edit any line to change what this world is built on; clear it to draw a fresh roll."></textarea>
+                </details>
                 <div class="menu_button stcg-generate"><i class="fa-solid fa-wand-magic-sparkles"></i> <span>Generate World</span></div>
                 <div class="menu_button stcg-w-more" title="Ask for more entries that fill gaps, keeping what you have"><i class="fa-solid fa-plus"></i> Add more entries</div>
                 <div class="menu_button stcg-w-rename" title="Ask the model for new names for entries using overused names, then replace them everywhere"><i class="fa-solid fa-signature"></i> Fix overused names</div>
@@ -573,6 +577,13 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
         state.raw = String($root.find('.stcg-raw-text').val() ?? '');
         state.steer = String($root.find('.stcg-steer').val() ?? '');
         state.imageDescription = String($root.find('.stcg-image-description').val() ?? '');
+        state.preRoll = String($root.find('.stcg-w-pre-roll').val() ?? '');
+    }
+
+    function setPreRoll(text) {
+        state.preRoll = String(text || '');
+        $root.find('.stcg-w-pre-roll').val(state.preRoll);
+        $root.find('.stcg-w-preroll').toggle(!!state.preRoll || api.settings().preRoll);
     }
 
     function renderEntries({ openIndex = null } = {}) {
@@ -746,10 +757,12 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
                     details: state.details,
                     excludeDraftId: draft?.id,
                     imageDescription: state.imageDescription,
+                    preRoll: state.preRoll,
                     signal,
                     onStatus: status,
                 });
                 setImageDescription(result.imageDescription);
+                setPreRoll(result.preRoll);
                 if (snap.data.entries.length) pushHistory(snap);
                 state.data = result.data;
                 state.raw = result.raw;
@@ -771,6 +784,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
                 details: state.details,
                 count: clampInt(s.worldEntryCount, 3, 80, 20),
                 excludeDraftId: draft?.id,
+                preRoll: state.preRoll,
                 signal,
             });
             pushHistory(snap);
@@ -819,6 +833,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
 
     // Wiring
     $root.find('.stcg-details').val(state.details);
+    setPreRoll(state.preRoll);
     $root.find('.stcg-steer').val(state.steer).on('input', updateFixButton);
     wireIssueChecks($root, () => state.review, updateFixButton);
     $root.find('.stcg-w-count').val(s.worldEntryCount).on('input', e => {
@@ -985,6 +1000,7 @@ async function saveWorldDraft(state, existing) {
     draft.steer = state.steer;
     draft.imageDescription = state.imageDescription;
     draft.review = state.review;
+    draft.preRoll = state.preRoll;
     draft.error = '';
     draft.status = state.data.entries.length ? 'ready' : 'queued';
     api.upsertDraft(draft);

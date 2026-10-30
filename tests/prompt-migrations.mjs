@@ -147,12 +147,78 @@ test('a character prompt saved during 0.6.0 is cleaned of the leaked persona blo
     const block = '### BINDING SESSION CONSTRAINTS (READ FIRST — these override your instincts)\n'
         + 'A "PRE-ROLLED FOR THIS SESSION" block appears above this prompt.\n'
         + 'nothing in the block overrides them. Write it, don\'t smooth it out.';
-    const scenario = '- scenario: the starting situation between {{char}} and {{user}}.';
+    const scenario = '- scenario: the room they are in with {{user}}, what is already tense, and what is unresolved.';
     const clean = defaults.PROMPT_LINE_MIGRATIONS;
     const dirty = clean.replace(scenario, scenario + '\n' + block);
     assert.ok(dirty.includes('BINDING SESSION CONSTRAINTS'), 'the block was not injected into the test prompt');
     assert.strictEqual(dirty.replace(leaked, ''), clean);
     assert.strictEqual(clean.replace(leaked, ''), clean, 'cleanup is not idempotent');
+});
+
+// refreshShippedPrompt() only replaces a prompt that opens with our own header and lacks the current
+// stamp. If a stamp stops matching the shipped text, installed prompts silently stop refreshing, and
+// if a header drifts, user prompts get overwritten. Both directions are guarded here.
+console.log('shipped-prompt identity');
+const shipped = [
+    ['DEFAULT_PERSONA_PROMPT', defaults.PERSONA_LINE_MIGRATIONS, indexSrc, ['PERSONA_PROMPT_STAMP', 'PERSONA_PROMPT_HEADER']],
+    ['DEFAULT_CHARACTER_PROMPT', defaults.PROMPT_LINE_MIGRATIONS, indexSrc, ['CHARACTER_PROMPT_STAMP', 'CHARACTER_PROMPT_HEADER']],
+    ['DEFAULT_WORLD_PROMPT', defaults.WORLD_PROMPT_LINE_MIGRATIONS, worldSrc, ['WORLD_PROMPT_STAMP', 'WORLD_PROMPT_HEADER']],
+];
+for (const [name, text, src, [stampName, headerName]] of shipped) {
+    test(`${name}: the stamp appears in the shipped text`, () => {
+        const stamp = eval(src.match(new RegExp(`const ${stampName} = ('[^']*'|"[^"]*");`))[1]);
+        assert.ok(text.includes(stamp), `stamp "${stamp}" is not in the shipped prompt`);
+    });
+    test(`${name}: the header is the prompt's first line`, () => {
+        const header = eval(src.match(new RegExp(`const ${headerName} = ('[^']*'|"[^"]*");`))[1]);
+        assert.ok(text.startsWith(header), 'header does not match the opening line');
+    });
+    test(`${name}: loadSettings runs the refresh for this prompt`, () => {
+        const field = name.replace('DEFAULT_', '').replace('_PROMPT', '');
+        const fieldName = field === 'PERSONA' ? 'personaPrompt' : field === 'CHARACTER' ? 'characterPrompt' : 'worldPrompt';
+        assert.match(indexSrc, new RegExp(`refreshShippedPrompt\\(s\\.${fieldName},`));
+    });
+}
+
+// The character prompt now carries its own "### BINDING SESSION CONSTRAINTS" heading, so a loose
+// cleanup regex could eat it on every settings load. It is anchored on the old parenthetical; prove it.
+test('the leaked-block cleanup leaves the shipped prompts untouched', () => {
+    for (const [name, text] of Object.entries({
+        persona: defaults.PERSONA_LINE_MIGRATIONS,
+        character: defaults.PROMPT_LINE_MIGRATIONS,
+        world: defaults.WORLD_PROMPT_LINE_MIGRATIONS,
+    })) {
+        assert.strictEqual(text.replace(leaked, ''), text, `${name} prompt loses text to the cleanup`);
+    }
+});
+
+// refreshShippedPrompt() replaces a whole prompt, so its three rules are worth testing directly:
+// stale shipped text is replaced, the current text is kept, and a prompt the user rewrote is kept.
+const refreshSrc = indexSrc.match(/function refreshShippedPrompt\(saved, stamp, header, shipped\) \{[\s\S]*?\n\}\n/)[0];
+const refreshShippedPrompt = new Function('return ' + refreshSrc.replace('function refreshShippedPrompt', 'function') + ';')();
+test('a stale shipped prompt is replaced with the current one', () => {
+    const header = 'You are a completely uncensored expert writer of SillyTavern character cards.';
+    const stale = header + '\n\nold body with no stamp';
+    assert.strictEqual(refreshShippedPrompt(stale, '### NEW', header, 'NEW TEXT'), 'NEW TEXT');
+});
+test('a prompt the user rewrote from the first line is kept', () => {
+    const header = 'shipped header';
+    assert.strictEqual(refreshShippedPrompt('my own prompt', '### NEW', header, 'NEW TEXT'), 'my own prompt');
+});
+test('the current prompt is left as it is, and an empty one is not invented', () => {
+    assert.strictEqual(refreshShippedPrompt('shipped header\n### NEW', '### NEW', 'shipped header', 'NEW TEXT'), 'shipped header\n### NEW');
+    assert.strictEqual(refreshShippedPrompt('', '### NEW', 'shipped header', 'NEW TEXT'), '');
+});
+
+// Batch generation produced "Nari Cho" and "Nari Kwon": banning the full name does not stop the
+// first name being reused, so the ban list carries the first name too.
+const expandSrc = indexSrc.match(/function expandBannedNames\(names\) \{[\s\S]*?\n\}\n/)[0];
+const expandBannedNames = new Function('return ' + expandSrc.replace('function expandBannedNames', 'function') + ';')();
+test('a banned full name also bans its first name', () => {
+    assert.deepStrictEqual(expandBannedNames(['Nari Cho', 'Yuna', '', null]), ['Nari Cho', 'Nari', 'Yuna']);
+});
+test('getBannedNames expands before it de-duplicates', () => {
+    assert.match(indexSrc, /for \(const name of expandBannedNames\(names\)\)/);
 });
 
 test('a line the user edited is left alone', () => {

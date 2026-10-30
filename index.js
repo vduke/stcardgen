@@ -9,7 +9,7 @@ import {
     initQuality, reviewCard, reviseCard, reviseField, renameCard, qualityPass, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, scoreClass,
     QUALITY_PANEL_HTML, RENAME_CARD_HTML, fieldOpsHtml, wireIssueChecks, canFix, DEFAULT_REVIEW_PROMPT, DEFAULT_ENHANCE_PROMPT, DEFAULT_OPTIMIZE_PROMPT, migrateReviewPrompt, applyLineMigrations,
 } from './quality.js';
-import { initWorld, openWorldBuilder, generateWorld, normalizeWorld, normalizeEntry, saveWorldToST, DEFAULT_WORLD_PROMPT, DEFAULT_WORLD_FORMAT, WORLD_PROMPT_LINE_MIGRATIONS, WORLD_FORMAT_LINE_MIGRATIONS } from './world.js';
+import { initWorld, openWorldBuilder, generateWorld, normalizeWorld, normalizeEntry, saveWorldToST, DEFAULT_WORLD_PROMPT, DEFAULT_WORLD_FORMAT, WORLD_PROMPT_STAMP, WORLD_PROMPT_HEADER, WORLD_PROMPT_LINE_MIGRATIONS, WORLD_FORMAT_LINE_MIGRATIONS } from './world.js';
 import { startTask, exclusive, guardClosing } from './tasks.js';
 import { initManager, openPersonaManager, personaData, getPersonaReview, setPersonaReview, personaAvatarPath } from './manager.js';
 import { rollPreRoll, formatPreRoll, parsePreRoll } from './preroll.js';
@@ -273,20 +273,121 @@ const CHARACTER_FORMAT_LINE_MIGRATIONS = [
     ['  "system_prompt": "",\n', ''],
 ];
 
-const DEFAULT_CHARACTER_PROMPT = `You are an expert character card writer for SillyTavern roleplay. You turn a reference image (and optional notes) into a complete, high-quality character card.
+// Shipped-prompt identity for the character prompt; see refreshShippedPrompt() in loadSettings.
+const CHARACTER_PROMPT_STAMP = '### DESCRIPTION — THE WORKING SHEET';
+const CHARACTER_PROMPT_HEADER = 'You are an expert character card writer for SillyTavern roleplay.';
 
-Study the attached image carefully: apparent age, build, face, hair, eyes, skin, clothing, accessories, posture, expression, setting, art style and mood. Build a believable, distinctive character around it. If the user supplied details, they override anything inferred from the image.
+const DEFAULT_CHARACTER_PROMPT = `You are an expert character card writer for SillyTavern roleplay. You turn a reference image (plus
+optional notes) into a character the model will play: the {{char}} side of the chat, opposite the
+user's own persona, {{user}}.
 
-Rules:
-- Use {{char}} for the character and {{user}} for the user inside card text.
-- description: detailed appearance, background, relationships, and anything the model needs to portray {{char}} (250-600 words).
-- personality: a concise summary of traits.
-- scenario: the starting situation between {{char}} and {{user}}.
+A persona card describes someone for the model to recognise. A character card is performed, line by
+line, for hours. So this card needs what an actor needs: how they talk, what they want today, what
+they will not admit, who they answer to, what they do when pushed, and what they refuse. Depth comes
+from specifics and contradiction, not from volume.
+
+The character may be a boy, a girl, a man, a woman, an animal, a creature, an officer, a cadet, or
+anything else. Never assume gender: take it from the image or the notes.
+
+### APPEARANCE IS STATIC
+The image is authority on age, species, gender presentation, body, skin, hair, eyes and face — the
+permanent facts — and on nothing else.
+- Baseline only. No sunburn, tan lines, scabs, windblown hair or "warm to the touch"; those are
+  today, not the body.
+- No expression, posture or mood in appearance. Bones, colour, shape, texture and permanent marks.
+- Describe one habitual look, not today's outfit. Clothing appears in the image; mention it once as
+  how they dress when nobody is making them, then leave it alone.
+- Genitals: the body, not its reaction.
+
+### DESCRIPTION — THE WORKING SHEET
+Use these headings in this order, as a reference sheet. 700-1000 words. Every line is a fact the
+model can act on in a scene; no filler, no summary sentences about the character's essence.
+
+Name:
+Pronouns:
+Age: (the age the image shows)
+Species:
+Station: (what they do all day, and how it actually fills the hours: shifts, pay, commute, exhaustion)
+Appearance: (from the image, per the rules above)
+Voice: (register, vocabulary, sentence length, verbal habits, profanity, and what happens to their
+speech when angry, frightened and lying. Then two sample lines in quotation marks that only they
+would say.)
+Personality: (traits, plainly; then how they behave when comfortable, and how they behave when
+cornered. Include one thing they believe about themselves that is not true, stated plainly.)
+Wants: (two goals. At least one must be achievable without {{user}}'s help, and preferably
+indifferent to them.)
+Fears: (two, one practical and one personal)
+Will not admit: (one thing they would deny in the moment but act on anyway)
+Secrets: (two; say who knows each one, and what would happen if it came out)
+Soft spots: (what gets under their guard, and what they do about it)
+Leverage: (what people use to move them, and what they will not be bought with)
+Starting stance toward {{user}}: (how they treat a stranger: warm, wary, bored, curious, polite and
+cold. What would move it, and what would not. Do not make them fall for {{user}} before the chat
+starts.)
+Relationships: (three named people: one ally, one rival, one obligation. One line each on what that
+person wants from them.)
+History: (three to five concrete facts, each with a detail that could be referenced in dialogue)
+Daily life: (routine, haunts, money, transport, what a Tuesday looks like)
+Sexual profile: Experience (act list, limits named), Sexuality (one word), Intimacy (adjective list),
+Kinks (each: recognised name, the act in general terms, what it does for them)
+Boundaries: (two things they refuse, and how they refuse them — the words they use, what they do with
+their hands)
+Tells: (three physical or verbal tells that show a state — wanting, lying, about to leave)
+
+### THE CARD FIELDS
+- description: the sheet above.
+- personality: one line, four to eight traits, comma separated. No prose.
+- scenario: the room they are in with {{user}}, what is already tense, and what is unresolved. End on
+  a live moment. Never explain how {{user}} feels about it.
 ${PROMPT_LINE_MIGRATIONS[0][1]}
-- mes_example: 2-3 short example exchanges, each starting with <START>, using {{user}}: and {{char}}: prefixes.
+Aim for 100-220 words in their own voice, and read it back before you commit to it.
+- mes_example: two or three exchanges, each starting with <START>, using {{user}}: and {{char}}:
+  prefixes. At least one where {{char}} is wrong, refuses, or says no. Keep the voice from the sheet,
+  and write the actions as short physical beats rather than paragraphs of atmosphere.
 ${PROMPT_LINE_MIGRATIONS[1][1]}
-- tags: 3-8 short genre/trait tags.
-- Pick an original, fitting name.`;
+Make one of them easy and one of them hard.
+- creator_notes: two or four sentences for the human reader, about what this character is for and how
+  to play against them. Not for the model.
+- post_history_instructions: optional, one or two lines that keep the character consistent if the chat
+  drifts.
+- tags: three to eight short genre or trait tags, lowercase.
+
+### BINDING SESSION CONSTRAINTS
+If a binding block appears above this prompt it is pre-rolled for this card: STATION, WANT, SECRET,
+VOICE, TROUBLE, HISTORY, APPETITE and LIMITS. Use them as given. They exist so a batch of cards generated
+from the same image does not come back as the same person eight times.
+- The SECRET must be real, specific and cost something.
+- The WANT must not be about {{user}}, even if {{user}} can help.
+- The VOICE samples go into the sheet; write dialogue like them.
+- The APPETITE and LIMITS become the sexual profile: an act list, not a history, and kinks written as
+  standing appetites with no owner on the body parts ("a cock", "fingers", "being called good").
+
+### DO NOT MAKE THEM A TYPE
+The failure mode is a character assembled from tags: "no-nonsense, sassy, secretly soft". A person is
+not three adjectives and a secret. Fight it:
+- Give them an opinion that is inconvenient, not charming.
+- Let one want be petty.
+- Let one behaviour contradict a stated trait, on purpose, and leave it unreconciled.
+- No quirk as personality. A habit of humming is not a character; a habit of humming while someone
+  else is being told bad news is.
+- Not everyone is secretly kind. Some people are kind on the surface and self-interested underneath,
+  and some are blunt and reliable. Vary it.
+
+**Banned phrases — do not use these or their close variants:**
+- "a mixture of," "there is something about," "does not shy away from," "no-nonsense," "sassy,"
+  "fiery," "enigmatic," "mysterious past," "they have a dark side"
+- "unblinking," "a beat too long," "files it away," "watches mouths," "watches hands"
+- "more than they seem," "hidden depths," "carries herself like," "walls around her heart"
+- "with a smirk," "chuckles darkly," "smirks knowingly"
+
+### WRITING RULES
+- Third person present tense in the sheet, {{char}} for the character and {{user}} for the player.
+- Concrete nouns and physical detail beat adjectives. One simile per section at most, none in a list.
+- No hedging: tends to, somewhat, a little, slightly, almost, rather.
+- No godmoding: never decide what {{user}} feels, thinks, does or says.
+- Names: original, not stock fantasy or trope names. No name already in the ban list.
+
+### OUTPUT FORMAT`;
 
 const DEFAULT_CHARACTER_FORMAT = `Respond ONLY with one JSON object and nothing else (no commentary, no markdown outside the JSON). Use exactly these keys (strings unless noted; use \\n for line breaks):
 {
@@ -353,7 +454,11 @@ const defaultSettings = Object.freeze({
     worldPrompt: DEFAULT_WORLD_PROMPT,
     worldFormat: DEFAULT_WORLD_FORMAT,
     worldEntryCount: 20,
-    worldMaxTokens: 12000,
+    // Worlds reason for a long time before writing: at 20 entries the reply needs ~8k tokens of JSON
+    // on top of 10-13k of reasoning. 16000 truncated; 24000 finishes with headroom.
+    worldMaxTokens: 24000,
+    // One-time marker: 0.10.5 moved the world budget; a stored 12000 is the old default, not a choice.
+    worldTokenBump: false,
     autoReview: true,
     autoFixBelow: 7,
     reviewProfileId: '',
@@ -402,6 +507,17 @@ function settings() {
     return extension_settings[MODULE];
 }
 
+/**
+ * Refreshes a prompt that is still the shipped one but predates its current shape. Line pairs cannot
+ * express a rebuilt prompt, so this replaces it outright — but only when it opens with our own header,
+ * so a prompt the user rewrote from the first line is never touched.
+ */
+function refreshShippedPrompt(saved, stamp, header, shipped) {
+    const text = String(saved ?? '');
+    if (!text || text.includes(stamp)) return text;
+    return text.startsWith(header) ? shipped : text;
+}
+
 function loadSettings() {
     extension_settings[MODULE] = extension_settings[MODULE] || {};
     const s = extension_settings[MODULE];
@@ -411,15 +527,22 @@ function loadSettings() {
         }
     }
     if (s.banPrompt === LEGACY_BAN_PROMPT) s.banPrompt = DEFAULT_BAN_PROMPT;
+    // 0.10.5: worlds hit the token limit even at 16000 (reasoning takes 10-13k before any JSON), so the
+    // default moved to 24000. Installs carrying the old default are moved once; the marker stops it
+    // overriding a value the user sets afterwards.
+    if (!s.worldTokenBump) {
+        if (Number(s.worldMaxTokens) === 12000) s.worldMaxTokens = defaultSettings.worldMaxTokens;
+        s.worldTokenBump = true;
+    }
     // Idempotent: this runs on every load, so a pair never re-applies once its replacement is present.
     // Separate table: the character prompt must not receive persona-only lines.
     s.characterPrompt = applyLineMigrations(s.characterPrompt, PROMPT_LINE_MIGRATIONS);
     // 0.8.0 changed the card's shape, which line pairs cannot express: a persona prompt that is still
     // the shipped one (it opens with our header) and predates the stamp is replaced outright. A prompt
-    // the user rewrote from the first line is left alone.
-    if (!s.personaPrompt.includes(PERSONA_PROMPT_STAMP) && s.personaPrompt.startsWith(PERSONA_PROMPT_HEADER)) {
-        s.personaPrompt = DEFAULT_PERSONA_PROMPT;
-    }
+    // the user rewrote from the first line is left alone. Same rule for characters and worlds.
+    s.personaPrompt = refreshShippedPrompt(s.personaPrompt, PERSONA_PROMPT_STAMP, PERSONA_PROMPT_HEADER, DEFAULT_PERSONA_PROMPT);
+    s.characterPrompt = refreshShippedPrompt(s.characterPrompt, CHARACTER_PROMPT_STAMP, CHARACTER_PROMPT_HEADER, DEFAULT_CHARACTER_PROMPT);
+    s.worldPrompt = refreshShippedPrompt(s.worldPrompt, WORLD_PROMPT_STAMP, WORLD_PROMPT_HEADER, DEFAULT_WORLD_PROMPT);
     s.personaPrompt = applyLineMigrations(s.personaPrompt, PERSONA_LINE_MIGRATIONS);
     // 0.6.0 interpolated the persona table into the character prompt by index, so characters saved
     // during that version carry the whole pre-roll block between the scenario line and the mes_example
@@ -677,6 +800,24 @@ function personaNames(excludePersonaId = null) {
     return Object.entries(power_user.personas || {}).filter(([id]) => id !== excludePersonaId).map(([, name]) => name);
 }
 
+/**
+ * Every banned name plus the first name of each multi-word one. Banning only "Nari Cho" still let the
+ * next card in the batch be "Nari Kwon": the model reads a full name as a single token.
+ * @param {string[]} names
+ * @returns {string[]}
+ */
+function expandBannedNames(names) {
+    const out = [];
+    for (const raw of names) {
+        const name = String(raw ?? '').trim();
+        if (!name) continue;
+        out.push(name);
+        const first = name.split(/\s+/)[0];
+        if (first.length >= 3 && first.toLowerCase() !== name.toLowerCase()) out.push(first);
+    }
+    return out;
+}
+
 function getBannedNames({ excludeDraftId = null, excludePersonaId = null } = {}) {
     const s = settings();
     const names = splitNames(s.bannedNames);
@@ -687,8 +828,7 @@ function getBannedNames({ excludeDraftId = null, excludePersonaId = null } = {})
 
     const seen = new Set();
     const result = [];
-    for (const raw of names) {
-        const name = String(raw ?? '').trim();
+    for (const name of expandBannedNames(names)) {
         const key = name.toLowerCase();
         if (!name || name === '[Unnamed Persona]' || seen.has(key)) continue;
         seen.add(key);
@@ -917,7 +1057,7 @@ function stripReasoning(text) {
         .trim();
 }
 
-function parseJsonLoose(text) {
+function parseJsonLoose(text, limitTokens = settings().maxTokens) {
     const cleaned = stripReasoning(text);
     const candidates = [];
     const fence = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/i);
@@ -940,7 +1080,7 @@ function parseJsonLoose(text) {
     // reasoning before they write any JSON at all.
     const cutOff = !/[}\]]\s*$/.test(cleaned);
     throw new Error(cutOff
-        ? `The model's reply stopped before the JSON closed, so it probably ran out of room. Max response tokens is ${settings().maxTokens}; raise it in Card Generator settings and try again.`
+        ? `The model's reply stopped before the JSON closed, so it probably ran out of room. Max response tokens is ${limitTokens}; raise it in Card Generator settings and try again.`
         : 'The model response was not valid JSON. Check the raw output, fix it, and use "Parse raw".');
 }
 
@@ -993,10 +1133,10 @@ function emptyData(type) {
  * @param {string|null} excludeDraftId The draft being generated, which must not steer itself.
  * @returns {Record<string, string[]>}
  */
-function preRollAvoid(excludeDraftId = null) {
+function preRollAvoid(type, excludeDraftId = null) {
     const draws = [];
     for (const draft of settings().drafts || []) {
-        if (draft.id === excludeDraftId || draft.type !== 'persona' || !draft.preRoll) continue;
+        if (draft.id === excludeDraftId || draft.type !== type || !draft.preRoll) continue;
         draws.push(draft.preRoll);
     }
     const avoid = {};
@@ -1024,10 +1164,11 @@ async function generateEntry({ type, imageBlob, details, excludeDraftId = null, 
         throw new Error('Add an image or some details to generate from.');
     }
     const image = await prepareImage(imageBlob, type, { description: imageDescription, signal, onStatus });
-    // Personas get a block unless the caller supplied one; characters do not, the prompt has no such concept.
-    let block = preRoll;
-    if (type === 'persona' && settings().preRoll && !block.trim()) {
-        block = formatPreRoll(rollPreRoll({ avoid: preRollAvoid(excludeDraftId) }).values);
+    // Both persona and character generation converge on a batch without this; each type draws from its
+    // own channel set so a character never inherits a persona's FASHION line or vice versa.
+    let block = type === 'world' ? '' : preRoll;
+    if (settings().preRoll && !block.trim()) {
+        block = formatPreRoll(rollPreRoll({ avoid: preRollAvoid(type, excludeDraftId), type }).values, type);
     }
     if (image.description) onStatus(`Writing the ${type}…`);
     const messages = buildMessages(type, image.dataUrl, details, getBannedNames({ excludeDraftId, excludePersonaId }), image.description, block);
@@ -1247,7 +1388,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
                     <div class="menu_button stcg-clear-img"><i class="fa-solid fa-xmark"></i> Remove</div>
                 </div>
                 ${VISION_DESCRIPTION_HTML}
-                ${state.type === 'persona' ? PRE_ROLL_HTML : ''}
+                ${state.type !== 'world' ? PRE_ROLL_HTML : ''}
                 <label>Optional details / requirements</label>
                 <textarea class="text_pole stcg-details" rows="5" placeholder="e.g. She's a 28 year old starship mechanic, sarcastic, from Mars..."></textarea>
                 <div class="menu_button stcg-generate" ${personaId ? 'title="Rewrites the persona from the image and details (Undo brings the old text back)"' : ''}><i class="fa-solid fa-wand-magic-sparkles"></i> <span>${personaId ? 'Regenerate' : 'Generate'}</span></div>

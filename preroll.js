@@ -159,6 +159,267 @@ export const PRE_ROLL_CHANNELS = [
     },
 ];
 
+// Characters and worlds converge for the same reason personas did: one image, one prompt, and no
+// knowledge of what the rest of the batch already took. These are the same kind of channel sets, one
+// for each generator. Unlike the persona channels they may describe behaviour, because {{char}} is
+// played by the model, not by the user.
+
+export const CHARACTER_CHANNELS = [
+    {
+        key: 'STATION',
+        label: 'STATION',
+        entries: [
+            'Night baker on a failing high street: in at two, out by ten, sleeps through the afternoon.',
+            'Ambulance dispatcher on the graveyard shift, six years in, no plans to move.',
+            'Groundskeeper at a private school that pays badly and pretends otherwise.',
+            'Wedding photographer, bankrupt twice, booking again.',
+            'Diesel mechanic, the only woman in the shop, keeps her tools locked.',
+            'Line cook in a casino kitchen, fastest hands on the pass, worst temper.',
+            'Junior partner in a family law firm she will inherit whether she wants it or not.',
+            'Ferry deckhand, four days on, three days off, lives for the three.',
+            'Librarian in a town that funds everything else first.',
+            'Barber in her father\'s shop, keeping the chair warm while he recovers.',
+            'Warehouse supervisor on nights, schedules everyone\'s breaks but never her own.',
+            'Phone repair kiosk in a mall, half the town\'s secrets on her bench.',
+        ],
+    },
+    {
+        key: 'WANT',
+        label: 'WANT',
+        entries: [
+            'Wants the shop lease in her own name before the owner sells the building.',
+            'Wants to finish the course she abandoned twice, and has told nobody she re-enrolled.',
+            'Wants custody of a younger sibling from a mother who is not unfit, just tired.',
+            'Wants to pay off a debt she took on for someone else before she tells them it exists.',
+            'Wants to be the one who notices things first: not power, precedence.',
+            'Wants a rival out of her trade, fairly, which may not be possible.',
+            'Wants to stop being the one who fixes everything and has not worked out how.',
+            'Wants four months of the year somewhere else, and is afraid of the quiet.',
+            'Wants her father to admit he was wrong once, about one thing, before he dies.',
+            'Wants the new house to feel like hers, which is different from being hers.',
+            'Wants to be promoted over a friend, and knows exactly what that will cost.',
+            'Wants to hear her own name said by someone who is not asking her for anything.',
+        ],
+    },
+    {
+        key: 'SECRET',
+        label: 'SECRET',
+        entries: [
+            'Tells everyone she moved here for the job; she moved to get away from a friend who stopped speaking to her, and does not know why.',
+            'Has been quietly paying a bill in her ex\'s name since the break-up, and would rather die than admit it.',
+            'Saw something at work last winter and signed the report that said otherwise.',
+            'Keeps her mother\'s diagnosis to herself, so nobody treats her differently yet.',
+            'Told her sister she would not take the money. She took it.',
+            'Was the one who walked away first, and has let everyone believe it was the other way round.',
+            'Writes every conversation down, word for word, and mentions it to nobody.',
+            'Has never told anyone what she wants to be, because she is waiting to be sure.',
+            'Still keeps a spare key to a house she has no right to any more.',
+            'Knows the marriage everyone admires is over, and has not told her friend.',
+            'Fails a thing at work regularly and has got very good at fixing it before anyone sees.',
+            'Turned down a different life seven years ago and revisits it at night.',
+        ],
+    },
+    {
+        key: 'VOICE',
+        label: 'VOICE',
+        entries: [
+            'Clipped and polite: drops the "please" when she is angry and never repeats a question.',
+            'Warm, fast and self-interrupting: fine detail, no overview, three starts per sentence.',
+            'Unhurried and exact: answers the literal question, jokes land later, deadpan.',
+            'Talks like she is explaining something to a child she likes, without condescension.',
+            'Customer-service patter that switches off the moment the customer leaves.',
+            'Says "we" when she means "I", which is how she gets people on her side.',
+            'Says the hard thing plainly and changes the subject before there is a reply.',
+            'Over-elaborates with technical words when nervous; goes quiet when furious.',
+            'Answers quietly, always with a question back, always two steps from leaving.',
+            'Fast and funny and fluent in the local slang, and never uses it when she is serious.',
+            'Short sentences, formal courtesy, profanity rare and devastating.',
+            'Narrates her own actions out loud when uncomfortable: "and now she is putting the kettle on."',
+        ],
+    },
+    {
+        key: 'TROUBLE',
+        label: 'TROUBLE',
+        entries: [
+            'She is paid to be pleasant, and the pleasantness goes off duty with the clock.',
+            'She arranges her life to need nobody, and finds other people\'s needs an imposition.',
+            'She tells you the truth immediately, which is not the same as being open.',
+            'She is the one who leaves first, every time, and calls it being sensible.',
+            'She cannot accept a favour without paying it back twice.',
+            'She gets bored of being needed the moment it becomes a habit.',
+            'Her loyalty is real, her judgement is absolute, and she will not discuss it.',
+            'She wants the last word, and cannot bear the silence after she has it.',
+            'She is generous with things and stingy with time.',
+            'She rescues people from their problems and will not let them be angry about it.',
+        ],
+    },
+    {
+        key: 'HISTORY',
+        label: 'HISTORY',
+        entries: [
+            'Grew up in a shared house with a rotating cast of lodgers and learned to lock her bedroom door.',
+            'Left school at sixteen and has been catching up quietly, in libraries, ever since.',
+            'Spent three years on a fishing boat; the money was worse than the smell and she loved it.',
+            'Was the middle child who mediated everything and was never asked anything.',
+            'Her first job was mopping the floors of the place she now manages.',
+            'Married once for eleven months at twenty-three, and does not talk about it.',
+            'Looked after her mother for six years and nobody thanked her, because it is invisible.',
+            'Grew up two streets from here; the people who knew her then still use her childhood name.',
+            'Moved eleven times before she was eighteen; now she stays in jobs for years and rooms for months.',
+            'Was the clever one in the family, and is the one who stayed.',
+            'The first money she ever saved went on a car she has never learned to drive properly.',
+            'Was in a band that got close enough to feel it, then broke up in an argument she still replays.',
+        ],
+    },
+    {
+        key: 'APPETITE',
+        label: 'APPETITE',
+        entries: [
+            'Oral fixation: craves a cock or a clit in her mouth and the taste of it, and the ache in her jaw after.',
+            'Praise: wants to be called good and told she takes it well, because the words are proof she did it right.',
+            'Being owned: a collar, a claim, one person\'s word over hers, and the weight of deciding lifted.',
+            'Bondage: wrists tied, ankles tied, and no vote in what happens next.',
+            'Exhibitionism: being watched while she does it, and not allowed to look away.',
+            'Rough handling: hair pulled, hips grabbed, marks she can press the next morning.',
+            'Breeding: filled and left leaking, marked as somebody\'s for the night.',
+            'Spanking: pain she can point to the next day, like a receipt.',
+            'Sensory deprivation: a blindfold, and nothing to do but feel what arrives.',
+            'Gangbangs: being shared, several people at once, wanted by all of them.',
+            'Breathplay: a hand at her throat until the room goes quiet.',
+            'Hair-pulling: a fist in it, head back, throat exposed.',
+        ],
+    },
+    {
+        key: 'LIMITS',
+        label: 'LIMITS',
+        entries: [
+            'Oral sex (giving and receiving), vaginal sex, a few one-night stands, no anal.',
+            'Virgin: nothing but her own hands and a lot of reading.',
+            'Vaginal sex with two long-term partners, oral both ways, nothing since.',
+            'Sleeps around: oral, vaginal, toys, light bondage, no anal yet.',
+            'Anal sex, oral both ways, bondage, no penetration without it being decided for her.',
+            'Vaginal sex, no oral, no anal, and she does not finish with a partner.',
+            'Oral sex both ways, vaginal sex, a threesome, anal once and not again.',
+            'Vaginal sex, oral (receiving), nothing she has not asked for twice.',
+            'Oral sex (giving), handjobs, vaginal sex twice, anal virgin.',
+            'Vaginal sex with several people, oral (giving), one night of anal she still thinks about.',
+            'Nothing with a partner yet, but she knows her own body well.',
+            'Vaginal sex, oral both ways, she has never let anyone watch.',
+        ],
+    },
+];
+
+export const WORLD_CHANNELS = [
+    {
+        key: 'PLACE',
+        label: 'PLACE',
+        entries: [
+            'A harbour town where the fishing quota was cut this spring.',
+            'A commuter suburb where every house is being renovated and nobody knows the neighbours.',
+            'A university town in the middle of a building scandal.',
+            'A border town with two currencies and one working road.',
+            'A desert motel town forty minutes from the nearest supermarket.',
+            'A cold-water island with one ferry a day and a school that closed last year.',
+            'A city district under a compulsory-purchase order; half the shops are empty.',
+            'A logging town in the last year before the mill shuts.',
+            'A canal town where the locks are being automated.',
+            'A mountain village with a new ski lift and old money.',
+            'A railway junction, five hours from anywhere, where the trains still stop.',
+            'A river town rebuilding after the second flood in two years.',
+        ],
+    },
+    {
+        key: 'PRESSURE',
+        label: 'PRESSURE',
+        entries: [
+            'The biggest employer announced a consultation everyone knows the answer to.',
+            'Rent rose for the whole street in the same month and nobody knows who bought the buildings.',
+            'A council vote next week decides whether the market stays or becomes a car park.',
+            'Wages are four weeks late and the payroll clerk has stopped answering.',
+            'Two families have fallen out over a boundary nobody can find on a map.',
+            'The tourist season starts in nine days and half the seasonal staff have not come back.',
+            'A water bill for the whole block was paid to the wrong account and the taps are still on.',
+            'The school is being merged with one six miles away.',
+            'A public health notice about the water was withdrawn without explanation.',
+            'The old manager died in spring and nobody was ever officially put in charge.',
+            'The highway will bypass the town in two years and everyone talks about nothing else.',
+            'The only pharmacy is closing on Fridays from next month.',
+        ],
+    },
+    {
+        key: 'POWER',
+        label: 'POWER',
+        entries: [
+            'A mayor elected on promises and a dock boss who actually decides.',
+            'The council is elected and the developer has been seen buying the coffee.',
+            'A police chief who is reasonable, tired, and knows exactly how much he can afford to notice.',
+            'The parish priest holds the food bank, the hall and the only quiet room.',
+            'The family that owns the mill also owns the paper and the bus company.',
+            'A tenants\' association of three people doing the work of forty.',
+            'The clinic is understaffed and the nurse practitioner has become the local authority.',
+            'A contractor controls every job site in a ninety-mile radius.',
+            'The gang is small and well-mannered, and the police visit it rather than the other way round.',
+            'The union branch holds the vote but its chair answers to his brother-in-law.',
+            'The head teacher has more real power in town than the council.',
+            'Nobody is in charge: the postmaster, the priest and the librarian quietly do the governing.',
+        ],
+    },
+    {
+        key: 'TEXTURE',
+        label: 'TEXTURE',
+        entries: [
+            'Radio and landlines; nobody has a mobile phone, and people agree to meet at a place, at a time.',
+            'Salt, diesel and hot tar, and everything metal rusting from the inside.',
+            'Cars with manual windows and cassette decks, and a lot of driving.',
+            'Snow four months of the year, and the shops sell boots rather than shoes.',
+            'Cheap plastic signs, sodium lights, a fried-food smell that never lifts.',
+            'Paper everywhere: forms, ledgers, carbon copies, rubber stamps.',
+            'The street smells of yeast and bread from two o\'clock onwards.',
+            'Everything is a ten-minute walk and everyone knows whose dog is barking.',
+            'Soft mountains behind the town and no streetlights past the last house.',
+            'The technology works, but the weather interferes with it four days in ten.',
+            'Old money made of wood and brass, and new money made of chrome and impatience.',
+            'A single radio station, a single newspaper, and both of them careful.',
+        ],
+    },
+    {
+        key: 'SEASON',
+        label: 'SEASON',
+        entries: [
+            'The last week of summer; the fair opens on Friday.',
+            'The fortnight before the frost, when everyone is harvesting and nobody sleeps.',
+            'The tail of a mild winter with no snow and a lot of mud.',
+            'The first week of school, four hundred children and one bus.',
+            'The middle of a dry autumn: burn warnings in the fields and dust in the shop windows.',
+            'The week after a wedding the whole town attended and half of them are still angry about.',
+            'Election week, and every third conversation is about it.',
+            'Three days before Christmas, and the last ferry has already gone.',
+            'The night of the summer festival, when the town doubles in size for six hours.',
+            'A funeral tomorrow, and the whole street has rearranged its schedule for it.',
+            'The first week of the fishing season, boats going out before dawn.',
+            'Late autumn, wind off the water, and the first shop has already put up tinsel.',
+        ],
+    },
+    {
+        key: 'OPENING',
+        label: 'OPENING',
+        entries: [
+            'A wake for someone the town knew and nobody liked, at the back of the pub.',
+            'A job left unstaffed for six weeks, and the person everyone suspects of quitting.',
+            'A stranger at the bar asking where the swimming spot is, in a town with one.',
+            'A shared shift with a person who will not stop talking and a person who will not talk at all.',
+            'A shelf of unclaimed lost property and a search for an item that matters more than it should.',
+            'A late-night doorbell ring, then nobody there, and then it rings again.',
+            'A bus that does not arrive, a crowd that waits, and the small talk that happens while it does not.',
+            'A mutual friend\'s spare room and a sofa for the night, with rules nobody has written down.',
+            'A queue for rationed fuel where everyone has to talk to whoever is next to them.',
+            'A rehearsal for something the persona has been talked into taking part in.',
+            'A bad day in a quiet week, and a knock about a small thing that is not small.',
+            'A power cut that leaves the same faces in the same doorway for twenty minutes.',
+        ],
+    },
+];
+
 /** Small deterministic PRNG (mulberry32), so a seed reproduces a roll exactly. */
 function makeRandom(seed) {
     let state = (Number(seed) || 1) >>> 0;
@@ -171,6 +432,34 @@ function makeRandom(seed) {
     };
 }
 
+/** The channel set each generator draws from. Personas are the default, for older callers. */
+const CHANNEL_SETS = {
+    persona: PRE_ROLL_CHANNELS,
+    character: CHARACTER_CHANNELS,
+    world: WORLD_CHANNELS,
+};
+
+/**
+ * Closing instruction for each set. The persona footer is persona-specific on purpose: the block is
+ * the only place that says what the channels are *for*, and a generic footer was ignored.
+ */
+const SET_FOOTERS = {
+    persona: `Write the persona so that MASK TEMPERAMENT and FRICTION DIRECTION are true of the same person at the
+same time, and let the MASK TEMPERAMENT be visible in the Personality traits. Let the MOTIF recur as concrete sensory detail. Age, body, skin and hair come from the
+image; clothes come from FASHION and not from the image; everything else here comes from here.`,
+    character: `Build one person in whom STATION, WANT, SECRET, TROUBLE and HISTORY are all true at once. Let
+the VOICE shape every line of dialogue, let the APPETITE and LIMITS become the sexual profile, and give
+the WANT a life outside {{user}}. Appearance comes from the image; everything else comes from here.`,
+    world: `Build the world out of PLACE, PRESSURE, POWER, TEXTURE, SEASON and OPENING. The persona's card is how
+they experience this world, not a specification for what the world contains or what people know about
+them: nobody in this world has read their card.`,
+};
+
+/** Channels for a generator type. Unknown types fall back to personas. */
+export function channelsFor(type) {
+    return CHANNEL_SETS[type] || PRE_ROLL_CHANNELS;
+}
+
 /**
  * Draws one value per channel.
  *
@@ -181,12 +470,13 @@ function makeRandom(seed) {
  * @param {object} [options]
  * @param {number} [options.seed] Makes the draw reproducible.
  * @param {Record<string, string[]|Set<string>>} [options.avoid] Previously used entries per channel.
+ * @param {'persona'|'character'|'world'} [options.type] Which channel set to draw from.
  * @returns {{seed: number, values: Record<string, string>}}
  */
-export function rollPreRoll({ seed = Date.now(), avoid = {} } = {}) {
+export function rollPreRoll({ seed = Date.now(), avoid = {}, type = 'persona' } = {}) {
     const random = makeRandom(seed);
     const values = {};
-    for (const channel of PRE_ROLL_CHANNELS) {
+    for (const channel of channelsFor(type)) {
         const used = new Set(avoid[channel.key] || []);
         const unused = channel.entries.filter(entry => !used.has(entry));
         const pool = unused.length ? unused : channel.entries;
@@ -195,42 +485,37 @@ export function rollPreRoll({ seed = Date.now(), avoid = {} } = {}) {
     return { seed: Number(seed), values };
 }
 
-/** Renders a roll as the binding block the persona prompt expects above itself. */
-export function formatPreRoll(values) {
+/** Renders a roll as the binding block the matching prompt expects above itself. */
+export function formatPreRoll(values, type = 'persona') {
     if (!values) return '';
-    const lines = PRE_ROLL_CHANNELS
+    const lines = channelsFor(type)
         .filter(channel => values[channel.key])
         .map(channel => `${channel.label}: ${values[channel.key]}`);
     if (!lines.length) return '';
     return `PRE-ROLLED FOR THIS SESSION (binding; use these exactly, do not substitute your own, do not add a second one)
 ${lines.join('\n')}
 
-Write the persona so that MASK TEMPERAMENT and FRICTION DIRECTION are true of the same person at the
-same time, and let the MASK TEMPERAMENT be visible in the Personality traits. Let the MOTIF recur as concrete sensory detail. Age, body, skin and hair come from the
-image; clothes come from FASHION and not from the image; everything else here comes from here.
+${SET_FOOTERS[type] || SET_FOOTERS.persona}
 
 If the user's details speak to one of these channels, the details win and this value becomes
 background for the rest. Do not discard the other channels.`;
 }
 
 /**
- * Reads a block back into channel values, so an edited block in the editor round-trips.
+ * Reads a block back into channel values, so an edited block in the editor round-trips. Parses across
+ * every set: the labels are distinct, so one function serves the persona, character and world editors.
  * @param {string} text
  * @returns {Record<string, string>|null}
  */
 export function parsePreRoll(text) {
     const values = {};
+    const all = [...PRE_ROLL_CHANNELS, ...CHARACTER_CHANNELS, ...WORLD_CHANNELS];
     for (const line of String(text || '').split('\n')) {
-        for (const channel of PRE_ROLL_CHANNELS) {
+        for (const channel of all) {
             if (line.startsWith(channel.label + ': ')) {
                 values[channel.key] = line.slice(channel.label.length + 2).trim();
             }
         }
     }
     return Object.keys(values).length ? values : null;
-}
-
-/** All entries for one channel, by key. */
-export function channelEntries(key) {
-    return PRE_ROLL_CHANNELS.find(channel => channel.key === key)?.entries || [];
 }

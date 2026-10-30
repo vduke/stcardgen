@@ -8,7 +8,7 @@ import assert from 'node:assert';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PRE_ROLL_CHANNELS, rollPreRoll, formatPreRoll, parsePreRoll } from '../preroll.js';
+import { PRE_ROLL_CHANNELS, CHARACTER_CHANNELS, WORLD_CHANNELS, channelsFor, rollPreRoll, formatPreRoll, parsePreRoll } from '../preroll.js';
 import { extractTemplate } from './extract.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -104,6 +104,73 @@ test('the block avoids the prompt\'s own banned phrases', () => {
             }
         }
     }
+});
+
+// Characters and worlds draw from their own channel sets. A set that is too small, or that reuses a
+// label, collapses back into the convergence this whole mechanism exists to prevent.
+console.log('channel sets');
+const sets = {
+    persona: PRE_ROLL_CHANNELS,
+    character: CHARACTER_CHANNELS,
+    world: WORLD_CHANNELS,
+};
+for (const [type, channels] of Object.entries(sets)) {
+    test(`${type}: every channel carries at least ten distinct entries`, () => {
+        assert.ok(channels.length >= 5, `${type} has only ${channels.length} channels`);
+        for (const channel of channels) {
+            assert.ok(channel.entries.length >= 10, `${type}/${channel.key} has ${channel.entries.length} entries`);
+            assert.strictEqual(new Set(channel.entries).size, channel.entries.length, `${type}/${channel.key} repeats an entry`);
+            for (const entry of channel.entries) {
+                assert.ok(entry.length <= 260, `${type}/${channel.key} entry too long to use verbatim: ${entry}`);
+            }
+        }
+    });
+}
+test('labels are distinct across every set, so one parser can read any editor', () => {
+    const labels = Object.values(sets).flat().map(c => c.label);
+    assert.strictEqual(new Set(labels).size, labels.length, 'a label is shared between two channels');
+});
+for (const type of ['character', 'world']) {
+    test(`${type}: the block names every channel and does not include persona lines`, () => {
+        const block = formatPreRoll(rollPreRoll({ seed: 3, type }).values, type);
+        for (const channel of sets[type]) assert.ok(block.includes(channel.label + ': '), `block is missing ${channel.label}`);
+        for (const channel of PRE_ROLL_CHANNELS) {
+            if (sets[type].some(c => c.key === channel.key)) continue;
+            assert.ok(!block.includes(channel.label + ': '), `block leaked persona channel ${channel.label}`);
+        }
+    });
+    test(`${type}: a written block parses back to the same values`, () => {
+        const roll = rollPreRoll({ seed: 41, type });
+        assert.deepStrictEqual(parsePreRoll(formatPreRoll(roll.values, type)), roll.values);
+    });
+    test(`${type}: the roll varies with the seed`, () => {
+        const a = rollPreRoll({ seed: 1, type }).values;
+        const b = rollPreRoll({ seed: 2, type }).values;
+        assert.notDeepStrictEqual(a, b);
+    });
+    test(`${type}: asks for the channels it was given`, () => {
+        const block = formatPreRoll(rollPreRoll({ seed: 5, type }).values, type);
+        const footer = block.split('\n\n')[1] || '';
+        const named = sets[type].filter(c => footer.includes(c.label)).length;
+        assert.ok(named >= 3, `${type} footer names only ${named} of its channels: ${footer}`);
+    });
+}
+test('character and world entries avoid the slop phrases the prompts ban', () => {
+    const banned = ['a beat too long', 'files it away', 'watches hands', 'watches mouths', 'unblinking',
+        'smirk', 'chuckles', 'does not shy away', 'no-nonsense', 'enigmatic', 'walls around'];
+    for (const type of ['character', 'world']) {
+        for (const channel of sets[type]) {
+            for (const entry of channel.entries) {
+                for (const phrase of banned) {
+                    assert.ok(!entry.toLowerCase().includes(phrase), `${type}/${channel.key} repeats "${phrase}": ${entry}`);
+                }
+            }
+        }
+    }
+});
+test('an unknown type falls back to the persona set instead of crashing', () => {
+    assert.deepStrictEqual(channelsFor('nonsense'), PRE_ROLL_CHANNELS);
+    assert.ok(formatPreRoll(rollPreRoll({ seed: 1, type: 'nonsense' }).values, 'nonsense').includes('MASK TEMPERAMENT'));
 });
 
 console.log(failures ? `\n${failures} test(s) failed` : '\nall tests passed');

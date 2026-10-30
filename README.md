@@ -5,11 +5,14 @@ Generate personas, character cards, and persona-centered sandbox worlds with a v
 ## Features
 
 - **Create Persona / Create Character**: drop in an image, add optional details, click Generate, edit the result, then create it or save it to Drafts. With no image, the model also suggests an **image prompt** that you can copy into ComfyUI.
-- **Pre-rolled personalities**: before each persona is written, a core need, a surface manner, a friction direction, a setting, a source of experience, a motif and a primary kink are drawn and sent as binding constraints. Batch generation otherwise converges — six images, six warm and chatty characters with a secret — because each run sees only its own image and knows nothing about the others. The draw steers away from values the rest of the batch already used, is kept with the draft so **Regenerate** does not silently give the card a different personality, and appears in the editor where you can edit or clear it. Appearance is never pre-rolled: age, body, skin and hair come from the image. Turn it off in Settings.
-- **Create World for Persona**: builds a living sandbox around one of your personas:
+- **Pre-rolled personalities**: before each card is written, a set of channels is drawn: personas get a mask temperament, a friction direction, a setting, fashion, a source of experience, a motif and a primary kink; characters get a station, a want, a secret, a voice, a trouble, a history, an appetite and limits; worlds get a place, a pressure, a power structure, a texture, a season and an opening. They are drawn and sent as binding constraints. Batch generation otherwise converges — six images, six warm and chatty characters with a secret — because each run sees only its own image and knows nothing about the others. The draw steers away from values the rest of the batch already used, is kept with the draft so **Regenerate** does not silently give the card a different personality, and appears in the editor where you can edit or clear it. Appearance is never pre-rolled: age, body, skin and hair come from the image. Turn it off in Settings.
+- **Character cards are written to be played**: the description is a working sheet — station and hours, voice with sample lines and what happens to it under anger, wants that do not depend on {{user}}, secrets with owners, a starting stance toward {{user}}, boundaries with the words they refuse in, and tells. The scenario starts on live pressure, `first_mes` is {{char}}'s opening turn, `mes_example` includes at least one refusal, and `alternate_greetings` covers a harder register. No field narrates {{user}}'s thoughts, feelings or actions.
+- **Create World for Persona**: builds a living sandbox that one of your personas happens to live in — not a world shaped around them:
   - a narrator/game-master **sandbox character card** (setting overview, scenario, opening scene);
   - a **lorebook** of NPCs, places, factions, customs and story hooks, with keywords, secondary keywords, constants, priorities, positions and probabilities;
   - the lorebook is attached to the sandbox card as its primary lorebook and embedded in the card. The persona itself is never changed, so you can use it in other roleplays.
+
+  The world is built to exist whether or not {{user}} was born. Nobody in it has read the persona's card: NPCs know only what they could have seen, been told or guessed, kinks are private by default, and at most one or two people know anything specific. Reputation is local (the neighbour knows your hours, not your appetites) and word travels through named channels. The narrator is the room, the weather and the NPCs, never {{user}}'s inner voice. A third of the entries are left open-ended so the player can find out who their persona is by acting rather than being told.
 
   You can edit every entry, use **Add more entries** to fill gaps, and use **Fix overused names** to have the model rename NPCs with stock names everywhere they appear.
 - **Quality pass**: after generation, a second request scores the result 1–10 on specificity, consistency, playability, rules and efficiency (worlds also get keywords and coverage), and lists concrete issues.
@@ -28,7 +31,7 @@ Generate personas, character cards, and persona-centered sandbox worlds with a v
 - **Import Card as Persona**: pick `.png`/`.json` character cards. One file opens the editor; several go straight to Drafts.
 - **Manage Personas**: your installed personas, with score badges.
   - **Review & edit** opens the same editor with review, fix, enhance, optimize, instructions and undo. **Save Persona** writes the changes back to that persona.
-  - The globe button builds a world around that persona.
+  - The globe button builds a world that persona lives in.
   - **Review selected** scores many personas at once without changing them.
   - **Delete selected** deletes the ticked personas after a confirmation. The current and default personas are skipped.
   - **Remove duplicates** finds personas with the same name, the same description and the same avatar picture, and deletes the extra copies.
@@ -79,4 +82,4 @@ npm test
 
 `tests/prompt-migrations.mjs` covers the saved-prompt migrations. Those run on every settings load, so they must stay idempotent: a migration that re-matches its own output grows the prompt a little on each reload. The test runs the real modules and fails if one stops being idempotent.
 
-`tests/preroll.mjs` covers the pre-roll tables and block. It checks that every channel has enough values to fill a batch without repeating, that the tables do not reuse phrases the persona prompt bans, and that the prompt and the code agree about which channels are pre-rolled.
+`tests/preroll.mjs` covers the pre-roll tables and block for all three generators. It checks that every channel in every set has enough values to fill a batch without repeating, that labels are unique so one parser serves every editor, that the tables do not reuse phrases the prompts ban, that a block round-trips through the parser, and that the prompt and the code agree about which channels are pre-rolled. `tests/prompt-migrations.mjs` covers the shipped-prompt refresh: a prompt that still opens with our own header but predates the current stamp is replaced, and anything the user rewrote from the first line is kept.
