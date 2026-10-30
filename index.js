@@ -302,7 +302,7 @@ permanent facts — and on nothing else.
 ### DESCRIPTION — THE WORKING SHEET
 Use these headings in this order, as a reference sheet. 600-900 words. Every line is a fact the
 model can act on in a scene; no filler, no summary sentences about the character's essence. If a
-sentences says nothing you could point at, cut it.
+sentence says nothing you could point at, cut it.
 
 Name:
 Pronouns:
