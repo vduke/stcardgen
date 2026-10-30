@@ -101,6 +101,26 @@ export const PRE_ROLL_CHANNELS = [
         ],
     },
     {
+        key: 'FASHION',
+        label: 'FASHION',
+        entries: [
+            'Modern streetwear: skirts and crop tops, comfy panties, anything that shows her body, and she pretends not to notice being looked at.',
+            "Cottagecore: linen dresses, cardigans, thick wool socks, soft colors, and clothes that look borrowed from a grandmother's closet.",
+            'Athletic: leggings, sports bras, hoodies with the hood up, and clothes that look like she came straight from practice.',
+            'Preppy: pleated skirts, polo shirts, tidy blazers, and clothes that look like they cost more than they did.',
+            "Goth: black layers, lace, heavy boots, silver rings, and clothes that keep people at arm's length.",
+            'Y2K: low-rise jeans, tiny tops, chunky jewelry, and clothes that look like a music video from 2003.',
+            'Boho: long skirts, loose cotton, layered jewelry, and clothes that move when she walks.',
+            'Grunge: flannel over a band t-shirt, ripped denim, worn boots, and clothes that look like they were picked up off the floor.',
+            'Business-casual: blouses, tailored trousers, flats, and clothes that are trying to be taken seriously.',
+            'Gymwear worn everywhere: sports leggings, hoodies, sneakers, and clothes that are always ready for a workout that never happens.',
+            'Vintage: high-waisted trousers, tucked shirts, leather belts, and clothes that were bought secondhand on purpose.',
+            'Loungewear: oversized hoodies, sweatpants, thick socks, and clothes that are a wall with sleeves.',
+            'Cheap and cute: fast-fashion dresses, crop tops, chunky platforms, and clothes replaced every season.',
+            'Practical and plain: jeans, t-shirts, work boots, and clothes that ask nothing of anyone.',
+        ],
+    },
+    {
         key: 'SOURCE OF EXPERIENCE',
         label: 'SOURCE OF EXPERIENCE',
         entries: [
@@ -206,8 +226,8 @@ ${lines.join('\n')}
 
 Write the persona so that CORE and MASK TEMPERAMENT are both true of the same person at the same
 time, and so the FRICTION DIRECTION shows up in what she does rather than in what she says about
-herself. Let the MOTIF recur as concrete sensory detail. Age, body, skin, hair and clothes come from
-the image; everything in this block comes from here.
+herself. Let the MOTIF recur as concrete sensory detail. Age, body, skin and hair come from the
+image; clothes come from FASHION and not from the image; everything else here comes from here.
 
 If the user's details speak to one of these channels, the details win and this value becomes
 background for the rest. Do not discard the other channels.`;
