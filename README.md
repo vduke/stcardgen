@@ -12,7 +12,7 @@ Generate personas, character cards, and persona-centered sandbox worlds with a v
   - a **lorebook** of NPCs, places, factions, customs and story hooks, with keywords, secondary keywords, constants, priorities, positions and probabilities;
   - the lorebook is attached to the sandbox card as its primary lorebook and embedded in the card. The persona itself is never changed, so you can use it in other roleplays.
 
-  The world is built to exist whether or not {{user}} was born. Nobody in it has read the persona's card: NPCs know only what they could have seen, been told or guessed, kinks are private by default, and at most one or two people know anything specific. Reputation is local (the neighbour knows your hours, not your appetites) and word travels through named channels. The narrator is the room, the weather and the NPCs, never {{user}}'s inner voice. A third of the entries are left open-ended so the player can find out who their persona is by acting rather than being told.
+  The world is built to exist whether or not {{user}} was born. Nobody in it has read the persona's card: NPCs know only what they could have seen, been told or guessed, kinks are private by default, and at most one or two people know anything specific. Reputation is local (the neighbour knows your hours, not your appetites), word travels through named channels, and every NPC entry states what that NPC has not been told. The narrator is the room, the weather and the NPCs, never {{user}}'s inner voice. A third of the entries are left open-ended so the player can find out who their persona is by acting rather than being told.
 
   You can edit every entry, use **Add more entries** to fill gaps, and use **Fix overused names** to have the model rename NPCs with stock names everywhere they appear.
 - **Quality pass**: after generation, a second request scores the result 1–10 on specificity, consistency, playability, rules and efficiency (worlds also get keywords and coverage), and lists concrete issues.
@@ -57,7 +57,7 @@ Find them under Extensions → Card Generator.
 - **Jailbreak / extra system instructions**: text appended to the end of the system prompt of every request the extension sends (generation, worlds, reviews, fixes, enhance/optimize, renames). Use it for content rules or a jailbreak your preset would normally carry. Untick "Append to every system prompt" to switch it off without losing the text.
 - **Generation prompt / rules** for personas, characters and worlds: your own guidelines.
 - **Output format**: the JSON shape the model must return. Keep the keys if you edit it.
-- **Entries per generation / World max tokens**: the size of each world generation.
+- **Entries per generation / World max tokens**: the size of each world generation. The default is 24000 because a reasoning model spends 10–13k of it before it writes any JSON; lower it only if your model's context is small.
 - **Quality pass**: the reviewer profile, auto-review, the auto-fix threshold, and the review rubric and Enhance/Optimize instructions.
 - **Image prompts**: turn suggestions on or off, and edit the instruction.
 - **Ban instruction**: a template that supports `{{bannedNames}}` and `{{type}}`.
