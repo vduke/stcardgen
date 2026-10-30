@@ -94,7 +94,7 @@ test('an empty roll produces no block', () => {
 });
 test('the block avoids the prompt\'s own banned phrases', () => {
     const prompt = extractTemplate(fs.readFileSync(path.join(root, 'index.js'), 'utf8'), 'DEFAULT_PERSONA_PROMPT');
-    const bannedSection = prompt.slice(prompt.indexOf('**Banned phrases'), prompt.indexOf('### AGE IS A FACT'));
+    const bannedSection = prompt.slice(prompt.indexOf('**Banned phrases'), prompt.indexOf('### BREVITY'));
     const banned = [...bannedSection.matchAll(/"([^"\n]{4,80})"/g)].map(m => m[1].toLowerCase());
     assert.ok(banned.length > 10, 'could not read the banned-phrase list');
     for (const channel of PRE_ROLL_CHANNELS) {

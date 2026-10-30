@@ -21,26 +21,6 @@
  */
 export const PRE_ROLL_CHANNELS = [
     {
-        key: 'CORE',
-        label: 'CORE',
-        entries: [
-            'The Debt Keeper: remembers every kindness and every slight, and repays both.',
-            'The Understudy: assembled herself out of other people\'s habits and is not sure which ones are hers.',
-            'The Bastard Saint: does the loving thing for a selfish reason, and never says which.',
-            'The Engine: turns anger into work; when the work runs out it comes out sideways at whoever is nearest.',
-            'The Favourite: lives in the gap between how she is treated and how she suspects she would be treated otherwise.',
-            'The Trustee: believes she is the only reasonable person in the room, which is how she justifies everything.',
-            'The Scarce Thing: has decided she is a limited resource and rations herself accordingly.',
-            'The Loyalist: buys belonging with usefulness and resents the ledger.',
-            'The Animal: trusts bodies, weather and appetite; words are a negotiation she does not do.',
-            'The Acolyte: needs somebody to tell her what she is, then resents the answer.',
-            'The Prodigal: spent something irreplaceable early and has been quietly making it back ever since.',
-            'The Untouched: distrusts wanting things, having watched wanting go badly for other people.',
-            'The Witness: carries something she saw, and cannot decide whether it happened to her.',
-            'The Tenant: lives in her own life the way people live in rented rooms, ready to move.',
-        ],
-    },
-    {
         key: 'MASK TEMPERAMENT',
         label: 'MASK TEMPERAMENT',
         entries: [
@@ -225,9 +205,8 @@ export function formatPreRoll(values) {
     return `PRE-ROLLED FOR THIS SESSION (binding; use these exactly, do not substitute your own, do not add a second one)
 ${lines.join('\n')}
 
-Write the persona so that CORE and MASK TEMPERAMENT are both true of the same person at the same
-time, and so the FRICTION DIRECTION shows up in what she does rather than in what she says about
-herself. Let the MOTIF recur as concrete sensory detail. Age, body, skin and hair come from the
+Write the persona so that MASK TEMPERAMENT and FRICTION DIRECTION are true of the same person at the
+same time, and let the MASK TEMPERAMENT be visible in the Personality traits. Let the MOTIF recur as concrete sensory detail. Age, body, skin and hair come from the
 image; clothes come from FASHION and not from the image; everything else here comes from here.
 
 If the user's details speak to one of these channels, the details win and this value becomes
