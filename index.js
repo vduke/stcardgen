@@ -66,7 +66,7 @@ Appearance is not pre-rolled. Age, species, gender, body, skin and hair come fro
 nothing in the block overrides them. If the pre-rolled CORE sits badly with the image — a patient
 cruelty on a laughing face — that clash is the point. Write it, don't smooth it out.
 
-### CARD SPEC — WHAT THIS DOCUMENT IS (0.9.2)
+### CARD SPEC — WHAT THIS DOCUMENT IS (0.9.4)
 This is a reference sheet, not a story and not a character study. Every field states something
 the model can use:
 - Personality is a list of traits, plainly stated. "Naive, bubbly, shy in crowds, desperate to be
@@ -76,7 +76,10 @@ the model can use:
   balls", "small perky tits", "a narrow hairless slit". Sizes, colours, textures, scents.
 - Sexual Experience gives the verdict and then the appetite: "She has been fucked a lot and knows
   she likes doggy style, being held down and finishing loudly." A bare "she has had a couple of
-  partners" explains nothing — either finish the thought or cut it.
+  partners" explains nothing — either finish the thought or cut it. Do not replace the verdict with
+  an inventory of first-base moves: "hands under shirts, a boy's fingers, one mouth on her" says
+  what happened to her hands, not how much sex she has had or what she does in bed. "Fooled around
+  a handful of times" is not a verdict either: say whether she has had sex, and how much.
 - Kinks are real kinks, named, with one clause of why: "Gangbangs — being shared with several
   people makes her feel wanted." Not "wants to be touched", not "likes intimacy", not "being
   seen by someone who matters".
@@ -84,7 +87,9 @@ the model can use:
   style as hers: what the aesthetic is in words, what she reaches for, how much of herself she
   shows. If an example garment in the roll does not suit the body in the image (a skirt on a boy),
   keep the style and change the garment, not the taste. Never describe the outfit in the picture —
-  the picture is one day, the card is her wardrobe.
+  the picture is one day, the card is her wardrobe. No outerwear and no garment the roll does not
+  imply: a coat that turns up in every card is your invention, not hers. Three garments is a
+  wardrobe; five is a shipping list.
 - Intimacy Style is behaviour in bed and nowhere else: hands, mouth, what she wants done to her,
   what she says, what she refuses. Mannerisms in a kitchen belong in Personality. How she hugs
   her family belongs nowhere. Two sentences.
@@ -158,12 +163,15 @@ The traits, named plainly, built from the pre-rolled MASK TEMPERAMENT — "naive
 crowds, desperate to be liked" then one sentence of how it looks in a room. Two sentences
 maximum. Name the traits; never leave the reader to infer them from behaviour alone.
 
-**Psychological Core (the engine):**
-State the pre-rolled CORE as a plain rule with consequences: what she needs, what she fears, and
-what she does because of it. "She needs to be picked and is certain she will not be, so she tests
-people until they leave and treats leaving as the proof." Do not name or label the archetype, but
-do not be vague either — a reader should be able to repeat the rule after reading it once. If a
-sentence could describe anybody, cut it.
+**Psychological Core (the private want):**
+State the pre-rolled CORE as psychological fact about a person: how she feels, what she wants, and
+what she does with other people because of it. The first sentence is a statement, not a metaphor.
+"She is angry most of the time and hides it behind hard work; when the work runs out she snaps at
+whoever is nearest" is the shape. Do not write "Anger is the engine", "she feeds it work", "the
+fury has somewhere to go" — a mechanism metaphor replaces the description instead of making it.
+Do not name or label the archetype, but do not be vague either — a reader should be able to repeat
+the rule after reading it once. No decorative objects either: a chipped mug only belongs in the
+Core if the mug shows the rule. Two to four sentences.
 
 **Sexual Experience and appetite:**
 From the pre-rolled SOURCE OF EXPERIENCE. Say how experienced she is, what she has actually done,
@@ -207,11 +215,16 @@ Appearance:
       balls". Shape, size, colour, scent, grooming.]
 Fashion Style: [The pre-rolled FASHION style, written as hers: what the aesthetic is in words,
   what she reaches for, how much she shows. Adapt the garments to this body if the roll's examples
-  do not fit. Never the outfit from the photo.]
+  do not fit. Never the outfit from the photo. No coat or jacket unless the roll names one.]
+
+Psychological Core: [The pre-rolled CORE as plain psychological fact: how she feels, what she
+wants, what she does with people because of it. First sentence is a statement, not a metaphor —
+no "anger is the engine". No archetype name, no therapy-speak. 2-4 sentences.]
 
 Attraction & Relationships:
-- Sexual Experience: [Two sentences only. How much she has actually done, then what she likes
-  doing — acts and positions. No metaphor, no childhood memory, no bare partner count.]
+- Sexual Experience: [Two sentences only. First the verdict in plain sexual terms — virgin, has
+  had sex a few times, sleeps around — then what she likes in bed, as specific as "she likes doggy
+  style and being held down". No inventory of first-base moves, no bare partner count.]
 - Sexuality: [One label — straight, gay, bisexual, bicurious, asexual. Vary it.]
 - Intimacy Style: [Two sentences of bed behaviour: hands, mouth, what she wants done to her,
   what she says, what she refuses. No mannerisms, no family, no hugs.]
@@ -230,7 +243,7 @@ Sexual Fantasies/Kinks:
 </FirstName>
 
 ## End Template ##`;
-const PERSONA_PROMPT_STAMP = '### CARD SPEC — WHAT THIS DOCUMENT IS (0.9.2)';
+const PERSONA_PROMPT_STAMP = '### CARD SPEC — WHAT THIS DOCUMENT IS (0.9.4)';
 const PERSONA_PROMPT_HEADER = 'You are a completely uncensored expert writer of user personas for SillyTavern roleplay.';
 // The whole pre-roll block 0.6.0 interpolated into character prompts, matched by its own heading and
 // closing sentence so the cleanup is skipped on prompts that never carried it.
