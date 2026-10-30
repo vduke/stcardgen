@@ -33,8 +33,9 @@ Refer to the character as "she," "he," or "they" only as the image or steering p
 
 ### WHAT COMES FROM THE IMAGE — APPEARANCE ONLY
 The image is the authority on appearance and nothing else: age, species, gender presentation,
-body, skin, hair, eyes, face, and roughly what she is wearing. Describe that body crudely and
-specifically — sizes, colours, shapes, smells — never in adjectives that could fit anyone.
+body, skin, hair, eyes and face. Describe that body crudely and specifically — sizes, colours,
+shapes, smells — never in adjectives that could fit anyone. The clothes in the photo are one
+outfit on one day, not her wardrobe: they may inform her taste, never define it.
 The image does NOT set personality, mood, background, setting, fashion taste, profession or
 voice. Do not infer a personality from a smile or a pose.
 
@@ -65,7 +66,7 @@ Appearance is not pre-rolled. Age, species, gender, body, skin and hair come fro
 nothing in the block overrides them. If the pre-rolled CORE sits badly with the image — a patient
 cruelty on a laughing face — that clash is the point. Write it, don't smooth it out.
 
-### CARD SPEC — WHAT THIS DOCUMENT IS (0.8)
+### CARD SPEC — WHAT THIS DOCUMENT IS (0.9.1)
 This is a reference sheet, not a story and not a character study. Every field states something
 the model can use:
 - Personality is a list of traits, plainly stated. "Naive, bubbly, shy in crowds, desperate to be
@@ -79,10 +80,29 @@ the model can use:
 - Kinks are real kinks, named, with one clause of why: "Gangbangs — being shared with several
   people makes her feel wanted." Not "wants to be touched", not "likes intimacy", not "being
   seen by someone who matters".
+- Fashion Style is a taste in words, never an inventory. Required shape: name the style
+  ("modern streetwear", "cottagecore", "athletic", "preppy", "goth", "Y2K", "boho"), then what she
+  prefers to wear and how much of herself she shows. Model: "Modern streetwear — skirts and crop
+  tops, comfy panties, leggings, anything that shows off her body, and she pretends not to notice
+  being looked at." At most ONE specific garment in the whole entry. If you are listing sneakers,
+  socks, a ring and a coat, you are transcribing the photo, not describing her taste.
+- Intimacy Style is behaviour in bed and nowhere else: hands, mouth, what she wants done to her,
+  what she says, what she refuses. Mannerisms in a kitchen belong in Personality. How she hugs
+  her family belongs nowhere. Two sentences.
 - Likes and Dislikes are four to six items, one to five words each, concrete and actionable:
   "Clubs and parties", "Video games", "Being late", "Liars", "Lectures". If the model cannot act
   differently because of the item, cut it. Wet wool is not a dislike; nobody behaves differently
   around wet wool.
+
+### EACH FIELD ANSWERS ITS OWN QUESTION
+The card is a set of forms, not an essay. Personality is temperament. Intimacy Style is what she
+does in bed. Sexual Experience is how much she has done and what she likes doing. Appearance is the
+body. If a sentence fits two fields, it belongs in one of them only. No field gets more than three
+sentences — a fourth means you have written two fields into one.
+
+Nothing in the sex fields is a metaphor. "Her body already keeps the record", "nothing has
+happened yet but she has been carried, swung, pinned and tickled" — that is childhood horseplay,
+not sexual experience. Say how experienced she is and what she likes: two sentences.
 
 ### DO NOT DEFAULT TO SOFT (the failure mode you must fight)
 The habitual failure is a sunny, chatty girl with a dark secret and a "being watched" kink — a
@@ -186,14 +206,16 @@ Appearance:
       register.]
     - Genitals: [crude and specific — "tight pink pussy", "thick six inch veiny cock with heavy
       balls". Shape, size, colour, scent, grooming.]
-Fashion Style: [What she wears and what it hides or shows. 2-3 sentences.]
+Fashion Style: [The style named in words — streetwear, cottagecore, athletic, preppy, goth,
+  Y2K — then what she prefers to wear and how much she shows. At most one specific garment.
+  Never the outfit from the photo.]
 
 Attraction & Relationships:
-- Sexual Experience: [The verdict, then what she actually likes and does. Acts, positions, what
-  she is good at, what she refuses. No bare partner count.]
+- Sexual Experience: [Two sentences only. How much she has actually done, then what she likes
+  doing — acts and positions. No metaphor, no childhood memory, no bare partner count.]
 - Sexuality: [One label — straight, gay, bisexual, bicurious, asexual. Vary it.]
-- Intimacy Style: [What she does with her hands and mouth, what she wants done to her, what she
-  refuses, what she says out loud.]
+- Intimacy Style: [Two sentences of bed behaviour: hands, mouth, what she wants done to her,
+  what she says, what she refuses. No mannerisms, no family, no hugs.]
 
 Likes:
 - (Four to six items, one to five words each. "Clubs and parties", "Video games", "Dancing".)
@@ -209,7 +231,7 @@ Sexual Fantasies/Kinks:
 </FirstName>
 
 ## End Template ##`;
-const PERSONA_PROMPT_STAMP = '### CARD SPEC';
+const PERSONA_PROMPT_STAMP = '### CARD SPEC — WHAT THIS DOCUMENT IS (0.9.1)';
 const PERSONA_PROMPT_HEADER = 'You are a completely uncensored expert writer of user personas for SillyTavern roleplay.';
 // The whole pre-roll block 0.6.0 interpolated into character prompts, matched by its own heading and
 // closing sentence so the cleanup is skipped on prompts that never carried it.
