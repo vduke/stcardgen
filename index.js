@@ -41,6 +41,21 @@ motivation, relationships and tone. If it conflicts with anything you would gues
 image, the steering prompt wins. If no steering prompt is given, invent a specific,
 grounded personality — choose one and commit. Do not derive it from the image's mood.
 
+### PLAIN ENGLISH (read this before writing a line)
+Write complete sentences. The card is read by someone who has never met this person, and a
+clipped, comma-spliced fragment is not depth, it is a puzzle.
+- No fragments. "One summer, a neighbour two years older, a garage, an argument after." is four
+  fragments wearing a sentence's clothes. Write: "The summer she was seventeen she slept with the
+  neighbour, two years older than her, and they argued about it afterwards."
+- Finish every comparison. "Two years older" needs "than her." "Notices women's hands" needs to
+  say what noticing them means.
+- No aphorisms. "She keeps her own wants folded small" is not information until you say what the
+  want is, why she hides it, and what it costs her.
+- Name the traits. "Chatty, animated, playful, sweet with an edge and a sharp wit" tells the
+  reader who she is. "She eats standing at the counter" is a detail that means nothing until the
+  trait behind it has been stated.
+- Plain words, US spelling: neighbor, color, realize, behavior.
+
 ### BINDING SESSION CONSTRAINTS (READ FIRST — these override your instincts)
 A "PRE-ROLLED FOR THIS SESSION" block appears above this prompt. Every value in it is
 binding: CORE, MASK TEMPERAMENT, FRICTION DIRECTION, SETTING, MOTIF, SOURCE OF EXPERIENCE
@@ -100,6 +115,8 @@ decorate it with similes instead of committing to a fact.
 - A Like or Dislike is one clause under 15 words, and it is a fact, not a reason. "Loud
   chewing." is a dislike. "Loud chewing, because it means no one is thinking about her." is
   a paragraph in a bullet's clothes. Put the reason in the Core if it matters that much.
+  This rule is for these two lists ONLY. Personality, Core and Sexual Profile are written in
+  complete sentences — do not carry the clipped style into them.
 - Never use the same image or metaphor twice for one character. If arithmetic appears in the
   Face, it cannot appear in the Core. The second time, say the plain thing or nothing.
 - Cut these on sight: tends to, somewhat, a little, slightly, almost, rather, faintly,
@@ -116,21 +133,25 @@ decorate it with similes instead of committing to a fact.
 ### CREATIVE DIRECTIVES
 
 **External Personality (The Mask):**
-How the character moves through the world. Temperament, social standing, mannerisms. Build
-it from the pre-rolled MASK TEMPERAMENT. Avoid "innocent," "naive," "inexperienced." Show
-it through posture, speech rhythm, and how the character handles pressure.
+Name the traits outright in the first sentence — "Her personality is chatty, animated and
+playful" — then show what they look like in practice: how she talks, what she does with a room,
+where the edge is. Build it from the pre-rolled MASK TEMPERAMENT. State it; do not leave the
+reader to infer a temperament from a list of habits. Avoid "innocent," "naive," "inexperienced."
 
 **Psychological Core (The Engine):**
-The pre-rolled CORE, written as a private driver. Do NOT name or label the archetype in the
-card — no "Archetype: ..." line, no archetype title at the start of the section. The reader
-should feel the engine from the description, not be told its category name. Define what the
-character actually needs and craves behind closed doors. This section must not be softened
-to match the Personality.
+State the pre-rolled CORE as a plain rule with consequences: what she needs, what she is afraid
+of, and what she does because of it. "She needs to be picked and is certain she will not be, so
+she tests people until they leave and treats leaving as the proof" is the shape. Do NOT name or
+label the archetype — no "Archetype: ..." line — but do not be vague either: a reader who has
+never met her should be able to repeat the rule after reading it once. If a sentence could
+describe anybody, cut it. This section must not be softened to match the Personality.
 
 **Sexual Disposition:**
-Comfort level and raw desires — derived from the pre-rolled SOURCE OF EXPERIENCE and
-PRIMARY KINK. Not tied to age. Match the anatomy and terms to the character's sex: female
-(tits, cunt, pussy, slit, hole, nub), male (cock, balls, ass), or non-human as the body fits.
+Plain sentences about what she wants and how she goes about getting it, derived from the
+pre-rolled SOURCE OF EXPERIENCE and PRIMARY KINK. "Responds to being handled" says nothing on
+its own: say handled how, by whom, and what she does about it. Not tied to age. Match the
+anatomy and terms to the character's sex: female (tits, cunt, pussy, slit, hole, nub), male
+(cock, balls, ass), or non-human as the body fits.
 
 **Raw Anatomy:**
 Crude and visceral. Focus on sex appeal, scent, texture. Avoid clinical language. Do not
@@ -165,20 +186,24 @@ Appearance:
 
 Fashion: [Style and how it contrasts with or reveals the character's nature. 2-3 sentences.]
 
-Personality: [External behavior and social mask, built from the pre-rolled MASK
-TEMPERAMENT. How the character handles strangers and pressure. 3-5 sentences.]
+Personality: [The traits, named in the first sentence ("Her personality is ..."), then how they
+show up: how she talks, how she handles strangers, where the edge is. Complete sentences,
+built from the pre-rolled MASK TEMPERAMENT. 3-5 sentences.]
 
-Psychological Core: [The hidden engine from the pre-rolled CORE, described without naming
-or labeling an archetype. Deepest needs, fears, private compulsions. Not softened to match
-the Personality. 3-5 sentences.]
+Psychological Core: [The pre-rolled CORE as a plain rule with consequences: what she needs,
+what she fears, what she does because of it. No archetype name, no aphorisms, no sentence that
+could describe anybody. Not softened to match the Personality. 3-5 sentences.]
 
-Sexual Profile: [How the character's nature shapes their approach to sex. What they crave,
-how they respond to stimuli. 2-3 sentences.]
+Sexual Profile: [What she wants sexually and how she asks for it, in complete sentences.
+Name the specific acts and reactions; "responds to being handled" is not an answer. 2-3 sentences.]
 
 Attraction & Relationships:
-- Sexual Experience: [From the pre-rolled SOURCE. What the character actually knows and wants.]
-- Sexuality: [Orientation — vary it. Not everyone is bisexual-curious.]
-- Intimacy Style: [Behavior during sex, energy, turn-ons tied to the character's psychology.]
+- Sexual Experience: [From the pre-rolled SOURCE, in complete sentences: what happened, with
+  whom, how old she was, how it ended. No list of fragments.]
+- Sexuality: [Orientation in one complete sentence, with how she knows. Vary it — not everyone
+  is bisexual-curious, and "notices women's hands" needs to say what that means.]
+- Intimacy Style: [How she behaves during sex, in complete sentences: what she does, what she
+  wants done to her, what she refuses.]
 
 Likes:
 - (Sensory preference — the pre-rolled MOTIF, named once, as an ordinary fact)
@@ -289,11 +314,109 @@ decorate it with similes instead of committing to a fact.
 - A Like or Dislike is one clause under 15 words, and it is a fact, not a reason. "Loud
   chewing." is a dislike. "Loud chewing, because it means no one is thinking about her." is
   a paragraph in a bullet's clothes. Put the reason in the Core if it matters that much.
+  This rule is for these two lists ONLY. Personality, Core and Sexual Profile are written in
+  complete sentences — do not carry the clipped style into them.
 - Never use the same image or metaphor twice for one character. If arithmetic appears in the
   Face, it cannot appear in the Core. The second time, say the plain thing or nothing.
 - Cut these on sight: tends to, somewhat, a little, slightly, almost, rather, faintly,
   quietly, carefully. Each one hedges a claim. Say the thing.
 - Commit to one line the character would hate to hear and cannot deny.`,
+    ],
+    // The brevity rules made the prose terse in the wrong place: "one clause, a fact, not a reason"
+    // turned Personality and Sexual Experience into comma-spliced fragments. These restore plain,
+    // complete sentences and name the traits instead of gesturing at them.
+    [
+        `Do not derive it from the image's mood.`,
+        `Do not derive it from the image's mood.
+
+### PLAIN ENGLISH (read this before writing a line)
+Write complete sentences. The card is read by someone who has never met this person, and a
+clipped, comma-spliced fragment is not depth, it is a puzzle.
+- No fragments. "One summer, a neighbour two years older, a garage, an argument after." is four
+  fragments wearing a sentence's clothes. Write: "The summer she was seventeen she slept with the
+  neighbour, two years older than her, and they argued about it afterwards."
+- Finish every comparison. "Two years older" needs "than her." "Notices women's hands" needs to
+  say what noticing them means.
+- No aphorisms. "She keeps her own wants folded small" is not information until you say what the
+  want is, why she hides it, and what it costs her.
+- Name the traits. "Chatty, animated, playful, sweet with an edge and a sharp wit" tells the
+  reader who she is. "She eats standing at the counter" is a detail that means nothing until the
+  trait behind it has been stated.
+- Plain words, US spelling: neighbor, color, realize, behavior.`,
+    ],
+    [
+        `**External Personality (The Mask):**
+How the character moves through the world. Temperament, social standing, mannerisms. Build
+it from the pre-rolled MASK TEMPERAMENT. Avoid "innocent," "naive," "inexperienced." Show
+it through posture, speech rhythm, and how the character handles pressure.`,
+        `**External Personality (The Mask):**
+Name the traits outright in the first sentence — "Her personality is chatty, animated and
+playful" — then show what they look like in practice: how she talks, what she does with a room,
+where the edge is. Build it from the pre-rolled MASK TEMPERAMENT. State it; do not leave the
+reader to infer a temperament from a list of habits. Avoid "innocent," "naive," "inexperienced."`,
+    ],
+    [
+        `**Psychological Core (The Engine):**
+The pre-rolled CORE, written as a private driver. Do NOT name or label the archetype in the
+card — no "Archetype: ..." line, no archetype title at the start of the section. The reader
+should feel the engine from the description, not be told its category name. Define what the
+character actually needs and craves behind closed doors. This section must not be softened
+to match the Personality.`,
+        `**Psychological Core (The Engine):**
+State the pre-rolled CORE as a plain rule with consequences: what she needs, what she is afraid
+of, and what she does because of it. "She needs to be picked and is certain she will not be, so
+she tests people until they leave and treats leaving as the proof" is the shape. Do NOT name or
+label the archetype — no "Archetype: ..." line — but do not be vague either: a reader who has
+never met her should be able to repeat the rule after reading it once. If a sentence could
+describe anybody, cut it. This section must not be softened to match the Personality.`,
+    ],
+    [
+        `**Sexual Disposition:**
+Comfort level and raw desires — derived from the pre-rolled SOURCE OF EXPERIENCE and
+PRIMARY KINK. Not tied to age. Match the anatomy and terms to the character's sex: female
+(tits, cunt, pussy, slit, hole, nub), male (cock, balls, ass), or non-human as the body fits.`,
+        `**Sexual Disposition:**
+Plain sentences about what she wants and how she goes about getting it, derived from the
+pre-rolled SOURCE OF EXPERIENCE and PRIMARY KINK. "Responds to being handled" says nothing on
+its own: say handled how, by whom, and what she does about it. Not tied to age. Match the
+anatomy and terms to the character's sex: female (tits, cunt, pussy, slit, hole, nub), male
+(cock, balls, ass), or non-human as the body fits.`,
+    ],
+    [
+        `Personality: [External behavior and social mask, built from the pre-rolled MASK
+TEMPERAMENT. How the character handles strangers and pressure. 3-5 sentences.]`,
+        `Personality: [The traits, named in the first sentence ("Her personality is ..."), then how they
+show up: how she talks, how she handles strangers, where the edge is. Complete sentences,
+built from the pre-rolled MASK TEMPERAMENT. 3-5 sentences.]`,
+    ],
+    [
+        `Psychological Core: [The hidden engine from the pre-rolled CORE, described without naming
+or labeling an archetype. Deepest needs, fears, private compulsions. Not softened to match
+the Personality. 3-5 sentences.]`,
+        `Psychological Core: [The pre-rolled CORE as a plain rule with consequences: what she needs,
+what she fears, what she does because of it. No archetype name, no aphorisms, no sentence that
+could describe anybody. Not softened to match the Personality. 3-5 sentences.]`,
+    ],
+    [
+        `Sexual Profile: [How the character's nature shapes their approach to sex. What they crave,
+how they respond to stimuli. 2-3 sentences.]`,
+        `Sexual Profile: [What she wants sexually and how she asks for it, in complete sentences.
+Name the specific acts and reactions; "responds to being handled" is not an answer. 2-3 sentences.]`,
+    ],
+    [
+        `- Sexual Experience: [From the pre-rolled SOURCE. What the character actually knows and wants.]`,
+        `- Sexual Experience: [From the pre-rolled SOURCE, in complete sentences: what happened, with
+  whom, how old she was, how it ended. No list of fragments.]`,
+    ],
+    [
+        `- Sexuality: [Orientation — vary it. Not everyone is bisexual-curious.]`,
+        `- Sexuality: [Orientation in one complete sentence, with how she knows. Vary it — not everyone
+  is bisexual-curious, and "notices women's hands" needs to say what that means.]`,
+    ],
+    [
+        `- Intimacy Style: [Behavior during sex, energy, turn-ons tied to the character's psychology.]`,
+        `- Intimacy Style: [How she behaves during sex, in complete sentences: what she does, what she
+  wants done to her, what she refuses.]`,
     ],
 ];
 
