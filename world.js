@@ -79,7 +79,9 @@ Because they are binding, the setting has an identity of its own that a batch of
 
 ### LOREBOOK ENTRIES
 - One topic per entry (one NPC, one place, one faction, one custom...). 50-140 words each, factual reference style, present tense. Refer to the persona as {{user}}. Short entries are better than truncated JSON: close every brace.
-- Each NPC's goal must make sense without {{user}} in the room, and must state what that NPC does and does not know about {{user}}.
+- Each NPC's goal must make sense without {{user}} in the room. State the narrow version of what they know, then end the
+  description with one sentence on what they do not know (before any example dialogue), in the form "He does not know ... and has not asked." One or two
+  NPCs may know something private, but only as an anecdote, never as a label.
 - NPC entries: full name, age, role, relationship to {{user}}, appearance, personality, speech style, current goal. For important NPCs (family, close friends, love interests, rivals, bosses, crew), end the content with "Example dialogue:" followed by 2-3 short lines in their own voice, showing how they talk to {{user}}. These lines may push the entry past 160 words.
 - keys: 2-6 specific trigger words people would actually type in chat: names, nicknames, surnames, place names, distinctive terms, plus short/lowercase forms. Avoid generic words (the, home, he, she, mom when there are several moms) that would fire constantly.
 - secondary_keys: optional. When set, the entry only fires if a primary key AND a secondary key appear. Use them to disambiguate.
