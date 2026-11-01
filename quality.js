@@ -5,6 +5,13 @@ const LEGACY_REVIEW_CALIBRATION = 'Score it honestly; a 10 is rare.';
 const REVIEW_CALIBRATION = 'Score it honestly and be hard to impress. Calibration: a solid first draft usually scores 6-7; 8 is genuinely strong; 9+ means you looked hard and found nothing meaningful to improve. You are likely reviewing AI-generated text, so watch for its habits: stock names, generic adjectives ("mysterious", "enigmatic"), tidy summaries instead of specifics, and repeated phrasing.';
 
 const PLAYABILITY_LINE = '- playability: gives the AI what it needs to roleplay well: motivations, speech style, relationships, conflicts and hooks. For worlds: NPCs have goals and distinct voices, places have things to do.';
+// 0.12.0: what a card states about its own body has to agree with itself. The reviewer was scoring
+// prose and ignoring arithmetic, so a catgirl with no ears and a 44-inch nine-year-old at 62 lbs both
+// passed. Species embodiment and the height/weight/body/wardrobe cross-check are consistency issues.
+const CONSISTENCY_LINE = '- consistency: fields agree with each other and respect the source of truth. Appearance (age, species, gender, body, skin, hair, eyes) must match the image. Personality, background, setting and tone must match the steering prompt if one was given, even when they clash with the image\'s mood. Do not call a steering-driven personality "inconsistent with the image." Pronouns and anatomy must match the character\'s sex and species.';
+// Single-quoted on purpose: tests/prompt-migrations.mjs extracts plain string constants from this
+// file to rebuild the migration table, and it does not evaluate template literals.
+const CONSISTENCY_BODY_RULES = ' For personas and characters: if the species is not human, Appearance must name the non-human anatomy the image shows (ears, tail, fur, scales, claws, horns) — a catgirl with no ears or tail on the sheet is a human in a costume. Height, weight, shoe size and the Body line must describe one body at the stated age: 3\'8" with 62 lbs and a narrow waist is three different girls. Appearance is anatomy plus the garments the Fashion Style lists, never a habit: a heavy coat she "always wears" that the outfit line does not name contradicts it.';
 const RULES_LINE = '- rules: correct {{char}}/{{user}} macros, never acts or speaks for {{user}}, opening messages end on an in-world beat (never "What do you do?"), example messages use <START> and name prefixes, no Main Prompt content.';
 
 // [old, new] pairs applied to saved rubrics; a line the user edited no longer matches and is left alone.
@@ -22,8 +29,10 @@ const REVIEW_LINE_MIGRATIONS = [
     // alone would re-append on every load. With the anchor, a migrated rubric no longer matches.
     [
         '- consistency: fields agree with each other and with the user\'s details; no contradictions in ages, relationships, timeline or appearance; names used consistently.\n' + PLAYABILITY_LINE,
-        '- consistency: fields agree with each other and respect the source of truth. Appearance (age, species, gender, body, skin, hair, eyes) must match the image. Personality, background, setting and tone must match the steering prompt if one was given, even when they clash with the image\'s mood. Do not call a steering-driven personality "inconsistent with the image." Pronouns and anatomy must match the character\'s sex and species.\n' + PLAYABILITY_LINE,
+        CONSISTENCY_LINE + '\n' + PLAYABILITY_LINE,
     ],
+    // 0.12.0 adds species anatomy and the body-number cross-check to that same criterion.
+    [CONSISTENCY_LINE, CONSISTENCY_LINE + CONSISTENCY_BODY_RULES],
     // Contradiction and discomfort are content, not padding, and older rubrics lack these criteria.
     [
         '- efficiency: no filler, repetition or padding, and no lazy, thin fields either. Length fits the content.\nFor worlds, also score:',
@@ -65,7 +74,7 @@ export const DEFAULT_REVIEW_PROMPT = migrateReviewPrompt(`You are a strict edito
 
 Score each criterion from 1 to 10:
 - specificity: concrete details (habits, history, sensory facts) instead of generic tropes, cliches or purple prose. Specificity means facts about THIS character, not decorative quirks added to seem original.
-- consistency: fields agree with each other and respect the source of truth. Appearance (age, species, gender, body, skin, hair, eyes) must match the image. Personality, background, setting and tone must match the steering prompt if one was given, even when they clash with the image's mood. Do not call a steering-driven personality "inconsistent with the image." Pronouns and anatomy must match the character's sex and species.
+${CONSISTENCY_LINE}${CONSISTENCY_BODY_RULES}
 ${PLAYABILITY_LINE}
 ${RULES_LINE}
 - efficiency: no filler, repetition or padding, and no lazy, thin fields either. Length fits the content. Do not flag internal contradiction or an uncomfortable detail as padding: those are the point.

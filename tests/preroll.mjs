@@ -31,7 +31,12 @@ test('the prompt is told about exactly the channels that are rolled', () => {
         assert.ok(prompt.includes(channel.label), `prompt never names ${channel.label}`);
     }
     // Appearance must not be pre-rolled: the image is the authority on it.
-    const binding = prompt.slice(prompt.indexOf('BINDING SESSION CONSTRAINTS'), prompt.indexOf('### THE CONVERGENCE PROBLEM'));
+    // The shipped prompt's section names drift; anchor on the section that really follows the
+    // binding block and fail loudly if it stops existing, instead of slicing to the end of the file.
+    const start = prompt.indexOf('BINDING SESSION CONSTRAINTS');
+    const end = prompt.indexOf('### CARD SPEC');
+    assert.ok(start >= 0 && end > start, 'binding block anchors moved; the check would scan the wrong text');
+    const binding = prompt.slice(start, end);
     assert.ok(!/\bAGE\b/.test(binding), 'binding block still claims to pre-roll AGE, but age comes from the image');
     assert.ok(!/\bBODY\b/.test(binding), 'binding block still claims to pre-roll BODY, but it comes from the image');
 });

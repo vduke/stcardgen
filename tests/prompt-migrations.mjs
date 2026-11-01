@@ -116,6 +116,32 @@ test('the character prompt is not sent persona-only migration text', () => {
     assert.ok(!character.includes('FRICTION DIRECTION'), 'character prompt mentions persona channels');
     assert.ok(character.includes('Never end with a question to the player'), 'first_mes rule lost its ending');
 });
+// 0.12.0: a card has to describe the anatomy its species implies, and its numbers have to describe
+// the same body. These are spec text, not migrations, so assert the shipped prompts carry them.
+test('the persona spec gives non-human anatomy a slot and a rule', () => {
+    const p = defaults.PERSONA_LINE_MIGRATIONS;
+    assert.ok(p.includes('Species traits:'), 'Appearance has no Species traits line');
+    assert.ok(p.includes('a human in a costume'), 'no rule that the species must be embodied');
+});
+
+test('the persona spec makes the height, weight, shoe size and Body line agree', () => {
+    const p = defaults.PERSONA_LINE_MIGRATIONS;
+    assert.ok(p.includes('ONE GIRL, NOT FOUR NUMBERS'), 'missing the body-consistency section');
+    assert.ok(p.includes("3'8\" is a five-year-old's height"), 'missing the height anchor');
+    assert.ok(p.includes('solid, chunky'), 'missing the weight-for-height example');
+});
+
+test('the character spec embodies the species too', () => {
+    assert.ok(defaults.PROMPT_LINE_MIGRATIONS.includes('a human in a costume'), 'character Appearance never handles non-human anatomy');
+});
+
+test('the reviewer scores species anatomy and body consistency', () => {
+    const r = quality.DEFAULT_REVIEW_PROMPT;
+    assert.ok(r.includes('catgirl with no ears or tail'), 'reviewer never checks the species is embodied');
+    assert.ok(r.includes('three different girls'), 'reviewer never cross-checks height, weight and body');
+    assert.ok(r.includes('heavy coat she "always wears"'), 'reviewer never checks the outfit against Appearance');
+});
+
 // Derives the marker from the table itself rather than hardcoding prose, so this keeps working when
 // the wording changes and cannot accidentally test a phrase no migration actually inserts.
 test('a pair that extends its own match text appends the extension exactly once', () => {
