@@ -297,7 +297,7 @@ const CHARACTER_FORMAT_LINE_MIGRATIONS = [
 ];
 
 // Shipped-prompt identity for the character prompt; see refreshShippedPrompt() in loadSettings.
-const CHARACTER_PROMPT_STAMP = '### DESCRIPTION — THE WORKING SHEET';
+const CHARACTER_PROMPT_STAMP = '### DESCRIPTION — THE WORKING SHEET (0.12.0)';
 const CHARACTER_PROMPT_HEADER = 'You are an expert character card writer for SillyTavern roleplay.';
 
 const DEFAULT_CHARACTER_PROMPT = `You are an expert character card writer for SillyTavern roleplay. You turn a reference image (plus
@@ -325,7 +325,7 @@ permanent facts — and on nothing else.
   they do on their own. A catgirl sheet with no ears and no tail is a human in a costume.
 - Genitals: the body, not its reaction.
 
-### DESCRIPTION — THE WORKING SHEET
+### DESCRIPTION — THE WORKING SHEET (0.12.0)
 Use these headings in this order, as a reference sheet. 600-900 words. Every line is a fact the
 model can act on in a scene; no filler, no summary sentences about the character's essence. If a
 sentence says nothing you could point at, cut it.
