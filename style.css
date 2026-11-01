@@ -28,6 +28,16 @@
     flex: 1 1 120px;
 }
 
+/* SillyTavern sizes .menu_button to its longest word, which in the half-width settings column breaks
+   "Reset prompts to defaults" over four lines. Let a button take the width of its whole label and keep
+   the label on one line; .stcg-row and .stcg-actions already wrap between buttons. */
+.stcg-row .menu_button,
+.stcg-actions .menu_button {
+    width: max-content;
+    max-width: 100%;
+    white-space: nowrap;
+}
+
 /* ---------- Editor ---------- */
 
 .stcg-editor {
