@@ -8,7 +8,7 @@ import assert from 'node:assert';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PRE_ROLL_CHANNELS, CHARACTER_CHANNELS, WORLD_CHANNELS, WORLD_THEMES, channelsFor, rollPreRoll, formatPreRoll, parsePreRoll } from '../preroll.js';
+import { PRE_ROLL_CHANNELS, CHARACTER_CHANNELS, WORLD_CHANNELS, WORLD_THEMES, THEME_PLACE_KINDS, channelsFor, rollPreRoll, formatPreRoll, parsePreRoll } from '../preroll.js';
 import { extractTemplate } from './extract.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -263,6 +263,27 @@ test('an experience tier draws within itself and filters by orientation', () => 
         assert.notStrictEqual(tag, 'm', 'a lesbian card got a man-only act');
     }
     assert.ok(sourceChannel.groups.experienced.some(entry => sourceChannel.orientationTags[entry] === 'm'));
+});
+
+test('places are tagged and follow the theme', () => {
+    const place = WORLD_CHANNELS.find(c => c.key === 'PLACE');
+    for (const entry of place.entries) assert.ok(place.kinds[entry], `untagged place: ${entry}`);
+    assert.strictEqual(new Set(Object.values(place.kinds)).size >= 8, true, 'too few place kinds');
+    assert.strictEqual(Object.keys(THEME_PLACE_KINDS).length, WORLD_THEMES.length, 'a theme has no allowed places');
+    for (const theme of WORLD_THEMES) {
+        const allowed = THEME_PLACE_KINDS[theme.label];
+        assert.ok(allowed.length && place.entries.some(entry => allowed.includes(place.kinds[entry])), theme.label + ' has no fitting place');
+    }
+    const suburban = WORLD_THEMES.find(theme => theme.label === 'Suburban night').text;
+    for (let seed = 1; seed <= 12; seed++) {
+        const rolled = rollPreRoll({ seed, type: 'world', steer: { THEME: suburban } }).values.PLACE;
+        assert.notStrictEqual(place.kinds[rolled], 'island', 'Suburban night still lands on an island');
+    }
+});
+test('texture includes modern technology', () => {
+    const texture = WORLD_CHANNELS.find(c => c.key === 'TEXTURE').entries.join(' ');
+    assert.ok(/phone|group chat/i.test(texture), 'no modern phone texture');
+    assert.ok(/coffee|speaker/i.test(texture), 'no modern teenage texture');
 });
 
 test('world openings are allowed to be ordinary', () => {

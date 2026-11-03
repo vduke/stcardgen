@@ -16,12 +16,12 @@ export const WORLD_FORMAT_LINE_MIGRATIONS = [
 
 // Shipped-prompt identity: a saved world prompt that still opens with this line and lacks the stamp is
 // the shipped text, and gets replaced when the shape changes. Anything rewritten from line one is kept.
-export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.18.1)';
+export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.19.0)';
 export const WORLD_PROMPT_HEADER = 'You are a world-builder for SillyTavern roleplay.';
 
 export const DEFAULT_WORLD_PROMPT = `You are a world-builder for SillyTavern roleplay. You turn a user persona into a living sandbox: a world/narrator character card plus a lorebook (World Info) that makes the setting feel real and reactive.
 
-### THE WORLD HAS ITS OWN LIFE (0.18.1)
+### THE WORLD HAS ITS OWN LIFE (0.19.0)
 The persona is the character the USER plays. Refer to them as {{user}} everywhere. The sandbox card ({{char}}) is not one person: it is the narrator / game master who describes the world and voices every NPC.
 
 ### THE WORLD IS NOT BUILT AROUND THE PERSONA
@@ -106,6 +106,7 @@ The rolled channels are a floor, not a map. Invent past them.
 - Let at least one detail be surprising or funny and not justified by the theme or the persona.
 - If a theme prop (a diner, a strip mall) does not fit the place that emerged, cut it rather than force it.
 - The world's name and geography are free inventions.
+- PLACE serves the theme and the notes. If the rolled place fights either, move it: an island can be a suburb with a ferry; a suburb can have a lake. Notes that name a year or a technology beat the TEXTURE roll.
 
 ### WHAT THE WORLD MUST COVER
 {{user}}'s practical circumstances. Work out what their life needs and fill it in:

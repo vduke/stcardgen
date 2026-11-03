@@ -146,6 +146,80 @@ export const PERSONA_STEER_OPTIONS = {
     ],
 };
 
+/** Which place kinds each world theme tolerates; a mismatch is moved rather than forced. */
+export const THEME_PLACE_KINDS = {
+    "Cozy but fraying": [
+        "suburban",
+        "smallcity",
+        "lake",
+        "rural"
+    ],
+    "Neon noir": [
+        "urban"
+    ],
+    "Dystopian austerity": [
+        "urban",
+        "smallcity"
+    ],
+    "Pastoral gothic": [
+        "rural"
+    ],
+    "Solarpunk": [
+        "smallcity",
+        "urban",
+        "suburban"
+    ],
+    "Post-collapse": [
+        "rural",
+        "smallcity"
+    ],
+    "Corporate arcology": [
+        "urban"
+    ],
+    "Mythic": [
+        "coastal",
+        "rural"
+    ],
+    "Liminal": [
+        "urban",
+        "smallcity",
+        "rural"
+    ],
+    "Coastal working town": [
+        "coastal",
+        "island"
+    ],
+    "Frontier": [
+        "rural"
+    ],
+    "Underground": [
+        "urban"
+    ],
+    "Orbital": [
+        "urban"
+    ],
+    "Weird fiction": [
+        "rural",
+        "smallcity",
+        "coastal"
+    ],
+    "Industrial river city": [
+        "smallcity",
+        "urban"
+    ],
+    "Academic town": [
+        "college",
+        "smallcity",
+        "suburban"
+    ],
+    "Suburban night": [
+        "suburban",
+        "lake",
+        "smallcity",
+        "urban"
+    ]
+};
+
 export const PRE_ROLL_CHANNELS = [
     {
         key: 'VIBE',
@@ -589,19 +663,54 @@ export const WORLD_CHANNELS = [
     {
         key: 'PLACE',
         label: 'PLACE',
+        // Kind lets the theme narrow the place pool; the notes still outrank both.
+        kinds: {
+            "A harbour town where the fishing quota was cut this spring.": "coastal",
+            "A commuter suburb where every house is being renovated and nobody knows the neighbours.": "suburban",
+            "A university town in the middle of a building scandal.": "college",
+            "A border town with two currencies and one working road.": "rural",
+            "A desert motel town forty minutes from the nearest supermarket.": "rural",
+            "A cold-water island with one ferry a day and a school for every age.": "island",
+            "A city district under a compulsory-purchase order; half the shops are empty.": "urban",
+            "A logging town in the last year before the mill shuts.": "rural",
+            "A canal town where the locks are being automated.": "rural",
+            "A mountain village with a new ski lift and old money.": "mountain",
+            "A railway junction, five hours from anywhere, where the trains still stop.": "rural",
+            "A river town rebuilding after the second flood in two years.": "smallcity",
+            "A suburb of cul-de-sacs, a strip mall and a high school with a new astroturf field.": "suburban",
+            "A lake town in the last week of summer: rented pontoons, a party cove, seasonal money.": "lake",
+            "A small city north side: one high school, a diner, a bowling alley, a bus that runs late.": "smallcity",
+            "An apartment complex at the edge of a college town, half students and half families.": "college",
+            "A sun-belt suburb of new builds, irrigation warnings and a school run at seven.": "suburban",
+            "A rust-belt town where the plant is still open, just smaller than it was.": "smallcity",
+            "A coastal tourist town in high season: boardwalk, seasonal staff, locals priced out.": "coastal",
+            "A city neighbourhood with a high school, a corner shop and a transit stop.": "urban",
+            "A mountain resort town with two schools on one campus and staff housing behind the hotel.": "mountain",
+            "A rural county seat with a courthouse square and a Walmart twenty minutes out.": "rural"
+        },
         entries: [
             'A harbour town where the fishing quota was cut this spring.',
             'A commuter suburb where every house is being renovated and nobody knows the neighbours.',
             'A university town in the middle of a building scandal.',
             'A border town with two currencies and one working road.',
             'A desert motel town forty minutes from the nearest supermarket.',
-            'A cold-water island with one ferry a day and a school that closed last year.',
+            'A cold-water island with one ferry a day and a school for every age.',
             'A city district under a compulsory-purchase order; half the shops are empty.',
             'A logging town in the last year before the mill shuts.',
             'A canal town where the locks are being automated.',
             'A mountain village with a new ski lift and old money.',
             'A railway junction, five hours from anywhere, where the trains still stop.',
             'A river town rebuilding after the second flood in two years.',
+            'A suburb of cul-de-sacs, a strip mall and a high school with a new astroturf field.',
+            'A lake town in the last week of summer: rented pontoons, a party cove, seasonal money.',
+            'A small city north side: one high school, a diner, a bowling alley, a bus that runs late.',
+            'An apartment complex at the edge of a college town, half students and half families.',
+            'A sun-belt suburb of new builds, irrigation warnings and a school run at seven.',
+            'A rust-belt town where the plant is still open, just smaller than it was.',
+            'A coastal tourist town in high season: boardwalk, seasonal staff, locals priced out.',
+            'A city neighbourhood with a high school, a corner shop and a transit stop.',
+            'A mountain resort town with two schools on one campus and staff housing behind the hotel.',
+            'A rural county seat with a courthouse square and a Walmart twenty minutes out.',
         ],
     },
     {
@@ -656,6 +765,11 @@ export const WORLD_CHANNELS = [
             'The technology works, but the weather interferes with it four days in ten.',
             'Old money made of wood and brass, and new money made of chrome and impatience.',
             'A single radio station, a single newspaper, and both of them careful.',
+            'Phones in every hand, group chats faster than the adults, and one bar of signal at the school.',
+            'Iced coffee cups, hair straighteners, a speaker in a tote bag, and a charger everyone borrows.',
+            'A gas station neon glow and the blue light of a phone screen; everything else is dark.',
+            'Bus timetables, lifts from parents, and somebody always asking for a ride.',
+            'New builds with no fences yet, and a show home nobody has moved into.',
         ],
     },
     {
@@ -816,6 +930,13 @@ export function rollPreRoll({ seed = Date.now(), avoid = {}, type = 'persona', s
                 values[channel.key] = pick(keys.flatMap(key => channel.groups[key]));
                 continue;
             }
+        }
+        if (channel.key === 'PLACE' && channel.kinds && THEME_PLACE_KINDS[values.THEME]) {
+            const allowed = THEME_PLACE_KINDS[values.THEME];
+            const fitting = channel.entries.filter(entry => allowed.includes(channel.kinds[entry]));
+            if (fitting.length) values[channel.key] = pick(fitting);
+            else values[channel.key] = pick(channel.entries);
+            continue;
         }
         if (channel.key === 'SOURCE OF EXPERIENCE' || channel.key === 'EXPERIENCE') {
             const group = channel.groups?.[steer.SOURCE];
