@@ -1022,3 +1022,15 @@
 .stcg-theme, .stcg-w-theme, .stcg-bulk-theme {
     width: 100%;
 }
+
+.stcg-steer-row,
+.stcg-bulk-steer-row .stcg-steer-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.stcg-steer-row label {
+    flex: 1 1 45%;
+    font-size: 0.9em;
+}

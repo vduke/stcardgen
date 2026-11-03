@@ -296,6 +296,11 @@ test('theme steering is wired from the UI to the roll', () => {
     assert.match(worldSrc, /rollPreRoll\(\{ type: 'world', steer/);
     assert.match(indexSrc, /stcg-theme/);
     assert.match(worldSrc, /stcg-w-theme/);
+    assert.match(indexSrc, /stcg-steer/);
+    assert.match(indexSrc, /stcg-bulk-steer/);
+    assert.match(indexSrc, /data-key="VIBE"/);
+    assert.match(indexSrc, /data-key="SEXUALITY"/);
+    assert.match(indexSrc, /data-key="SOURCE"/);
 });
 
 // A fixer that never saw the roll can iron the card flat. The quality layer must receive it as
@@ -305,6 +310,17 @@ test('the quality layer receives the pre-roll block', () => {
     assert.match(qualitySrc, /function reviewCard\(\{[^}]*preRoll/);
     assert.match(qualitySrc, /function reviseCard\(\{[^}]*preRoll/);
     assert.match(qualitySrc, /function autoFixCard\(\{[^}]*preRoll/);
+});
+
+// 0.14.0: the mask is chosen by an energy/warmth cell, and sexuality settles before experience.
+test('the review rubric scores nuance and theme', () => {
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('nuance (personas and characters)'));
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('theme (characters and worlds)'));
+});
+test('the persona prompt explains the axes and orientation filtering', () => {
+    for (const phrase of ['VIBE', 'WARMTH', 'SEXUALITY', 'default to the gender', 'MASK TEMPERAMENT cell']) {
+        assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes(phrase), 'missing: ' + phrase);
+    }
 });
 
 test('a line the user edited is left alone', () => {

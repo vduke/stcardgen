@@ -21,7 +21,8 @@ function test(name, fn) {
 console.log('tables');
 test('every channel has enough values to fill a batch without repeating', () => {
     for (const channel of PRE_ROLL_CHANNELS) {
-        assert.ok(channel.entries.length >= 12, `${channel.key} has only ${channel.entries.length}`);
+        const min = channel.key === 'WARMTH' ? 3 : ['VIBE', 'SEXUALITY'].includes(channel.key) ? 5 : 12;
+        assert.ok(channel.entries.length >= min, `${channel.key} has only ${channel.entries.length}`);
         assert.strictEqual(new Set(channel.entries).size, channel.entries.length, `${channel.key} has duplicate entries`);
     }
 });
@@ -123,7 +124,8 @@ for (const [type, channels] of Object.entries(sets)) {
     test(`${type}: every channel carries at least ten distinct entries`, () => {
         assert.ok(channels.length >= 5, `${type} has only ${channels.length} channels`);
         for (const channel of channels) {
-            assert.ok(channel.entries.length >= 10, `${type}/${channel.key} has ${channel.entries.length} entries`);
+            const min = channel.key === 'WARMTH' ? 3 : ['VIBE', 'SEXUALITY'].includes(channel.key) ? 5 : 10;
+            assert.ok(channel.entries.length >= min, `${type}/${channel.key} has ${channel.entries.length} entries`);
             assert.strictEqual(new Set(channel.entries).size, channel.entries.length, `${type}/${channel.key} repeats an entry`);
             for (const entry of channel.entries) {
                 assert.ok(entry.length <= 260, `${type}/${channel.key} entry too long to use verbatim: ${entry}`);
@@ -208,6 +210,52 @@ test('a theme steer forces the theme instead of drawing one', () => {
     const worldChosen = worldThemes.entries[4];
     assert.strictEqual(rollPreRoll({ seed: 2, type: 'world', steer: { THEME: worldChosen } }).values.THEME, worldChosen);
 });
+const maskChannel = PRE_ROLL_CHANNELS.find(c => c.key === 'MASK TEMPERAMENT');
+const sourceChannel = PRE_ROLL_CHANNELS.find(c => c.key === 'SOURCE OF EXPERIENCE');
+test('every mask lives in exactly one vibe/warmth cell and every cell is usable', () => {
+    const seen = new Set();
+    for (const [cell, entries] of Object.entries(maskChannel.groups)) {
+        const [vibe, warmth] = cell.split('/');
+        assert.ok(['shy', 'reserved', 'steady', 'outgoing', 'big personality'].includes(vibe), cell);
+        assert.ok(['sweet', 'neutral', 'sharp'].includes(warmth), cell);
+        assert.ok(entries.length >= 2, cell);
+        for (const entry of entries) {
+            assert.ok(!seen.has(entry), entry + ' is in two cells');
+            seen.add(entry);
+        }
+    }
+    assert.strictEqual(seen.size, maskChannel.entries.length, 'a mask is in no cell');
+});
+test('vibe and warmth force values and narrow the mask to their cell', () => {
+    const roll = rollPreRoll({ seed: 9, steer: { VIBE: 'Shy', WARMTH: 'Sharp' } });
+    assert.strictEqual(roll.values.VIBE, 'Shy');
+    assert.strictEqual(roll.values.WARMTH, 'Sharp');
+    assert.ok(maskChannel.groups['shy/sharp'].includes(roll.values['MASK TEMPERAMENT']));
+});
+test('one axis alone unions its own cells', () => {
+    for (let seed = 1; seed <= 8; seed++) {
+        const roll = rollPreRoll({ seed, steer: { VIBE: 'Outgoing' } });
+        const allowed = Object.entries(maskChannel.groups)
+            .filter(([cell]) => cell.startsWith('outgoing/')).flatMap(([, entries]) => entries);
+        assert.ok(allowed.includes(roll.values['MASK TEMPERAMENT']));
+    }
+});
+test('sexuality defaults to the gender rule and honours a pick', () => {
+    const sexualities = PRE_ROLL_CHANNELS.find(c => c.key === 'SEXUALITY');
+    assert.match(rollPreRoll({ seed: 2 }).values.SEXUALITY, /Bisexual for a female card/);
+    assert.strictEqual(rollPreRoll({ seed: 2, steer: { SEXUALITY: 'Gay' } }).values.SEXUALITY, 'Gay');
+    assert.ok(sexualities.entries.includes('Heterosexual'));
+});
+test('an experience tier draws within itself and filters by orientation', () => {
+    for (let seed = 1; seed <= 10; seed++) {
+        const roll = rollPreRoll({ seed, steer: { SOURCE: 'experienced', SEXUALITY: 'Lesbian' } });
+        assert.ok(sourceChannel.groups.experienced.includes(roll.values['SOURCE OF EXPERIENCE']));
+        const tag = sourceChannel.orientationTags[roll.values['SOURCE OF EXPERIENCE']];
+        assert.notStrictEqual(tag, 'm', 'a lesbian card got a man-only act');
+    }
+    assert.ok(sourceChannel.groups.experienced.some(entry => sourceChannel.orientationTags[entry] === 'm'));
+});
+
 test('the prompts say theme is atmosphere and ask for nuance', () => {
     const character = extractTemplate(fs.readFileSync(path.join(root, 'index.js'), 'utf8'), 'DEFAULT_CHARACTER_PROMPT');
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');

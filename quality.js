@@ -12,6 +12,8 @@ const CONSISTENCY_LINE = '- consistency: fields agree with each other and respec
 // Single-quoted on purpose: tests/prompt-migrations.mjs extracts plain string constants from this
 // file to rebuild the migration table, and it does not evaluate template literals.
 const CONSISTENCY_BODY_RULES = ' For personas and characters: if the species is not human, Appearance must name the non-human anatomy the image shows (ears, tail, fur, scales, claws, horns) — a catgirl with no ears or tail on the sheet is a human in a costume. Height, weight, shoe size and the Body line must describe one body at the stated age: 3\'8" with 62 lbs and a narrow waist is three different girls. Appearance is anatomy plus the garments the Fashion Style lists, never a habit: a heavy coat she "always wears" that the outfit line does not name contradicts it.';
+const NUANCE_LINE = '- nuance (personas and characters): two true things held at once and left unresolved, a taste or habit that costs something, negative space where the narrator does not explain. Score low for a trait list wearing costumes, for contradictions that look random, and for every reaction explained.';
+const THEME_LINE = '- theme (characters and worlds): if a pre-rolled theme was supplied, it must show in props, light, money, weather, work or power rather than being named. A theme that could be swapped for another without changing the card is an issue.';
 const RULES_LINE = '- rules: correct {{char}}/{{user}} macros, never acts or speaks for {{user}}, opening messages end on an in-world beat (never "What do you do?"), example messages use <START> and name prefixes, no Main Prompt content.';
 
 // [old, new] pairs applied to saved rubrics; a line the user edited no longer matches and is left alone.
@@ -23,6 +25,11 @@ const REVIEW_LINE_MIGRATIONS = [
     [
         '- specificity: concrete, original details (names, habits, history, sensory specifics) instead of generic tropes, cliches or purple prose.',
         '- specificity: concrete details (habits, history, sensory facts) instead of generic tropes, cliches or purple prose. Specificity means facts about THIS character, not decorative quirks added to seem original.',
+    ],
+    // 0.14.0 adds nuance. Anchored through CONSISTENCY_LINE so the prefix pair cannot re-append.
+    [
+        '- specificity: concrete details (habits, history, sensory facts) instead of generic tropes, cliches or purple prose. Specificity means facts about THIS character, not decorative quirks added to seem original.\n' + CONSISTENCY_LINE,
+        '- specificity: concrete details (habits, history, sensory facts) instead of generic tropes, cliches or purple prose. Specificity means facts about THIS character, not decorative quirks added to seem original.\n' + NUANCE_LINE + '\n' + CONSISTENCY_LINE,
     ],
     // Appearance comes from the image; everything else comes from the steering prompt.
     // Anchored through the next line: the old line is a prefix of the new one, so matching it
@@ -38,10 +45,14 @@ const REVIEW_LINE_MIGRATIONS = [
         '- efficiency: no filler, repetition or padding, and no lazy, thin fields either. Length fits the content.\nFor worlds, also score:',
         '- efficiency: no filler, repetition or padding, and no lazy, thin fields either. Length fits the content. Do not flag internal contradiction or an uncomfortable detail as padding: those are the point.\n- edge (personas): the character has a real gap between what they believe and what is true, shown through behavior, not announced. A sweet, passive or obedient character is not a flaw. A card with no friction at all is. Score low for a character who is only a trait list, or whose "edge" is attitude rather than contradiction.\n- restraint (personas): the narrator does not explain the character, summarize them, or prove their depth in every sentence. Gaze and stillness are not substitutes for character.\n- world independence (worlds): the world is not built to flatter or feed {{user}}. People, places and factions have their own goals and pressures that would exist if {{user}} had never been born.\nFor worlds, also score:',
     ],
-    // A character card is performed, and a world is not a mirror. Older rubrics score neither.
+    // 0.14.0 adds theme. Two variants: pre-voiced rubrics, and rubrics already carrying voiced/npc lines.
     [
         '- world independence (worlds): the world is not built to flatter or feed {{user}}. People, places and factions have their own goals and pressures that would exist if {{user}} had never been born.\nFor worlds, also score:',
+        '- world independence (worlds): the world is not built to flatter or feed {{user}}. People, places and factions have their own goals and pressures that would exist if {{user}} had never been born.\n' + THEME_LINE + '\nFor worlds, also score:',
+    ],
+    [
         '- world independence (worlds): the world is not built to flatter or feed {{user}}. People, places and factions have their own goals and pressures that would exist if {{user}} had never been born.\n- voiced (characters): the card states how they talk (register, habits, what changes under anger, fear or lying) and gives lines only they would say; it states a want that has nothing to do with {{user}}, what they refuse and the words they refuse in, and a starting stance toward {{user}}. Score low for a character whose depth is adjectives plus a secret.\n- npc ignorance (worlds): NPCs know only what they could have seen, been told or guessed. Kinks and private appetites stay private; nobody greets {{user}} by their psychology. The narrator never speaks for {{user}}. Entries leave room for {{user}} to reveal themselves. Score low for a world that hands {{user}}\'s traits back to them.\nFor worlds, also score:',
+        '- world independence (worlds): the world is not built to flatter or feed {{user}}. People, places and factions have their own goals and pressures that would exist if {{user}} had never been born.\n' + THEME_LINE + '\n- voiced (characters): the card states how they talk (register, habits, what changes under anger, fear or lying) and gives lines only they would say; it states a want that has nothing to do with {{user}}, what they refuse and the words they refuse in, and a starting stance toward {{user}}. Score low for a character whose depth is adjectives plus a secret.\n- npc ignorance (worlds): NPCs know only what they could have seen, been told or guessed. Kinks and private appetites stay private; nobody greets {{user}} by their psychology. The narrator never speaks for {{user}}. Entries leave room for {{user}} to reveal themselves. Score low for a world that hands {{user}}\'s traits back to them.\nFor worlds, also score:',
     ],
 ];
 

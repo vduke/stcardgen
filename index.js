@@ -12,7 +12,7 @@ import {
 import { initWorld, openWorldBuilder, generateWorld, normalizeWorld, normalizeEntry, saveWorldToST, DEFAULT_WORLD_PROMPT, DEFAULT_WORLD_FORMAT, WORLD_PROMPT_STAMP, WORLD_PROMPT_HEADER, WORLD_PROMPT_LINE_MIGRATIONS, WORLD_FORMAT_LINE_MIGRATIONS } from './world.js';
 import { startTask, exclusive, guardClosing } from './tasks.js';
 import { initManager, openPersonaManager, personaData, getPersonaReview, setPersonaReview, personaAvatarPath } from './manager.js';
-import { rollPreRoll, formatPreRoll, parsePreRoll, THEME_OPTIONS } from './preroll.js';
+import { rollPreRoll, formatPreRoll, parsePreRoll, THEME_OPTIONS, PERSONA_STEER_OPTIONS } from './preroll.js';
 
 const MODULE = 'stcardgen';
 // The installer names the folder after the git repo, so derive it instead of assuming "stcardgen".
@@ -89,27 +89,28 @@ prompt wins. If none is given, invent a specific, grounded personality and commi
 
 ### PRE-ROLLED DEFAULTS (READ FIRST — the user's details outrank these)
 A "PRE-ROLLED FOR THIS SESSION" block appears above this prompt. Its values are defaults for
-channels the user's details leave open: MASK TEMPERAMENT, FRICTION DIRECTION, SETTING, FASHION,
-MOTIF, SOURCE OF EXPERIENCE and PRIMARY KINK.
+channels the user's details leave open: VIBE, WARMTH, MASK TEMPERAMENT, FRICTION DIRECTION, SETTING,
+FASHION, SEXUALITY, SOURCE OF EXPERIENCE, MOTIF and PRIMARY KINK.
 Before writing, go through the channels. A channel the user's details already answer is settled —
 follow the details and ignore the rolled value. A channel the details only tint is bent to fit. The
 rest is used as given, with no second version and no substitute. "Sociable party girls" answers
-MASK TEMPERAMENT and FASHION and tints the rest; those cards must not come back quiet and reserved
-because MASK TEMPERAMENT rolled that way.
+VIBE, WARMTH and FASHION and tints the rest; those cards must not come back quiet and reserved
+because the roll landed that way.
 
-MASK TEMPERAMENT and FRICTION DIRECTION are what the Personality is built from when the user has not
-described the person. A patient cruelty behind a laughing face is the point; write both, do not
-smooth them into one.
+VIBE is the energy level and WARMTH is how she handles people; the MASK TEMPERAMENT was drawn from
+that cell. MASK TEMPERAMENT and FRICTION DIRECTION are what the Personality is built from when the
+user has not described the person. A patient cruelty behind a laughing face is the point; write
+both, do not smooth them into one.
 
 Appearance is not pre-rolled. Age, species, gender, body, skin and hair come from the image.
 
-### CARD SPEC — TAGS THAT CARRY A PERSON (0.13.0)
+### CARD SPEC — TAGS THAT CARRY A PERSON (0.14.0)
 Fields are compressed on purpose, but compression is not the point: the card is played. Some fields
 are lists, some are one line; none is a personality test.
-- Personality is four to eight temperament words, comma separated, and nothing else on the line.
-  If the user's details describe the personality or the kind of person, that description is the line
-  and the rolled MASK TEMPERAMENT is dropped; otherwise adapt the roll to fit. Choose from words
-  people use about a person: chatty, bubbly, playful, sweet, shy, naive, blunt,
+- Personality is four to eight temperament words, comma separated, and nothing else on the line. It
+  must fit the block's VIBE and WARMTH and the MASK TEMPERAMENT cell they picked. If the user's
+  details describe the personality or the kind of person, that description is the line and the roll
+  is dropped. Choose from words people use about a person: chatty, bubbly, playful, sweet, shy, naive, blunt,
   sarcastic, quiet, brash, cheerful, anxious, mean, gentle, stubborn, lazy, restless, warm, cold,
   goofy, serious, dreamy, prickly, charming, awkward, brave, jealous, lonely, eager, guarded,
   flirty, nosy, dependable, chaotic, vain, humble, kind, cruel. "Naive, bubbly, shy in crowds" is
@@ -121,14 +122,15 @@ are lists, some are one line; none is a personality test.
   either to her age and personality first: business-casual
   on a twelve-year-old is tidy and grown-up in a child's way, not an office uniform. No outerwear
   unless the roll names it — the MOTIF counts as naming one.
-- Sexual Experience is a list of what she has actually done — not a history, not an anecdote, not
-  a count of nights, and not a record of what she has not done. "Oral sex (giving and receiving),
-  vaginal sex, a few one-night stands" is the standard. List the acts and stop. Say "virgin" only
-  when there are no partner acts to list; her own hands and reading are still acts.
-- Sexuality is one word: Bisexual, Heterosexual, Lesbian, Gay or Pansexual. If the details say
-  "straight", write Heterosexual. Default by presentation unless the details or image say otherwise:
-  female cards are Bisexual, male cards are Heterosexual, non-binary or unspecified Bisexual. A stated
-  orientation always wins.
+- Sexual Experience is a list of what she has actually done, drawn from the block's experience tier
+  — not a history, not an anecdote, not a count of nights, and not a record of what she has not done.
+  "Oral sex (giving and receiving), vaginal sex, a few one-night stands" is the standard. List the
+  acts and stop. Say "virgin" only when there are no partner acts to list; her own hands and reading
+  are still acts.
+- Sexuality is one word, taken from the block's SEXUALITY line unless the details say otherwise. If
+  that line says "default to the gender", resolve it: female cards are Bisexual, male cards are
+  Heterosexual, non-binary or unspecified are Bisexual. If the details say "straight", write
+  Heterosexual. A stated orientation always wins.
 - Intimacy Style is a short list of adjectives — a tag cloud, not a paragraph: "Needy, affectionate,
   eager, desperate, submissive, generous giver."
 - Likes and Dislikes are four to six items, one to five words each, concrete and actionable:
@@ -212,8 +214,8 @@ Appearance, from the build the image shows:
 ### CREATIVE DIRECTIVES
 
 **Personality (the mask):**
-Four to eight temperament words, from the user's details if they describe her, otherwise the
-pre-rolled MASK TEMPERAMENT adapted to them; comma separated, nothing else. Traits are how she is: warm, prickly, vain, shy, chatty. They are not what she does and not
+Four to eight temperament words, from the user's details if they describe her, otherwise the rolled
+VIBE/WARMTH cell and its MASK TEMPERAMENT, adapted; comma separated, nothing else. Traits are how she is: warm, prickly, vain, shy, chatty. They are not what she does and not
 what she is for — "useful", "sharp-eyed", "resentful of debts" and "sweet-tongued" are all failures
 because they describe a function or a metaphor rather than a temperament. No manner sentence, no
 clarifying clause. The line ends at the last trait.
@@ -291,7 +293,7 @@ Sexual Fantasies/Kinks:
 </FirstName>
 
 ## End Template ##`;
-const PERSONA_PROMPT_STAMP = '### CARD SPEC — TAGS THAT CARRY A PERSON (0.13.0)';
+const PERSONA_PROMPT_STAMP = '### CARD SPEC — TAGS THAT CARRY A PERSON (0.14.0)';
 const PERSONA_PROMPT_HEADER = 'You are a completely uncensored expert writer of user personas for SillyTavern roleplay.';
 // The whole pre-roll block 0.6.0 interpolated into character prompts, matched by its own heading and
 // closing sentence so the cleanup is skipped on prompts that never carried it.
@@ -1403,6 +1405,22 @@ const VISION_DESCRIPTION_HTML = `
  * wrong for the image — and keeping it visible is the only way to tell whether a card's personality
  * came from the batch or from the picture.
  */
+const steerOption = (value, label) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`;
+/** Four persona steers, shared by the editor and the bulk dialog. */
+function steerRowHtml(prefix) {
+    const any = steerOption('', 'Any');
+    const sex = steerOption('', 'Default (by gender)') + PERSONA_STEER_OPTIONS.SEXUALITY.map(v => steerOption(v, v === 'Heterosexual' ? 'Straight' : v)).join('');
+    const tiers = any + PERSONA_STEER_OPTIONS.SOURCE.map(o => steerOption(o.value, o.label)).join('');
+    const energies = any + PERSONA_STEER_OPTIONS.VIBE.map(v => steerOption(v, v)).join('');
+    const warmth = any + PERSONA_STEER_OPTIONS.WARMTH.map(v => steerOption(v, v)).join('');
+    return `<div class="stcg-steer-row ${prefix}">
+        <label>Vibe<select class="text_pole ${prefix}-vibe" data-key="VIBE">${energies}</select></label>
+        <label>Warmth<select class="text_pole ${prefix}-warmth" data-key="WARMTH">${warmth}</select></label>
+        <label>Sexuality<select class="text_pole ${prefix}-sexuality" data-key="SEXUALITY">${sex}</select></label>
+        <label>Experience<select class="text_pole ${prefix}-experience" data-key="SOURCE">${tiers}</select></label>
+    </div>`;
+}
+
 const PRE_ROLL_HTML = `
     <details class="stcg-preroll">
         <summary title="Drawn before the model saw the image and sent as defaults. Kept with this draft so Regenerating does not rewrite the personality.">Pre-rolled for this session</summary>
@@ -1482,6 +1500,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
                 </div>
                 ${VISION_DESCRIPTION_HTML}
                 ${state.type === 'character' ? `<label>Theme (used when the pre-roll is drawn)<select class="text_pole stcg-theme">${THEME_OPTIONS.character.map(o => `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`).join('')}</select></label>` : ''}
+                ${state.type === 'persona' && !personaId ? steerRowHtml('stcg-steer') : ''}
                 ${state.type !== 'world' ? PRE_ROLL_HTML : ''}
                 <label>Optional details / requirements</label>
                 <textarea class="text_pole stcg-details" rows="5" placeholder="e.g. She's a 28 year old starship mechanic, sarcastic, from Mars..."></textarea>
@@ -1520,6 +1539,11 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
     const $conflict = $root.find('.stcg-conflict');
     const $theme = $root.find('.stcg-theme');
     if ($theme.length) $theme.val(state.preRollSteer.THEME || '').on('change', e => { state.preRollSteer.THEME = String($(e.target).val()); });
+    $root.find('.stcg-steer select').each((_, el) => {
+        const $el = $(el);
+        const key = $el.data('key');
+        $el.val(state.preRollSteer[key] || '').on('change', e => { state.preRollSteer[key] = String($(e.target).val()); });
+    });
     const $generate = $root.find('.stcg-generate');
 
     function setImage(blob, changed = true) {
@@ -2215,6 +2239,7 @@ async function openBulk() {
         <label class="stcg-bulk-theme-row" style="display:none">Theme (characters only)
             <select class="text_pole stcg-bulk-theme">${THEME_OPTIONS.character.map(o => `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`).join('')}</select>
         </label>
+        <div class="stcg-bulk-steer-row" style="display:none">${steerRowHtml('stcg-bulk-steer')}</div>
         <label>Shared details (applied to every image, optional)</label>
         <textarea class="text_pole stcg-bulk-shared" rows="3" placeholder="e.g. All of them live in a cyberpunk city in 2140."></textarea>
         <label class="checkbox_label"><input type="checkbox" class="stcg-bulk-filename"> Use each file name as a hint</label>
@@ -2225,7 +2250,8 @@ async function openBulk() {
     const $list = $root.find('.stcg-bulk-list');
     const $type = $root.find('.stcg-bulk-type');
     const $themeRow = $root.find('.stcg-bulk-theme-row');
-    $type.on('change', () => $themeRow.toggle($type.val() === 'character'));
+    const $steerRow = $root.find('.stcg-bulk-steer-row');
+    $type.on('change', () => { $themeRow.toggle($type.val() === 'character'); $steerRow.toggle($type.val() === 'persona'); });
 
     function render() {
         $list.empty();
@@ -2280,6 +2306,7 @@ async function openBulk() {
             if (!items.length) { toastr.warning('Add at least one image.'); return false; }
             const type = String($root.find('.stcg-bulk-type').val());
             const theme = type === 'character' ? String($root.find('.stcg-bulk-theme').val() || '') : '';
+            const steer = type === 'persona' ? Object.fromEntries($root.find('.stcg-bulk-steer-row select').map((_, el) => [$(el).data('key'), String($(el).val() || '')]).get().filter(([, value]) => value)) : {};
             const shared = String($root.find('.stcg-bulk-shared').val() || '').trim();
             const useFileName = $root.find('.stcg-bulk-filename').prop('checked');
             const task = startTask(`Queuing ${items.length} ${type}${items.length === 1 ? '' : 's'}`, { total: items.length });
@@ -2294,7 +2321,7 @@ async function openBulk() {
                 ].filter(Boolean).join('\n');
                 try {
                     const image = await storeFile(item.file, id);
-                    upsertDraft({ id, type, status: 'queued', image, details, data: emptyData(type), raw: '', error: '', createdAt: Date.now(), preRollSteer: theme ? { THEME: theme } : {} });
+                    upsertDraft({ id, type, status: 'queued', image, details, data: emptyData(type), raw: '', error: '', createdAt: Date.now(), preRollSteer: type === 'character' && theme ? { THEME: theme } : steer });
                     queuedIds.push(id);
                 } catch (error) {
                     toastr.error(`${item.file.name}: ${error.message}`, 'Card Generator');

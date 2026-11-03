@@ -1,10 +1,9 @@
 # Pre-roll steering — design brief (draft for review)
 
-Status: partially implemented (0.13.0). Shipped: per-channel `steer` in `rollPreRoll`, CHARACTER THEME and
-WORLD THEME channels, theme guidance in both prompts, and the pre-roll block now passed to
-review/fix/auto-fix as material to preserve. Also shipped: theme pickers in Create Character, World
-for Persona and Bulk (characters), the pick stored on the draft and reused when a block is cleared.
-Not yet shipped: the Energy/Warmth axes, SEXUALITY/SOURCE steer channels, and the persona controls.
+Status: implemented through phase 3 (0.14.0). All steers ship: VIBE/WARMTH mask cells, SEXUALITY,
+tiered EXPERIENCE with orientation filtering, theme pickers for characters and worlds, and persona
+pickers in Bulk and Create Persona. Phases 4–5 (character parity beyond theme, presets, weights,
+per-image overrides) remain.
 
 ## Implemented so far (0.13.0)
 
@@ -123,10 +122,10 @@ An act pool that says "two boyfriends" must not land on a Lesbian card or a male
 
 ## Phases
 
-- 0 Design brief (this document). Gate: agreed.
-- 1 Semantics, data, tests. Gate: all tests green, no UI.
-- 2 Bulk UI. Gate: manual batch proves picks hold.
-- 3 Create Persona UI. Gate: same.
+- 0 Design brief (this document). Gate: agreed. — done
+- 1 Semantics, data, tests. Gate: all tests green, no UI. — done
+- 2 Bulk UI. Gate: manual batch proves picks hold. — done
+- 3 Create Persona UI. Gate: same. — done
 - 4 Characters: hetero male default, own APPETITE/EXPERIENCE tiers, same contract.
 - 5 Polish: presets, weights, per-image overrides.
 

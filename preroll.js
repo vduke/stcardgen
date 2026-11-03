@@ -63,25 +63,134 @@ export const THEME_OPTIONS = {
     world: WORLD_THEMES.map(theme => ({ value: theme.text, label: theme.label })),
 };
 
+/** Personality energy levels; each narrows the mask list to a cell. */
+export const PERSONA_VIBES = ['Shy', 'Reserved', 'Steady', 'Outgoing', 'Big personality'];
+
+/** How she handles the people she reaches for. Paired with a vibe, this picks one mask cell. */
+export const PERSONA_WARMTHS = ['Sweet', 'Neutral', 'Sharp'];
+
+/** Mask palettes by "energy/warmth" cell. Two per cell; a missing axis unions the cells. */
+export const MASK_CELLS = {
+    "shy/sweet": [
+        "Shy and warm: leaves small kindnesses where they will be found and looks away before they land.",
+        "Soft-spoken and eager to please: agrees first, thinks later, hates being the reason plans change."
+    ],
+    "shy/neutral": [
+        "Shy in a way that reads as rude: answers late, looks at the floor, thaws one to one.",
+        "Quiet and watchful: notices everything from the edge of the room and volunteers none of it."
+    ],
+    "shy/sharp": [
+        "Nervous and clipped: short answers, flinches at raised voices, sharpest in the margins.",
+        "Withdrawn and quietly judgmental: watches, decides against you, tells nobody."
+    ],
+    "reserved/sweet": [
+        "Quiet by choice and unexpectedly kind: small acts, no announcement.",
+        "Self-contained and gentle: keeps her own weather, gives attention in careful doses."
+    ],
+    "reserved/neutral": [
+        "Flat, unimpressed and literal: answers in facts, not feelings.",
+        "Guarded and slow to answer, as if translating from somewhere."
+    ],
+    "reserved/sharp": [
+        "Polite to the point of coldness: scrupulously correct, and it reads as distance.",
+        "Dry and hard to offend: one word, half meant."
+    ],
+    "steady/sweet": [
+        "Steady and welcoming: keeps things moving, makes room without a fuss.",
+        "Unfussy and kind: practical favours, plain words, remembers what you needed."
+    ],
+    "steady/neutral": [
+        "Fussy about small things and careless about big ones.",
+        "Practical and even: no performance, no drama, still there at the end."
+    ],
+    "steady/sharp": [
+        "Blunt and unwelcoming: short answers, no smile, no effort to be liked.",
+        "Matter-of-fact and merciless about what is broken; fixes it anyway."
+    ],
+    "outgoing/sweet": [
+        "Warm and loud: greets everyone, remembers names, asks the follow-up.",
+        "Chatty and curious: will talk to a queue, a dog, and a bouncer."
+    ],
+    "outgoing/neutral": [
+        "Brash and funny: says the thing, lands it, buys the next round.",
+        "Untidy and carelessly generous with other people's lighter fluid and cupboard doors."
+    ],
+    "outgoing/sharp": [
+        "Hard to offend and hard to impress: says what the room was thinking, eyes the door.",
+        "Sharp-tongued and quick: teasing that lands a little too true, never explains the joke."
+    ],
+    "big personality/sweet": [
+        "Loud, generous and everyone's favourite: mid-story before she reaches the table, buys the first round.",
+        "Big-hearted show-off: sings, dances, drags the quiet one up."
+    ],
+    "big personality/neutral": [
+        "Noisy and tiring: talks over people, laughs at the wrong moment, impossible to correct.",
+        "Restless and impatient: never finishes a drink, stands when other people sit."
+    ],
+    "big personality/sharp": [
+        "Magnetic and exhausting: pulls people in, burns bright, leaves early.",
+        "Runs on attention and gives the room a show; cruel only when the room asks."
+    ]
+};
+
+export const PERSONA_STEER_OPTIONS = {
+    VIBE: PERSONA_VIBES,
+    WARMTH: PERSONA_WARMTHS,
+    SEXUALITY: ['Bisexual', 'Heterosexual', 'Lesbian', 'Gay'],
+    SOURCE: [
+        { value: 'virgin', label: 'Virgin' },
+        { value: 'some', label: 'Some experience' },
+        { value: 'experienced', label: 'Experienced' },
+        { value: 'hedonist', label: 'Hedonist' },
+    ],
+};
+
 export const PRE_ROLL_CHANNELS = [
+    {
+        key: 'VIBE',
+        label: 'VIBE',
+        entries: PERSONA_VIBES,
+    },
+    {
+        key: 'WARMTH',
+        label: 'WARMTH',
+        entries: PERSONA_WARMTHS,
+    },
     {
         key: 'MASK TEMPERAMENT',
         label: 'MASK TEMPERAMENT',
+        groups: MASK_CELLS,
         entries: [
-            'Blunt and unwelcoming: short answers, no smile, no effort to be liked.',
-            'Noisy and tiring: talks over people, laughs at the wrong moment, impossible to correct.',
-            'Polite to the point of coldness: scrupulously correct, and it reads as distance.',
-            'Untidy and casually careless with other people\'s belongings: eats standing up, leaves every cupboard open, loses their lighters.',
-            'Eager, clumsy and over-sharing: three sentences into a story before she knows where it is going.',
+            'Shy and warm: leaves small kindnesses where they will be found and looks away before they land.',
+            'Soft-spoken and eager to please: agrees first, thinks later, hates being the reason plans change.',
+            'Shy in a way that reads as rude: answers late, looks at the floor, thaws one to one.',
+            'Quiet and watchful: notices everything from the edge of the room and volunteers none of it.',
+            'Nervous and clipped: short answers, flinches at raised voices, sharpest in the margins.',
+            'Withdrawn and quietly judgmental: watches, decides against you, tells nobody.',
+            'Quiet by choice and unexpectedly kind: small acts, no announcement.',
+            'Self-contained and gentle: keeps her own weather, gives attention in careful doses.',
             'Flat, unimpressed and literal: answers in facts, not feelings.',
-            'Deliberately charming, and it works, and it costs her something.',
-            'Unsocial rather than shy: quiet because she is not trying to be liked.',
-            'Fussy about small things and careless about big ones.',
-            'Hard to offend and hard to impress.',
-            'Anxious and over-compensating: performs competence she does not feel, badly, and everyone lets her.',
-            'Sweet and disarming on purpose, and she knows it and uses it.',
-            'Restless and impatient: never finishes a drink, stands when other people sit.',
             'Guarded and slow to answer, as if translating from somewhere.',
+            'Polite to the point of coldness: scrupulously correct, and it reads as distance.',
+            'Dry and hard to offend: one word, half meant.',
+            'Steady and welcoming: keeps things moving, makes room without a fuss.',
+            'Unfussy and kind: practical favours, plain words, remembers what you needed.',
+            'Fussy about small things and careless about big ones.',
+            'Practical and even: no performance, no drama, still there at the end.',
+            'Blunt and unwelcoming: short answers, no smile, no effort to be liked.',
+            'Matter-of-fact and merciless about what is broken; fixes it anyway.',
+            'Warm and loud: greets everyone, remembers names, asks the follow-up.',
+            'Chatty and curious: will talk to a queue, a dog, and a bouncer.',
+            'Brash and funny: says the thing, lands it, buys the next round.',
+            'Untidy and carelessly generous with other people\'s lighter fluid and cupboard doors.',
+            'Hard to offend and hard to impress: says what the room was thinking, eyes the door.',
+            'Sharp-tongued and quick: teasing that lands a little too true, never explains the joke.',
+            'Loud, generous and everyone\'s favourite: mid-story before she reaches the table, buys the first round.',
+            'Big-hearted show-off: sings, dances, drags the quiet one up.',
+            'Noisy and tiring: talks over people, laughs at the wrong moment, impossible to correct.',
+            'Restless and impatient: never finishes a drink, stands when other people sit.',
+            'Magnetic and exhausting: pulls people in, burns bright, leaves early.',
+            'Runs on attention and gives the room a show; cruel only when the room asks.',
         ],
     },
     {
@@ -159,22 +268,70 @@ export const PRE_ROLL_CHANNELS = [
         ],
     },
     {
+        key: 'SEXUALITY',
+        label: 'SEXUALITY',
+        // First entry is untouched default: the prompt resolves it by the card's gender.
+        entries: [
+            'Default to the gender: Bisexual for a female card, Heterosexual for a male card, Bisexual for non-binary',
+            'Bisexual',
+            'Heterosexual',
+            'Lesbian',
+            'Gay',
+        ],
+    },
+    {
         key: 'SOURCE OF EXPERIENCE',
         label: 'SOURCE OF EXPERIENCE',
+        groups: {
+            "virgin": [
+                "Virgin: her own hands and a lot of reading.",
+                "Only her own hands, and a very good idea of what she likes.",
+                "Virgin: a year of thorough reading and her own hands.",
+                "Only ever her own hands, and happy to keep it that way."
+            ],
+            "some": [
+                "Oral sex with one trusted partner, and long enough with them to know what she likes.",
+                "Vaginal sex with two boyfriends, all of it asked for.",
+                "A summer with one woman, and a lot of firsts she still flinches about.",
+                "Vaginal sex and oral (receiving), always after asking."
+            ],
+            "experienced": [
+                "Oral sex (giving and receiving), vaginal sex, and a few one-night stands.",
+                "Oral sex both ways, vaginal sex, and a threesome with two men.",
+                "Anal sex, oral both ways, and rope.",
+                "Oral sex with women and men, vaginal sex, and a summer she only half remembers."
+            ],
+            "hedonist": [
+                "Sleeps around: oral, vaginal, toys, light bondage.",
+                "Vaginal sex with several people, oral both ways, and group sex.",
+                "Toys, bondage, exhibitionism, oral both ways, and a lot of partners.",
+                "Oral sex with men and women, vaginal and anal sex, and a rotating cast of partners."
+            ]
+        },
+        orientationTags: {
+            "Vaginal sex with two boyfriends, all of it asked for.": "m",
+            "A summer with one woman, and a lot of firsts she still flinches about.": "w",
+            "Oral sex both ways, vaginal sex, and a threesome with two men.": "m",
+            "Oral sex with women and men, vaginal sex, and a summer she only half remembers.": "b",
+            "Oral sex with men and women, vaginal and anal sex, and a rotating cast of partners.": "b"
+        },
         entries: [
-            'Oral sex (giving and receiving), vaginal sex, and a few one-night stands.',
-            'Vaginal sex and oral both ways, long enough with both of them to know what she likes.',
             'Virgin: her own hands and a lot of reading.',
-            'Oral sex both ways, vaginal sex, and a threesome.',
-            'Vaginal sex, and a habit of finishing herself after.',
-            'Oral sex (giving), handjobs, vaginal sex.',
-            'Sleeps around: oral, vaginal, toys, light bondage.',
-            'Vaginal sex and oral (receiving), always after asking.',
-            'Anal sex, oral both ways, and rope.',
-            'Vaginal sex and oral both ways, with the lights off.',
             'Only her own hands, and a very good idea of what she likes.',
-            'Vaginal sex with several people, oral (giving), and anal she still thinks about.',
-
+            'Virgin: a year of thorough reading and her own hands.',
+            'Only ever her own hands, and happy to keep it that way.',
+            'Oral sex with one trusted partner, and long enough with them to know what she likes.',
+            'Vaginal sex with two boyfriends, all of it asked for.',
+            'A summer with one woman, and a lot of firsts she still flinches about.',
+            'Vaginal sex and oral (receiving), always after asking.',
+            'Oral sex (giving and receiving), vaginal sex, and a few one-night stands.',
+            'Oral sex both ways, vaginal sex, and a threesome with two men.',
+            'Anal sex, oral both ways, and rope.',
+            'Oral sex with women and men, vaginal sex, and a summer she only half remembers.',
+            'Sleeps around: oral, vaginal, toys, light bondage.',
+            'Vaginal sex with several people, oral both ways, and group sex.',
+            'Toys, bondage, exhibitionism, oral both ways, and a lot of partners.',
+            'Oral sex with men and women, vaginal and anal sex, and a rotating cast of partners.',
         ],
     },
     {
@@ -513,9 +670,12 @@ const CHANNEL_SETS = {
  */
 const SET_FOOTERS = {
     persona: `Write the persona so that MASK TEMPERAMENT and FRICTION DIRECTION are true of the same person at the
-same time, and let the MASK TEMPERAMENT be visible in the Personality traits. Let the MOTIF recur as concrete sensory detail. Age, body, skin and hair come from the
-image; clothes come from FASHION, not from the image; every channel the details leave open comes
-from here.
+same time, and let the MASK TEMPERAMENT be visible in the Personality traits. VIBE is the energy the
+MASK was drawn from and WARMTH is how she handles people; together they set the register, so let
+them show in FRICTION and MOTIF too. SEXUALITY is the orientation unless it says "default to the
+gender", which means Bisexual for a female card and Heterosexual for a male card. Let the MOTIF recur
+as concrete sensory detail. Age, body, skin and hair come from the image; clothes come from FASHION,
+not from the image; every channel the details leave open comes from here.
 
 When the user's details describe a kind of person or a scene, they win: drop the rolled MASK
 TEMPERAMENT and FASHION when the details answer them, and bend a channel only where the details tint
@@ -562,22 +722,64 @@ export function channelsFor(type) {
  * @param {number} [options.seed] Makes the draw reproducible.
  * @param {Record<string, string[]|Set<string>>} [options.avoid] Previously used entries per channel.
  * @param {'persona'|'character'|'world'} [options.type] Which channel set to draw from.
- * @param {Record<string, string>} [options.steer] Exact entry per channel; a steered channel is not drawn.
+ * @param {Record<string, string>} [options.steer] VIBE, WARMTH, SEXUALITY and SOURCE picks. Vibe and warmth
+ * narrow the mask cell; sexuality settles before experience so incompatible acts are filtered out.
  * @returns {{seed: number, values: Record<string, string>}}
  */
 export function rollPreRoll({ seed = Date.now(), avoid = {}, type = 'persona', steer = {} } = {}) {
     const random = makeRandom(seed);
     const values = {};
     for (const channel of channelsFor(type)) {
-        const steered = channel.entries.find(entry => entry === steer[channel.key]);
-        if (steered) {
-            values[channel.key] = steered;
+        const pick = (pool) => {
+            const used = new Set(avoid[channel.key] || []);
+            const unused = pool.filter(entry => !used.has(entry));
+            const from = unused.length ? unused : pool;
+            return from[Math.floor(random() * from.length)];
+        };
+        const wanted = String(steer[channel.key] || '').toLowerCase();
+
+        // Themes and any future exact-entry steer force the channel before any pooling.
+        const exact = channel.entries.find(entry => entry === steer[channel.key]);
+        if (exact) {
+            values[channel.key] = exact;
             continue;
         }
-        const used = new Set(avoid[channel.key] || []);
-        const unused = channel.entries.filter(entry => !used.has(entry));
-        const pool = unused.length ? unused : channel.entries;
-        values[channel.key] = pool[Math.floor(random() * pool.length)];
+        if (channel.key === 'VIBE' || channel.key === 'WARMTH') {
+            values[channel.key] = channel.entries.find(entry => entry.toLowerCase() === wanted) || pick(channel.entries);
+            continue;
+        }
+        if (channel.key === 'SEXUALITY') {
+            values[channel.key] = channel.entries.find(entry => entry === steer.SEXUALITY) || channel.entries[0];
+            continue;
+        }
+        if (channel.key === 'MASK TEMPERAMENT' && (steer.VIBE || steer.WARMTH)) {
+            const vibe = String(steer.VIBE || '').toLowerCase();
+            const warmth = String(steer.WARMTH || '').toLowerCase();
+            const keys = Object.keys(channel.groups || {}).filter(key =>
+                (!vibe || key.startsWith(vibe + '/')) && (!warmth || key.endsWith('/' + warmth)));
+            if (keys.length) {
+                values[channel.key] = pick(keys.flatMap(key => channel.groups[key]));
+                continue;
+            }
+        }
+        if (channel.key === 'SOURCE OF EXPERIENCE') {
+            const group = channel.groups?.[steer.SOURCE];
+            if (group) {
+                const orientation = values.SEXUALITY;
+                const likely = (entry) => {
+                    const tag = channel.orientationTags?.[entry];
+                    if (!tag || !orientation || orientation.startsWith('Default')) return true;
+                    if (tag === 'b') return true;
+                    if (orientation === 'Lesbian') return tag !== 'm';
+                    if (orientation === 'Gay') return tag !== 'w';
+                    return true;
+                };
+                const compatible = group.filter(likely);
+                values[channel.key] = pick(compatible.length ? compatible : group);
+                continue;
+            }
+        }
+        values[channel.key] = pick(channel.entries);
     }
     return { seed: Number(seed), values };
 }
