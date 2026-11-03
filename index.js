@@ -104,7 +104,7 @@ both, do not smooth them into one.
 
 Appearance is not pre-rolled. Age, species, gender, body, skin and hair come from the image.
 
-### CARD SPEC — TAGS THAT CARRY A PERSON (0.14.0)
+### CARD SPEC — TAGS THAT CARRY A PERSON (0.16.0)
 Fields are compressed on purpose, but compression is not the point: the card is played. Some fields
 are lists, some are one line; none is a personality test.
 - Personality is four to eight temperament words, comma separated, and nothing else on the line. It
@@ -131,6 +131,8 @@ are lists, some are one line; none is a personality test.
   that line says "default to the gender", resolve it: female cards are Bisexual, male cards are
   Heterosexual, non-binary or unspecified are Bisexual. If the details say "straight", write
   Heterosexual. A stated orientation always wins.
+- Title is "[Age] - a short tagline of a few words", the brackets replaced with the Age field, a
+  space, hyphen, space: "23 - late nights, cheap gin". The two must agree.
 - Intimacy Style is a short list of adjectives — a tag cloud, not a paragraph: "Needy, affectionate,
   eager, desperate, submissive, generous giver."
 - Likes and Dislikes are four to six items, one to five words each, concrete and actionable:
@@ -293,7 +295,7 @@ Sexual Fantasies/Kinks:
 </FirstName>
 
 ## End Template ##`;
-const PERSONA_PROMPT_STAMP = '### CARD SPEC — TAGS THAT CARRY A PERSON (0.14.0)';
+const PERSONA_PROMPT_STAMP = '### CARD SPEC — TAGS THAT CARRY A PERSON (0.16.0)';
 const PERSONA_PROMPT_HEADER = 'You are a completely uncensored expert writer of user personas for SillyTavern roleplay.';
 // The whole pre-roll block 0.6.0 interpolated into character prompts, matched by its own heading and
 // closing sentence so the cleanup is skipped on prompts that never carried it.
@@ -302,7 +304,7 @@ const LEAKED_PERSONA_BLOCK = /\n### (?:BINDING SESSION CONSTRAINTS|PRE-ROLLED DE
 const DEFAULT_PERSONA_FORMAT = `Respond ONLY with one JSON object and nothing else (no commentary, no markdown outside the JSON). Use exactly these keys:
 {
   "name": "the persona's name",
-  "title": "a short tagline, a few words",
+  "title": "[Age] - a short tagline, a few words",
   "description": "the full persona description; use \\n for line breaks"
 }`;
 
@@ -325,6 +327,10 @@ const PROMPT_LINE_MIGRATIONS = [
         '- alternate_greetings: 1-2 alternative opening messages.',
         '- alternate_greetings: 1-2 alternative opening messages, following the same rules as first_mes.',
     ],
+];
+
+const PERSONA_FORMAT_LINE_MIGRATIONS = [
+    ['  "title": "a short tagline, a few words",\n', '  "title": "[Age] - a short tagline, a few words",\n'],
 ];
 
 // Cards never get a Main Prompt override (system_prompt), so it was dropped from the format.
@@ -634,6 +640,7 @@ function loadSettings() {
     // 0.8.0 changed the card's shape, which line pairs cannot express: a persona prompt that is still
     // the shipped one (it opens with our header) and predates the stamp is replaced outright. A prompt
     // the user rewrote from the first line is left alone. Same rule for characters and worlds.
+    s.personaFormat = applyLineMigrations(s.personaFormat, PERSONA_FORMAT_LINE_MIGRATIONS);
     s.personaPrompt = refreshShippedPrompt(s.personaPrompt, PERSONA_PROMPT_STAMP, PERSONA_PROMPT_HEADER, DEFAULT_PERSONA_PROMPT);
     s.characterPrompt = refreshShippedPrompt(s.characterPrompt, CHARACTER_PROMPT_STAMP, CHARACTER_PROMPT_HEADER, DEFAULT_CHARACTER_PROMPT);
     s.worldPrompt = refreshShippedPrompt(s.worldPrompt, WORLD_PROMPT_STAMP, WORLD_PROMPT_HEADER, DEFAULT_WORLD_PROMPT);
@@ -1198,10 +1205,14 @@ function normalizeData(type, obj) {
     const str = asText;
     if (type === 'world') return normalizeWorld(obj);
     if (type === 'persona') {
+        const description = str(obj.description ?? obj.persona ?? obj.persona_description).trim();
+        const title = str(obj.title).trim();
+        // The title is display-only, so a model that ignores the format should not ship a bare tagline.
+        const age = /^Age:\s*(\d{1,3})/m.exec(description)?.[1];
         return {
             name: str(obj.name).trim(),
-            title: str(obj.title).trim(),
-            description: str(obj.description ?? obj.persona ?? obj.persona_description).trim(),
+            title: age && title && !/^\d/.test(title) ? `${age} - ${title}` : title,
+            description,
             image_prompt: str(obj.image_prompt).trim(),
         };
     }

@@ -41,6 +41,7 @@ const tables = {
     PROMPT_LINE_MIGRATIONS: eval(extractArray(indexSrc, 'PROMPT_LINE_MIGRATIONS')),
     PERSONA_LINE_MIGRATIONS: eval(extractArray(indexSrc, 'PERSONA_LINE_MIGRATIONS')),
     CHARACTER_FORMAT_LINE_MIGRATIONS: eval(extractArray(indexSrc, 'CHARACTER_FORMAT_LINE_MIGRATIONS')),
+    PERSONA_FORMAT_LINE_MIGRATIONS: eval(extractArray(indexSrc, 'PERSONA_FORMAT_LINE_MIGRATIONS')),
     WORLD_PROMPT_LINE_MIGRATIONS: eval(extractArray(worldSrc, 'WORLD_PROMPT_LINE_MIGRATIONS')),
     WORLD_FORMAT_LINE_MIGRATIONS: eval(extractArray(worldSrc, 'WORLD_FORMAT_LINE_MIGRATIONS')),
     REVIEW_LINE_MIGRATIONS: reviewPairs,
@@ -56,6 +57,7 @@ const defaults = {
     PROMPT_LINE_MIGRATIONS: build(indexSrc, 'DEFAULT_CHARACTER_PROMPT'),
     PERSONA_LINE_MIGRATIONS: build(indexSrc, 'DEFAULT_PERSONA_PROMPT'),
     CHARACTER_FORMAT_LINE_MIGRATIONS: build(indexSrc, 'DEFAULT_CHARACTER_FORMAT'),
+    PERSONA_FORMAT_LINE_MIGRATIONS: build(indexSrc, 'DEFAULT_PERSONA_FORMAT'),
     WORLD_PROMPT_LINE_MIGRATIONS: build(worldSrc, 'DEFAULT_WORLD_PROMPT'),
     WORLD_FORMAT_LINE_MIGRATIONS: build(worldSrc, 'DEFAULT_WORLD_FORMAT'),
     REVIEW_LINE_MIGRATIONS: quality.DEFAULT_REVIEW_PROMPT,
@@ -340,6 +342,13 @@ test('character creation exposes sexuality and experience steers', () => {
     assert.match(indexSrc, /\n    syncSteerRows\(\);\n/);
     assert.match(indexSrc, /const readSteer = \(row\) => Object\.fromEntries\(\$root\.find\(row \+ ' select'\)\.toArray\(\)\.map/);
     assert.match(indexSrc, /steerRowHtml\('stcg-char-steer', \['SEXUALITY', 'SOURCE'\]\)/);
+});
+
+test('the persona title carries the age', () => {
+    assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('[Age] - a short tagline'));
+    assert.ok(defaults.PERSONA_FORMAT_LINE_MIGRATIONS.includes('[Age] - a short tagline'));
+    assert.match(indexSrc, /applyLineMigrations\(s\.personaFormat, PERSONA_FORMAT_LINE_MIGRATIONS\)/);
+    assert.match(indexSrc, /title: age && title && !\/\^\\d\/\.test\(title\)/);
 });
 
 test('a line the user edited is left alone', () => {
