@@ -521,7 +521,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
                 <label>Entries per generation
                     <input class="text_pole stcg-w-count" type="number" min="3" max="80">
                 </label>
-                <label>Theme (used when the pre-roll is drawn)<select class="text_pole stcg-w-theme">${THEME_OPTIONS.world.map(o => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join('')}</select></label>
+                <label>Theme (used when the pre-roll is drawn)<select class="text_pole stcg-w-theme">${THEME_OPTIONS.world.map(o => `<option value="${api.escapeHtml(o.value)}">${api.escapeHtml(o.label)}</option>`).join('')}</select></label>
                 <details class="stcg-w-preroll">
                     <summary>Pre-rolled for this world</summary>
                     <textarea class="text_pole stcg-w-pre-roll" rows="7" placeholder="Rolled on Generate. Edit any line to change what this world is built on; clear it to draw a fresh roll."></textarea>

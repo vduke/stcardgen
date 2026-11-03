@@ -298,6 +298,7 @@ test('theme steering is wired from the UI to the roll', () => {
     assert.match(worldSrc, /rollPreRoll\(\{ type: 'world', steer/);
     assert.match(indexSrc, /stcg-theme/);
     assert.match(worldSrc, /stcg-w-theme/);
+    assert.match(worldSrc, /stcg-w-theme">\$\{THEME_OPTIONS\.world\.map\(o => `<option value="\$\{api\.escapeHtml/);
     assert.match(indexSrc, /stcg-steer/);
     assert.match(indexSrc, /stcg-bulk-steer/);
     assert.match(indexSrc, /data-key="VIBE"/);
