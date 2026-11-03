@@ -265,6 +265,15 @@ test('an experience tier draws within itself and filters by orientation', () => 
     assert.ok(sourceChannel.groups.experienced.some(entry => sourceChannel.orientationTags[entry] === 'm'));
 });
 
+test('world openings are allowed to be ordinary', () => {
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    assert.ok(world.includes('not necessarily a problem'), 'scenario still demands a problem');
+    assert.ok(world.includes('Not every opening needs trouble'), 'opening tension rule missing');
+    assert.ok(world.includes('Pressure is not a crisis'), 'theme pressure line missing');
+    const openings = WORLD_CHANNELS.find(c => c.key === 'OPENING').entries;
+    assert.ok(openings.some(entry => /warm evening|come over/.test(entry)), 'no low-stakes opening option');
+});
+
 test('the world prompt stays mixed and leaves creative room', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     assert.ok(world.includes('TONE — MIXED, NOT BLEAK'), 'tone guidance missing');

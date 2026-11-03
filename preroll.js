@@ -692,6 +692,10 @@ export const WORLD_CHANNELS = [
             'A rehearsal for something the persona has been talked into taking part in.',
             'A bad day in a quiet week, and a knock about a small thing that is not small.',
             'A power cut that leaves the same faces in the same doorway for twenty minutes.',
+            'The first warm evening of the year, and the whole street outside at once.',
+            'A text that says come over, with no explanation and no time.',
+            'The last hour of a shift, and the person closing up with her.',
+            'A town event being set up badly, and somebody asking for a second pair of hands.',
         ],
     },
 ];
