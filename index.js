@@ -2261,7 +2261,15 @@ async function openBulk() {
     const $themeRow = $root.find('.stcg-bulk-theme-row');
     const $steerRow = $root.find('.stcg-bulk-steer-row');
     const $charSteerRow = $root.find('.stcg-bulk-char-steer-row');
-    $type.on('change', () => { $themeRow.toggle($type.val() === 'character'); $steerRow.toggle($type.val() === 'persona'); $charSteerRow.toggle($type.val() === 'character'); });
+    // The dialog opens on Personas, so sync the rows once rather than waiting for a change event.
+    const syncSteerRows = () => {
+        const isCharacter = $type.val() === 'character';
+        $themeRow.toggle(isCharacter);
+        $charSteerRow.toggle(isCharacter);
+        $steerRow.toggle(!isCharacter);
+    };
+    $type.on('change', syncSteerRows);
+    syncSteerRows();
 
     function render() {
         $list.empty();
