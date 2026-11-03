@@ -337,6 +337,7 @@ test('the save lock survives a reload', () => {
 test('character creation exposes sexuality and experience steers', () => {
     assert.match(indexSrc, /stcg-char-steer/);
     assert.match(indexSrc, /stcg-bulk-char-steer/);
+    assert.match(indexSrc, /const readSteer = \(row\) => Object\.fromEntries\(\$root\.find\(row \+ ' select'\)\.toArray\(\)\.map/);
     assert.match(indexSrc, /steerRowHtml\('stcg-char-steer', \['SEXUALITY', 'SOURCE'\]\)/);
 });
 

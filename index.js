@@ -2316,7 +2316,8 @@ async function openBulk() {
             if (!items.length) { toastr.warning('Add at least one image.'); return false; }
             const type = String($root.find('.stcg-bulk-type').val());
             const theme = type === 'character' ? String($root.find('.stcg-bulk-theme').val() || '') : '';
-            const readSteer = (row) => Object.fromEntries($root.find(row + ' select').map((_, el) => [$(el).data('key'), String($(el).val() || '')]).get().filter(([, value]) => value));
+            // jQuery.map() flattens the [key, value] pairs, so map the DOM nodes instead of using it here.
+            const readSteer = (row) => Object.fromEntries($root.find(row + ' select').toArray().map(el => [$(el).data('key'), String($(el).val() || '')]).filter(([, value]) => value));
             const steer = type === 'persona' ? readSteer('.stcg-bulk-steer-row') : type === 'character' ? readSteer('.stcg-bulk-char-steer-row') : {};
             if (type === 'character' && theme) steer.THEME = theme;
             const shared = String($root.find('.stcg-bulk-shared').val() || '').trim();
