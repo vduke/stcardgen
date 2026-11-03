@@ -263,6 +263,19 @@ test('a failed Fix keeps the instructions so they can be retried', () => {
     assert.ok(fixBlock.indexOf("state.steer = '';") !== -1);
 });
 
+// 0.12.1: the roll is a fallback. A brief like "sociable party girls" must outrank a quiet rolled
+// MASK TEMPERAMENT, target channels the details settle are skipped, and cards carry defaults.
+test('the persona prompt lets user details outrank the roll', () => {
+    assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes("A channel the user's details already answer is settled"));
+    assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('Sociable party girls'));
+});
+test('sexuality defaults by gender and experience lists only acts done', () => {
+    assert.match(defaults.PERSONA_LINE_MIGRATIONS, /female cards are\s+Bisexual/);
+    assert.match(defaults.PERSONA_LINE_MIGRATIONS, /male cards are\s+Heterosexual/);
+    assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('not a record of what she has not done'));
+    assert.ok(defaults.PROMPT_LINE_MIGRATIONS.includes('Bisexual by default for a female character'));
+});
+
 test('a line the user edited is left alone', () => {
     const edited = 'my own playability wording, untouched';
     assert.strictEqual(quality.applyLineMigrations(edited, reviewPairs), edited);

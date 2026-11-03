@@ -98,24 +98,38 @@ export const PRE_ROLL_CHANNELS = [
             'Loungewear: oversized hoodies, sweatpants, thick socks, and clothes that are a wall with sleeves.',
             'Cheap and cute: fast-fashion dresses, crop tops, chunky platforms, and clothes replaced every season.',
             'Practical and plain: jeans, t-shirts, work boots, and clothes that ask nothing of anyone.',
+            'Femme sporty: a fitted track jacket, a crisp tennis skirt, tube socks and retro trainers, and clothes that look like a warm-up she never skips.',
+            'Coastal: an open linen shirt over a bikini top, denim cutoffs, and salt-stiff hair; clothes for a town with one main street.',
+            'Soft girl: a cropped cardigan, a pleated pastel skirt, and Mary Janes with little socks, and clothes that are deliberately gentle.',
+            'Rave-ready: cargo pants with straps, a mesh top, and platform boots, and clothes built to be seen in the dark.',
+            'Cowgirl: denim cutoffs, a plaid shirt tied at the waist, and scuffed boots, and clothes for wide open ground.',
+            'Skate: an oversized tee, baggy jeans, and flat skate shoes, and clothes she has fallen off in.',
+            'Clean girl: a matching knit set, gold hoops, and a neat bun; clothes with nothing out of place.',
+            'Dark coquette: a black lace corset top, a mini skirt, and ribbon-tied heels, and clothes that are sweet with teeth.',
+            'Retro seventies: flared jeans, a crochet halter, and round sunglasses, and clothes from a decade she never saw.',
+            'Tomboy: a button-down over a white tee, loose trousers, and beat-up trainers, and clothes that ask for no comment.',
+            'Chrome and leather: a silver chain top, a leather skirt, and chunky boots; clothes that flash when she moves.',
+            'Festival: a crochet top, denim cutoffs, and an armful of bracelets, and clothes with dust already on them.',
+            'Indie sleaze: a band tee, a studded belt, and ripped black jeans, and clothes borrowed from a much louder friend.',
+            'Tennis-club preppy: a cable-knit vest, a white pleated skirt, and a visor, and clothes that expect a lawn.',
         ],
     },
     {
         key: 'SOURCE OF EXPERIENCE',
         label: 'SOURCE OF EXPERIENCE',
         entries: [
-            'Oral sex (giving and receiving), vaginal sex, a few one-night stands, no anal.',
-            'Vaginal sex with two boyfriends, oral both ways, nothing else yet.',
-            'Virgin: nothing but her own hands and a lot of reading.',
-            'Oral sex both ways, vaginal sex, a threesome, anal once and not again.',
-            'Vaginal sex, no oral, no anal, and she does not finish with a partner.',
-            'Oral sex (giving), handjobs, vaginal sex twice, anal virgin.',
-            'Sleeps around: oral, vaginal, toys, light bondage, no anal yet.',
-            'Vaginal sex, oral (receiving), nothing she has not asked for twice.',
-            'Anal sex, oral both ways, bondage, no penetration without it being decided for her.',
-            'Vaginal sex, oral both ways, she has never let anyone watch.',
-            'Nothing with a partner yet, but she knows her own body well.',
-            'Vaginal sex with several people, oral (giving), one night of anal she still thinks about.',
+            'Oral sex (giving and receiving), vaginal sex, and a few one-night stands.',
+            'Vaginal sex and oral both ways, long enough with both of them to know what she likes.',
+            'Virgin: her own hands and a lot of reading.',
+            'Oral sex both ways, vaginal sex, and a threesome.',
+            'Vaginal sex, and a habit of finishing herself after.',
+            'Oral sex (giving), handjobs, vaginal sex.',
+            'Sleeps around: oral, vaginal, toys, light bondage.',
+            'Vaginal sex and oral (receiving), always after asking.',
+            'Anal sex, oral both ways, and rope.',
+            'Vaginal sex and oral both ways, with the lights off.',
+            'Only her own hands, and a very good idea of what she likes.',
+            'Vaginal sex with several people, oral (giving), and anal she still thinks about.',
 
         ],
     },
@@ -293,18 +307,18 @@ export const CHARACTER_CHANNELS = [
         key: 'LIMITS',
         label: 'LIMITS',
         entries: [
-            'Oral sex (giving and receiving), vaginal sex, a few one-night stands, no anal.',
-            'Virgin: nothing but her own hands and a lot of reading.',
-            'Vaginal sex with two long-term partners, oral both ways, nothing since.',
-            'Sleeps around: oral, vaginal, toys, light bondage, no anal yet.',
-            'Anal sex, oral both ways, bondage, no penetration without it being decided for her.',
-            'Vaginal sex, no oral, no anal, and she does not finish with a partner.',
-            'Oral sex both ways, vaginal sex, a threesome, anal once and not again.',
-            'Vaginal sex, oral (receiving), nothing she has not asked for twice.',
-            'Oral sex (giving), handjobs, vaginal sex twice, anal virgin.',
-            'Vaginal sex with several people, oral (giving), one night of anal she still thinks about.',
-            'Nothing with a partner yet, but she knows her own body well.',
-            'Vaginal sex, oral both ways, she has never let anyone watch.',
+            'Oral sex (giving and receiving), vaginal sex, and several one-night stands.',
+            'Only her own hands: a virgin.',
+            'Vaginal sex with two long-term partners, oral both ways.',
+            'Sleeps around: oral, vaginal, toys, light bondage.',
+            'Anal sex, oral both ways, and handcuffs.',
+            'Vaginal sex, and a lot of practice on her own.',
+            'Oral sex both ways, vaginal sex, a threesome, and anal sex.',
+            'Vaginal sex and oral (receiving), always with the light left on.',
+            'Oral sex (giving), handjobs, vaginal sex.',
+            'Vaginal sex with several people, oral (giving), and anal she thinks about.',
+            'Only her own hands, and a very good idea of what she likes.',
+            'Vaginal sex and oral both ways, in the back of a car more than once.',
         ],
     },
 ];
@@ -446,10 +460,24 @@ const CHANNEL_SETS = {
 const SET_FOOTERS = {
     persona: `Write the persona so that MASK TEMPERAMENT and FRICTION DIRECTION are true of the same person at the
 same time, and let the MASK TEMPERAMENT be visible in the Personality traits. Let the MOTIF recur as concrete sensory detail. Age, body, skin and hair come from the
-image; clothes come from FASHION and not from the image; everything else here comes from here.`,
+image; clothes come from FASHION and not from the image; everything else here comes from here.
+
+When the user's details describe a kind of person or a scene, they win: bend MASK TEMPERAMENT and
+FASHION to the description first, and keep any channel only where it still fits. "Sociable party
+girls" must not come back quiet and reserved because MASK TEMPERAMENT rolled that way.
+
+Go through these channels before writing. Any channel the user's details already answer is settled:
+follow the details and ignore the rolled value. Where the details only tint a channel, bend the
+rolled value to fit. Everything else is used as given.`,
     character: `Build one person in whom STATION, WANT, SECRET, TROUBLE and HISTORY are all true at once. Let
 the VOICE shape every line of dialogue, let the APPETITE and LIMITS become the sexual profile, and give
-the WANT a life outside {{user}}. Appearance comes from the image; everything else comes from here.`,
+the WANT a life outside {{user}}. Appearance comes from the image; everything else comes from here.
+
+When the user's details describe a kind of person, they win: bend STATION, VOICE and TROUBLE to the
+description and keep a channel only where it still fits.
+
+Go through these channels before writing. Any channel the user's details already answer is settled:
+follow the details and ignore the rolled value. Where they only tint a channel, bend it to fit.`,
     world: `Build the world out of PLACE, PRESSURE, POWER, TEXTURE, SEASON and OPENING. The persona's card is how
 they experience this world, not a specification for what the world contains or what people know about
 them: nobody in this world has read their card.`,
@@ -492,13 +520,13 @@ export function formatPreRoll(values, type = 'persona') {
         .filter(channel => values[channel.key])
         .map(channel => `${channel.label}: ${values[channel.key]}`);
     if (!lines.length) return '';
-    return `PRE-ROLLED FOR THIS SESSION (binding; use these exactly, do not substitute your own, do not add a second one)
+    return `PRE-ROLLED FOR THIS SESSION (binding by default, but only defaults: the user's details win every conflict and settle any channel they answer)
 ${lines.join('\n')}
 
 ${SET_FOOTERS[type] || SET_FOOTERS.persona}
 
-If the user's details speak to one of these channels, the details win and this value becomes
-background for the rest. Do not discard the other channels.`;
+If the user's details already answer a channel, that channel is settled: follow the details and
+ignore the rolled value. If they only tint it, bend the value to fit. Never discard the channel.`;
 }
 
 /**

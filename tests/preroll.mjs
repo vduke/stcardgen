@@ -173,6 +173,24 @@ test('character and world entries avoid the slop phrases the prompts ban', () =>
         }
     }
 });
+// The experience list is an inventory of what happened. "No anal" and "never" are limits, and the
+// model was copying them in; the lists must name acts done only.
+test('experience lists name only acts done', () => {
+    const channels = [PRE_ROLL_CHANNELS.find(c => c.key === 'SOURCE OF EXPERIENCE'), CHARACTER_CHANNELS.find(c => c.key === 'LIMITS')];
+    for (const channel of channels) {
+        for (const entry of channel.entries) {
+            assert.ok(!/\b(no|never|nothing|not yet|does not)\b/i.test(entry), `${channel.key} entry tracks a negative: ${entry}`);
+        }
+    }
+});
+// A roll is a fallback, not a script: the block has to tell the model that a settled channel is
+// dropped rather than written anyway.
+test('the block makes the user details outrank the roll', () => {
+    const block = formatPreRoll(rollPreRoll({ seed: 1 }).values);
+    assert.match(block, /details win/);
+    assert.match(block, /settled/);
+});
+
 test('an unknown type falls back to the persona set instead of crashing', () => {
     assert.deepStrictEqual(channelsFor('nonsense'), PRE_ROLL_CHANNELS);
     assert.ok(formatPreRoll(rollPreRoll({ seed: 1, type: 'nonsense' }).values, 'nonsense').includes('MASK TEMPERAMENT'));
