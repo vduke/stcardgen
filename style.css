@@ -1018,3 +1018,7 @@
     align-items: center;
     gap: 4px;
 }
+
+.stcg-theme, .stcg-w-theme, .stcg-bulk-theme {
+    width: 100%;
+}

@@ -5,7 +5,7 @@ import { user_avatar } from '../../../personas.js';
 import { debounce } from '../../../utils.js';
 import { reviewCard, reviseCard, reviseField, renameNames, renameCard, qualityPass, autoFixCard, autoFixTarget, autoFixRoundCap, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, QUALITY_PANEL_HTML, RENAME_CARD_HTML, fieldOpsHtml, wireIssueChecks, canFix } from './quality.js';
 import { startTask, guardClosing } from './tasks.js';
-import { rollPreRoll, formatPreRoll } from './preroll.js';
+import { rollPreRoll, formatPreRoll, THEME_OPTIONS } from './preroll.js';
 
 // [old line, new line] pairs applied to saved prompts on load; see PROMPT_LINE_MIGRATIONS in index.js.
 export const WORLD_PROMPT_LINE_MIGRATIONS = [];
@@ -16,11 +16,12 @@ export const WORLD_FORMAT_LINE_MIGRATIONS = [
 
 // Shipped-prompt identity: a saved world prompt that still opens with this line and lacks the stamp is
 // the shipped text, and gets replaced when the shape changes. Anything rewritten from line one is kept.
-export const WORLD_PROMPT_STAMP = '### THE WORLD IS NOT BUILT AROUND THE PERSONA';
+export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.13.0)';
 export const WORLD_PROMPT_HEADER = 'You are a world-builder for SillyTavern roleplay.';
 
 export const DEFAULT_WORLD_PROMPT = `You are a world-builder for SillyTavern roleplay. You turn a user persona into a living sandbox: a world/narrator character card plus a lorebook (World Info) that makes the setting feel real and reactive.
 
+### THE WORLD HAS ITS OWN LIFE (0.13.0)
 The persona is the character the USER plays. Refer to them as {{user}} everywhere. The sandbox card ({{char}}) is not one person: it is the narrator / game master who describes the world and voices every NPC.
 
 ### THE WORLD IS NOT BUILT AROUND THE PERSONA
@@ -30,9 +31,8 @@ The persona's inner life is not the setting. Their personality, fears, cravings 
 
 - People have their own lives, goals, loyalties and problems that have nothing to do with {{user}}. Most of them are busy with something else.
 - Institutions are indifferent or self-interested. Schools, jobs, families and authorities have their own rules and pressures, and they do not reorganise themselves around one person.
-- The world is not a paradise made for {{user}}, and not a grim dystopia either. It is ordinary, mixed and mostly indifferent: some warmth, some friction, some luck, some boredom.
-- Do not make every NPC a mirror of {{user}}'s traits or a supplier of what {{user}} craves. At least some NPCs should be uninterested, incompatible or a little disappointing.
 - Conflict comes from ordinary friction (money, time, obligation, other people's plans) more than from {{user}}'s psychology made manifest.
+- The world is mixed, not a genre poster: warmth and friction, luck and boredom, competence and neglect. A kind world still has leaky roofs; a harsh one still has somebody watering the plants.
 
 ### NOBODY IN THIS WORLD HAS READ THE PERSONA'S CARD
 The persona's card explains how they experience the world. It is not a fact sheet the world has memorised.
@@ -53,35 +53,60 @@ The point of a sandbox is that the player finds out who their persona is by acti
 - At least a third of the entries should be open-ended: a conversation that could go several ways, a problem nobody has solved, a person with an unstated reason to be interested.
 - Never pre-answer what {{user}} will do about anything.
 
+### THEME IS PRESSURE, NOT COSTUME
+The pre-rolled WORLD THEME is the physical and social atmosphere: light, materials, sound, weather, money, work, the kind of power in the air. It must be present in every entry and named as a genre almost never.
+- Build with its props, not its adjectives. "Neon noir" is wet signs, debt, a cash-only bar, a cop who answers to somebody; "dystopian austerity" is permits, a queue, a speaker on a pole, a black market that works better than the office.
+- Theme sets scarcity: what is cheap, what is rationed, what people will trade for. That scarcity is where conflict comes from.
+- Theme colours prose but not everyone's mood. A gothic town still has somebody funny in it; a sunny one still has a bully.
+- A theme with no consequence is set dressing. If the setting can be changed to another theme without changing how people live, it is not finished.
+
+### REALISM — THE WORLD HAS TO PAY ITS BILLS
+A sandbox is played in the ordinary parts of a life. Build them so they hold weight.
+- Money and work: rent, wages, travel, food, debt, who employs whom. Prices exist; shifts exist; some work is boring and some is dangerous.
+- Institutions: named people with interests run them. There is paperwork, favouritism, a broken process and somebody who knows how to skip it.
+- Maintenance: things leak, rust, run out and get repaired badly. Dirt, weather and noise are part of the place.
+- Time: shifts, terms, seasons, closing times, the bus that stops at nine. The world continues off-screen; at least some events happen without {{user}} present.
+- Consequence: actions ripple. Damage is paid for, gossip travels, a broken rule leaves a record.
+- Bodies: people get ill, injured, pregnant, old, hungry and tired. They have habits that show in the room.
+- Social texture: customs, slang, grudges, small rituals, who stands where. The place has a memory.
+- No theme-park logic. NPCs do not queue up to meet {{user}}, and not every shop is relevant.
+
+### NSFW AND NSFL
+The world is for adult roleplay. Do not round it off.
+- Sex, bodies and appetite are ordinary pressures: who is sleeping with whom, what is wanted, what it costs. Write plainly, without euphemism; not every entry needs a sex scene.
+- Violence, injury, death, illness and waste have aftermath: blood dries, funerals cost money, a broken arm loses a shift.
+- NSFL is allowed when the theme carries it (disease, gore, addiction, collapse). Do not stop to explain it; show the cost in the room.
+- A world can be cosy and still contain a death.
+
 ### WHAT THE WORLD MUST COVER
 {{user}}'s practical circumstances. Work out what their life needs and fill it in:
-- Home and family: where they live, parents/siblings/partner, household dynamics.
-- Work or school: the institution, its culture, bosses/teachers/classmates/crew.
+- Home and family: where they live, parents/siblings/partner, household dynamics, who pays.
+- Work or school: the institution, its culture, bosses/teachers/classmates/crew, the pay and the hours.
 - Social circle: friends, rivals, love interests, enemies, each with their own goals.
 - Places: hangouts, hot spots, the wider city/region/star system, and what happens there.
 - Organizations: factions, alliances, companies, gangs, clubs, governments, and where {{user}} stands with them.
 - Daily life: routines, hobbies, events, customs, slang, technology or magic rules.
-- Hooks: tensions, secrets and upcoming events that can start stories.
-Examples: a college student needs the campus, their dorm or apartment, parents, roommate, friend group, professors, a part-time job, parties and local spots. A starship captain needs the ship, the crew, the star system being traveled, political powers and alliances, rivals, ports of call and the current mission.
+- Hooks: tensions, secrets and upcoming events that can start stories, each with somebody already involved.
 
-### BINDING SESSION CONSTRAINTS
-If a binding block appears above this prompt it is pre-rolled for this world: PLACE, PRESSURE, POWER, TEXTURE, SEASON and OPENING. Use them as given. The world is built out of those six, not out of the persona. OPENING is where {{user}}'s story starts.
-Because they are binding, the setting has an identity of its own that a batch of worlds from the same persona cannot converge on.
+Examples: a college student needs the campus, their dorm or apartment, parents, roommate, friend group, professors, a part-time job, parties and local spots. A starship captain needs the ship, the crew, the star system being traveled, political powers and alliances, rivals, ports of call and the current mission, plus the dull maintenance that keeps a ship alive.
+
+### PRE-ROLLED DEFAULTS
+If a pre-rolled block appears above this prompt it is a default for this world: WORLD THEME, PLACE, PRESSURE, POWER, TEXTURE, SEASON and OPENING. A channel the user's details already answer is settled: write from the details and ignore the rolled value. A channel the details only tint is bent to fit. The rest is used as rolled. The world is built out of those seven, not out of the persona. OPENING is where {{user}}'s story starts.
+The block exists so a batch of worlds from the same persona cannot converge on the same setting.
 
 ### SANDWICH CARD
 - name: the world's name, not a person's.
-- description: setting overview, tone, and the narrator's role (voices all NPCs, describes the world, keeps continuity, lets {{user}} drive). The setting is an ordinary world with its own momentum, not a stage built for {{user}}: it does not flatter them and it does not punish them. 300-600 words. Include one line on what the world does not care about, and one line on what nobody here knows about {{user}} yet.
+- description: setting overview, tone, and the narrator's role (voices all NPCs, describes the world, keeps continuity, lets {{user}} drive). The setting is an ordinary world with its own momentum, not a stage built for {{user}}: it does not flatter them and it does not punish them. Roughly 300-600 words. Include one line on what the world does not care about, and one line on what nobody here knows about {{user}} yet.
 - scenario: where {{user}}'s story starts, on a live moment with something already unresolved.
-- first_mes: an immersive opening scene addressed to {{user}} in second person, 180-300 words. At most one short paragraph of setting before someone moves or speaks. Never act or speak for {{user}}. End on a concrete beat (an NPC speaking or acting, or something happening) that {{user}} can react to. Never end with a question to the player such as "What do you do?", "What's your next move?" or "Where do you go from here?".
+- first_mes: an immersive opening scene addressed to {{user}} in second person, roughly 180-300 words. At most one short paragraph of setting before someone moves or speaks. Never act or speak for {{user}}. End on a concrete beat (an NPC speaking or acting, or something happening) that {{user}} can react to. Never end with a question to the player such as "What do you do?", "What's your next move?" or "Where do you go from here?".
 - alternate_greetings: 1-2 alternative opening scenes set at different places or moments in {{user}}'s life, following the same rules as first_mes.
 - mes_example: 2-3 short example exchanges, each starting with <START> and using {{user}}: and {{char}}: prefixes, where {{char}} narrates and voices different NPCs so their distinct speech styles show.
 - tags: 3-8 genre/setting tags.
 
 ### LOREBOOK ENTRIES
-- One topic per entry (one NPC, one place, one faction, one custom...). 50-140 words each, factual reference style, present tense. Refer to the persona as {{user}}. Short entries are better than truncated JSON: close every brace.
-- Each NPC's goal must make sense without {{user}} in the room. State the narrow version of what they know, then end the
-  description with one sentence on what they do not know (before any example dialogue), in the form "He does not know ... and has not asked." One or two
-  NPCs may know something private, but only as an anecdote, never as a label.
+- One topic per entry (one NPC, one place, one faction, one custom, one event). 50-140 words each, factual reference style, present tense. Refer to the persona as {{user}}. Short entries are better than truncated JSON: close every brace.
+- Every entry needs one concrete cost or consequence of the theme in it: a price, a repair, a rule, a shortage, a smell, a debt.
+- Each NPC's goal must make sense without {{user}} in the room. State the narrow version of what they know, then end the description with one sentence on what they do not know (before any example dialogue), in the form "He does not know ... and has not asked." One or two NPCs may know something private, but only as an anecdote, never as a label.
 - NPC entries: full name, age, role, relationship to {{user}}, appearance, personality, speech style, current goal. For important NPCs (family, close friends, love interests, rivals, bosses, crew), end the content with "Example dialogue:" followed by 2-3 short lines in their own voice, showing how they talk to {{user}}. These lines may push the entry past 160 words.
 - keys: 2-6 specific trigger words people would actually type in chat: names, nicknames, surnames, place names, distinctive terms, plus short/lowercase forms. Avoid generic words (the, home, he, she, mom when there are several moms) that would fire constantly.
 - secondary_keys: optional. When set, the entry only fires if a primary key AND a secondary key appear. Use them to disambiguate.
@@ -90,7 +115,14 @@ Because they are binding, the setting has an identity of its own that a batch of
 - position: "before_char" for foundational lore, "after_char" for most entries, "at_depth" for things that must feel immediate (current events, the active mission).
 - probability: 100 normally; 20-60 for random flavor (rumors, random encounters, weather).
 - Mention other entries' names inside content so related entries chain together.
-- Invent original, fitting names.`;
+- Invent original, fitting names.
+
+### QUALITY BAR
+- A cannery entry smells of fish and bleach, names the shift and the owner, and mentions who is owed money.
+- A cop's loyalty is to a sergeant, not to "the law".
+- A market is cheap because somebody is desperate, and the entry says who.
+- If a detail could be moved to another world unchanged, it is still too generic.
+- Let at least one entry be quietly funny or tender without serving {{user}}.`;
 
 export const DEFAULT_WORLD_FORMAT = `Respond ONLY with one JSON object and nothing else (no commentary, no markdown outside the JSON). Use exactly these keys (use \\n for line breaks inside strings):
 {
@@ -267,12 +299,12 @@ async function request(messages, signal) {
  * @param {string} [options.imageDescription] A vision description of the world art to reuse
  * @returns {Promise<{data: object, raw: string, imageDescription: string}>}
  */
-export async function generateWorld({ source, imageBlob = null, details = '', excludeDraftId = null, imageDescription = '', preRoll = '', signal = null, onStatus = () => { } }) {
+export async function generateWorld({ source, imageBlob = null, details = '', excludeDraftId = null, imageDescription = '', preRoll = '', steer = null, signal = null, onStatus = () => { } }) {
     if (!source?.name) throw new Error('Pick a persona to live in this world.');
     const s = api.settings();
     const count = clampInt(s.worldEntryCount, 3, 80, 20);
     // Worlds converge the same way cards do: the same persona and the same prompt, batch after batch.
-    const preRollBlock = preRoll.trim() || (s.preRoll ? formatPreRoll(rollPreRoll({ type: 'world' }).values, 'world') : '');
+    const preRollBlock = preRoll.trim() || (s.preRoll ? formatPreRoll(rollPreRoll({ type: 'world', steer: steer || {} }).values, 'world') : '');
     const image = await api.prepareImage(imageBlob, 'world', { description: imageDescription, signal, onStatus });
     if (image.description) onStatus('Building the world… big worlds can take a few minutes.');
     const text = [
@@ -449,6 +481,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
         steer: draft?.steer ?? '',
         imageDescription: draft?.imageDescription ?? '',
         preRoll: draft?.preRoll ?? '',
+        preRollSteer: draft?.preRollSteer ?? {},
         imageBlob: null,
         imageUrl: '',
         imageChanged: false,
@@ -488,6 +521,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
                 <label>Entries per generation
                     <input class="text_pole stcg-w-count" type="number" min="3" max="80">
                 </label>
+                <label>Theme (used when the pre-roll is drawn)<select class="text_pole stcg-w-theme">${THEME_OPTIONS.world.map(o => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join('')}</select></label>
                 <details class="stcg-w-preroll">
                     <summary>Pre-rolled for this world</summary>
                     <textarea class="text_pole stcg-w-pre-roll" rows="7" placeholder="Rolled on Generate. Edit any line to change what this world is built on; clear it to draw a fresh roll."></textarea>
@@ -524,6 +558,8 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
     const $more = $root.find('.stcg-w-more');
     const $rename = $root.find('.stcg-w-rename');
     const s = api.settings();
+    const $theme = $root.find('.stcg-w-theme');
+    if ($theme.length) $theme.val(state.preRollSteer.THEME || '').on('change', e => { state.preRollSteer.THEME = String($(e.target).val()); });
 
     // Persona picker. A draft's persona may have been deleted since; keep its snapshot selectable.
     const $persona = $root.find('.stcg-w-persona');
@@ -708,7 +744,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
         state.task?.update({ detail: text });
     }
 
-    const quality = signal => ({ type: 'world', details: state.details, source: state.source, steer: state.steer, signal });
+    const quality = signal => ({ type: 'world', details: state.details, preRoll: state.preRoll, source: state.source, steer: state.steer, signal });
 
     function refresh() {
         writeCard();
@@ -796,6 +832,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
                     excludeDraftId: draft?.id,
                     imageDescription: state.imageDescription,
                     preRoll: state.preRoll,
+                    steer: state.preRollSteer,
                     signal,
                     onStatus: status,
                 });
@@ -1033,6 +1070,7 @@ async function saveWorldDraft(state, existing) {
         if (previous) await api.deleteStoredFile(previous);
     }
     draft.source = structuredClone(state.source);
+    draft.preRollSteer = { ...state.preRollSteer };
     draft.data = structuredClone(state.data);
     draft.raw = state.raw;
     draft.details = state.details;

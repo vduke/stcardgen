@@ -33,7 +33,7 @@ test('the prompt is told about exactly the channels that are rolled', () => {
     // Appearance must not be pre-rolled: the image is the authority on it.
     // The shipped prompt's section names drift; anchor on the section that really follows the
     // binding block and fail loudly if it stops existing, instead of slicing to the end of the file.
-    const start = prompt.indexOf('BINDING SESSION CONSTRAINTS');
+    const start = prompt.indexOf('PRE-ROLLED DEFAULTS');
     const end = prompt.indexOf('### CARD SPEC');
     assert.ok(start >= 0 && end > start, 'binding block anchors moved; the check would scan the wrong text');
     const binding = prompt.slice(start, end);
@@ -86,7 +86,7 @@ test('the block names every channel and is binding', () => {
     const block = formatPreRoll(rollPreRoll({ seed: 1 }).values);
     for (const channel of PRE_ROLL_CHANNELS) assert.ok(block.includes(channel.label + ': '), `missing ${channel.label}`);
     assert.ok(block.startsWith('PRE-ROLLED FOR THIS SESSION'), 'block must open with the label the prompt looks for');
-    assert.ok(/binding/i.test(block));
+    assert.ok(/defaults only/i.test(block));
 });
 test('a written block parses back to the same values', () => {
     const roll = rollPreRoll({ seed: 99 });
@@ -189,6 +189,33 @@ test('the block makes the user details outrank the roll', () => {
     const block = formatPreRoll(rollPreRoll({ seed: 1 }).values);
     assert.match(block, /details win/);
     assert.match(block, /settled/);
+});
+
+const charThemes = CHARACTER_CHANNELS.find(c => c.key === 'THEME');
+const worldThemes = WORLD_CHANNELS.find(c => c.key === 'THEME');
+test('theme channels cover characters and worlds with distinct entries', () => {
+    for (const channel of [charThemes, worldThemes]) {
+        assert.ok(channel && channel.entries.length >= 12, `${channel?.key} theme list is too short`);
+        assert.strictEqual(new Set(channel.entries).size, channel.entries.length, 'duplicate theme');
+    }
+    assert.ok(charThemes.entries.every(entry => !worldThemes.entries.includes(entry)), 'character and world themes overlap');
+});
+test('a theme steer forces the theme instead of drawing one', () => {
+    const chosen = charThemes.entries[4];
+    const rolled = rollPreRoll({ seed: 2, type: 'character', steer: { THEME: chosen } });
+    assert.strictEqual(rolled.values.THEME, chosen);
+    assert.ok(formatPreRoll(rolled.values, 'character').includes('CHARACTER THEME: ' + chosen));
+    const worldChosen = worldThemes.entries[4];
+    assert.strictEqual(rollPreRoll({ seed: 2, type: 'world', steer: { THEME: worldChosen } }).values.THEME, worldChosen);
+});
+test('the prompts say theme is atmosphere and ask for nuance', () => {
+    const character = extractTemplate(fs.readFileSync(path.join(root, 'index.js'), 'utf8'), 'DEFAULT_CHARACTER_PROMPT');
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    assert.ok(character.includes('CHARACTER THEME is atmosphere, not costume'), 'character theme guidance missing');
+    assert.ok(character.includes('Nuance is the job'), 'character nuance guidance missing');
+    assert.ok(world.includes('THEME IS PRESSURE, NOT COSTUME'), 'world theme guidance missing');
+    assert.ok(world.includes('REALISM — THE WORLD HAS TO PAY ITS BILLS'), 'world realism guidance missing');
+    assert.ok(world.includes('NSFW AND NSFL'), 'world NSFW guidance missing');
 });
 
 test('an unknown type falls back to the persona set instead of crashing', () => {

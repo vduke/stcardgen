@@ -7,7 +7,7 @@
 // already took.
 //
 // So the variety is decided before the model sees the request: one value per non-appearance channel
-// is drawn here, injected above the prompt as a binding block, and kept with the draft so
+// is drawn here, injected above the prompt as a default block, and kept with the draft so
 // regenerating a card does not silently re-roll it into a different person.
 //
 // Appearance is not pre-rolled. Age, body, skin and hair come from the image; these channels are
@@ -19,6 +19,50 @@
  * unflattering, low-status and unglamorous options, and avoid eye/gaze imagery, which the prompt's
  * banned-phrase list targets.
  */
+export const CHARACTER_THEMES = [
+    { label: 'Warm and lived-in', text: 'Warm and lived-in: second-hand furniture, chipped mugs, food on the stove, a hall light left on for somebody.' },
+    { label: 'Neon and rain-slick', text: 'Neon and rain-slick: wet asphalt, signs in three colours, train announcements at 2am, a jacket that never quite dries.' },
+    { label: 'Gothic and candlelit', text: 'Gothic and candlelit: cold stone, draughts under doors, beeswax and iron, rooms that were grand once.' },
+    { label: 'Dystopian and rationed', text: 'Dystopian and rationed: patched uniforms, queue tickets, grey daylight, a speaker on a pole that still works.' },
+    { label: 'Sun-bleached and tired', text: 'Sun-bleached and tired: dust on the windowsill, warm beer, a fan that turns, everything a shade paler than it was.' },
+    { label: 'Corporate and glass', text: 'Corporate and glass: lanyards, polished floors, a plant nobody waters, a meeting room with the blinds down.' },
+    { label: 'Pastoral and muddy', text: 'Pastoral and muddy: boot scrapers, wet wool, a cattle grid, mornings that smell of silage.' },
+    { label: 'Weird and folkloric', text: 'Weird and folkloric: charms nailed over doors, a path everyone takes the long way round, rules nobody explains.' },
+    { label: 'Mythic and storm-lit', text: 'Mythic and storm-lit: bronze, salt, low cloud, names with weight in them, weather that answers to somebody.' },
+    { label: 'Liminal and fluorescent', text: 'Liminal and fluorescent: corridors after hours, vending machines, one strip light buzzing, a clock ten minutes fast.' },
+    { label: 'Heat and humidity', text: 'Heat and humidity: fans moving warm air, sweat at the collarbone, screens propped open, everything sticky at six.' },
+    { label: 'Cold and industrial', text: 'Cold and industrial: concrete, work gloves, breath in the air, a shift bell, a kettle on a pallet.' },
+    { label: 'Soft and domestic', text: 'Soft and domestic: knitted blankets, bread cooling, a radio in the next room, shoes left where they were kicked.' },
+    { label: 'Glitter and grit', text: 'Glitter and grit: sequins under a work jacket, sticky floors, cab receipts, a dress worth more than the flat.' },
+    { label: 'Salt and sea-air', text: 'Salt and sea-air: ropes, gulls, diesel, a town that smells of low tide.' },
+    { label: 'Paper and old smoke', text: 'Paper and old smoke: books with pencil in the margins, ashtrays, worn stair carpet, doors that stick.' },
+];
+
+export const WORLD_THEMES = [
+    { label: 'Cozy but fraying', text: 'Cozy but fraying: a town with one bakery and one problem nobody has fixed; warmth that has started to run down.' },
+    { label: 'Neon noir', text: 'Neon noir: rain, signs, debt, a police force on the take, beauty in the reflection, rot under the arcade.' },
+    { label: 'Dystopian austerity', text: 'Dystopian austerity: quotas, permits, a loudspeaker, a black market, a bureaucracy that works for somebody else.' },
+    { label: 'Pastoral gothic', text: 'Pastoral gothic: fields, a chapel, a family that has owned the land too long, weather as a character.' },
+    { label: 'Solarpunk', text: 'Solarpunk: scaffolding with plants on it, civic pride, repairs instead of replacements, an argument about water.' },
+    { label: 'Post-collapse', text: 'Post-collapse: salvage, convoys, local treaties, a working radio and no working grid.' },
+    { label: 'Corporate arcology', text: 'Corporate arcology: company housing, floors as class, a transit atrium, contracts that include your sleep.' },
+    { label: 'Mythic', text: 'Mythic: a harbour with gods in the ledger, oaths that bind, storms with intent, festivals that must be kept.' },
+    { label: 'Liminal', text: 'Liminal: an airport town, a motel with long stays, shift work, a place people pass through.' },
+    { label: 'Coastal working town', text: 'Coastal working town: a cannery, a ferry timetable, tourists in summer, everyone knows the water.' },
+    { label: 'Frontier', text: 'Frontier: distance, a land office, a rail head, a sheriff who was elected because nobody else would.' },
+    { label: 'Underground', text: 'Underground: tunnels, a lift with a queue, damp concrete, hydroponics, a whole economy that never sees sky.' },
+    { label: 'Orbital', text: 'Orbital: a station ring, maintenance rotas, Earth as weather, air as a billed utility.' },
+    { label: 'Weird fiction', text: 'Weird fiction: a town with one unexplained rule, a survey office, locals who correct outsiders, a season that repeats.' },
+    { label: 'Industrial river city', text: 'Industrial river city: foundries, bridges, shift whistles, a river that carries what is dumped in it.' },
+    { label: 'Academic town', text: 'Academic town: a college, a library with restricted floors, term rhythms, a reputation to keep.' },
+];
+
+/** Theme pickers for the character and world screens; the value sent as a steer is the entry text. */
+export const THEME_OPTIONS = {
+    character: CHARACTER_THEMES.map(theme => ({ value: theme.text, label: theme.label })),
+    world: WORLD_THEMES.map(theme => ({ value: theme.text, label: theme.label })),
+};
+
 export const PRE_ROLL_CHANNELS = [
     {
         key: 'MASK TEMPERAMENT',
@@ -99,14 +143,14 @@ export const PRE_ROLL_CHANNELS = [
             'Cheap and cute: fast-fashion dresses, crop tops, chunky platforms, and clothes replaced every season.',
             'Practical and plain: jeans, t-shirts, work boots, and clothes that ask nothing of anyone.',
             'Femme sporty: a fitted track jacket, a crisp tennis skirt, tube socks and retro trainers, and clothes that look like a warm-up she never skips.',
-            'Coastal: an open linen shirt over a bikini top, denim cutoffs, and salt-stiff hair; clothes for a town with one main street.',
+            'Coastal: an open linen shirt over a bikini top, denim cutoffs, and a shell anklet; clothes for a town with one main street.',
             'Soft girl: a cropped cardigan, a pleated pastel skirt, and Mary Janes with little socks, and clothes that are deliberately gentle.',
             'Rave-ready: cargo pants with straps, a mesh top, and platform boots, and clothes built to be seen in the dark.',
-            'Cowgirl: denim cutoffs, a plaid shirt tied at the waist, and scuffed boots, and clothes for wide open ground.',
+            'Cowgirl: denim cutoffs, a plaid shirt tied at the waist, and scuffed boots; clothes for wide open ground.',
             'Skate: an oversized tee, baggy jeans, and flat skate shoes, and clothes she has fallen off in.',
-            'Clean girl: a matching knit set, gold hoops, and a neat bun; clothes with nothing out of place.',
+            'Clean girl: a matching knit set, white trainers, and gold hoops; clothes with nothing out of place.',
             'Dark coquette: a black lace corset top, a mini skirt, and ribbon-tied heels, and clothes that are sweet with teeth.',
-            'Retro seventies: flared jeans, a crochet halter, and round sunglasses, and clothes from a decade she never saw.',
+            'Retro seventies: flared jeans, a crochet halter, and a fringed suede jacket; clothes from a decade she never saw.',
             'Tomboy: a button-down over a white tee, loose trousers, and beat-up trainers, and clothes that ask for no comment.',
             'Chrome and leather: a silver chain top, a leather skirt, and chunky boots; clothes that flash when she moves.',
             'Festival: a crochet top, denim cutoffs, and an armful of bracelets, and clothes with dust already on them.',
@@ -179,6 +223,11 @@ export const PRE_ROLL_CHANNELS = [
 // played by the model, not by the user.
 
 export const CHARACTER_CHANNELS = [
+    {
+        key: 'THEME',
+        label: 'CHARACTER THEME',
+        entries: CHARACTER_THEMES.map(theme => theme.text),
+    },
     {
         key: 'STATION',
         label: 'STATION',
@@ -325,6 +374,11 @@ export const CHARACTER_CHANNELS = [
 
 export const WORLD_CHANNELS = [
     {
+        key: 'THEME',
+        label: 'WORLD THEME',
+        entries: WORLD_THEMES.map(theme => theme.text),
+    },
+    {
         key: 'PLACE',
         label: 'PLACE',
         entries: [
@@ -460,25 +514,34 @@ const CHANNEL_SETS = {
 const SET_FOOTERS = {
     persona: `Write the persona so that MASK TEMPERAMENT and FRICTION DIRECTION are true of the same person at the
 same time, and let the MASK TEMPERAMENT be visible in the Personality traits. Let the MOTIF recur as concrete sensory detail. Age, body, skin and hair come from the
-image; clothes come from FASHION and not from the image; everything else here comes from here.
+image; clothes come from FASHION, not from the image; every channel the details leave open comes
+from here.
 
-When the user's details describe a kind of person or a scene, they win: bend MASK TEMPERAMENT and
-FASHION to the description first, and keep any channel only where it still fits. "Sociable party
-girls" must not come back quiet and reserved because MASK TEMPERAMENT rolled that way.
+When the user's details describe a kind of person or a scene, they win: drop the rolled MASK
+TEMPERAMENT and FASHION when the details answer them, and bend a channel only where the details tint
+it. "Sociable party girls" must not come back quiet and reserved because MASK TEMPERAMENT rolled
+that way.
 
 Go through these channels before writing. Any channel the user's details already answer is settled:
-follow the details and ignore the rolled value. Where the details only tint a channel, bend the
-rolled value to fit. Everything else is used as given.`,
+follow the details and ignore the rolled value for that channel, because the details cover it. Where
+the details only tint a channel, bend the rolled value. A channel the details leave open is used as
+rolled.`,
     character: `Build one person in whom STATION, WANT, SECRET, TROUBLE and HISTORY are all true at once. Let
 the VOICE shape every line of dialogue, let the APPETITE and LIMITS become the sexual profile, and give
-the WANT a life outside {{user}}. Appearance comes from the image; everything else comes from here.
+the WANT a life outside {{user}}. Appearance comes from the image; every channel the details leave
+open comes from here.
 
-When the user's details describe a kind of person, they win: bend STATION, VOICE and TROUBLE to the
-description and keep a channel only where it still fits.
+CHARACTER THEME is atmosphere, not costume: let it colour the station, the room, the prose and the
+props, and never name it as a genre label in the card. When the user's details describe a kind of person or a
+scene, they win: drop the rolled CHARACTER THEME, STATION, VOICE and TROUBLE when the details answer them, and
+bend a channel only where the details tint it.
 
 Go through these channels before writing. Any channel the user's details already answer is settled:
-follow the details and ignore the rolled value. Where they only tint a channel, bend it to fit.`,
-    world: `Build the world out of PLACE, PRESSURE, POWER, TEXTURE, SEASON and OPENING. The persona's card is how
+follow the details and ignore the rolled value for that channel. Where they only tint a channel, bend
+it to fit. A channel the details leave open is used as rolled.`,
+    world: `Build the world out of WORLD THEME, PLACE, PRESSURE, POWER, TEXTURE, SEASON and OPENING. WORLD THEME is the
+physical and social atmosphere — light, materials, sound, money, weather — not a genre sticker, and
+it must show in the entries rather than be announced. The persona's card is how
 they experience this world, not a specification for what the world contains or what people know about
 them: nobody in this world has read their card.`,
 };
@@ -499,12 +562,18 @@ export function channelsFor(type) {
  * @param {number} [options.seed] Makes the draw reproducible.
  * @param {Record<string, string[]|Set<string>>} [options.avoid] Previously used entries per channel.
  * @param {'persona'|'character'|'world'} [options.type] Which channel set to draw from.
+ * @param {Record<string, string>} [options.steer] Exact entry per channel; a steered channel is not drawn.
  * @returns {{seed: number, values: Record<string, string>}}
  */
-export function rollPreRoll({ seed = Date.now(), avoid = {}, type = 'persona' } = {}) {
+export function rollPreRoll({ seed = Date.now(), avoid = {}, type = 'persona', steer = {} } = {}) {
     const random = makeRandom(seed);
     const values = {};
     for (const channel of channelsFor(type)) {
+        const steered = channel.entries.find(entry => entry === steer[channel.key]);
+        if (steered) {
+            values[channel.key] = steered;
+            continue;
+        }
         const used = new Set(avoid[channel.key] || []);
         const unused = channel.entries.filter(entry => !used.has(entry));
         const pool = unused.length ? unused : channel.entries;
@@ -513,20 +582,21 @@ export function rollPreRoll({ seed = Date.now(), avoid = {}, type = 'persona' } 
     return { seed: Number(seed), values };
 }
 
-/** Renders a roll as the binding block the matching prompt expects above itself. */
+/** Renders a roll as the defaults block the matching prompt expects above itself. */
 export function formatPreRoll(values, type = 'persona') {
     if (!values) return '';
     const lines = channelsFor(type)
         .filter(channel => values[channel.key])
         .map(channel => `${channel.label}: ${values[channel.key]}`);
     if (!lines.length) return '';
-    return `PRE-ROLLED FOR THIS SESSION (binding by default, but only defaults: the user's details win every conflict and settle any channel they answer)
+    return `PRE-ROLLED FOR THIS SESSION (defaults only: the user's details win every conflict and settle any channel they answer)
 ${lines.join('\n')}
 
 ${SET_FOOTERS[type] || SET_FOOTERS.persona}
 
 If the user's details already answer a channel, that channel is settled: follow the details and
-ignore the rolled value. If they only tint it, bend the value to fit. Never discard the channel.`;
+ignore the rolled value for it, because the details cover the channel. If they only tint it, bend the
+value to fit. A channel the details leave open is used as rolled.`;
 }
 
 /**

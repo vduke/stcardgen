@@ -276,6 +276,37 @@ test('sexuality defaults by gender and experience lists only acts done', () => {
     assert.ok(defaults.PROMPT_LINE_MIGRATIONS.includes('Bisexual by default for a female character'));
 });
 
+// 0.13.0: cards need theme and nuance, not just tag-sheet compliance.
+test('the prompts carry theme and nuance guidance', () => {
+    assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('NUANCE, NOT TAG SOUP'));
+    assert.ok(defaults.PROMPT_LINE_MIGRATIONS.includes('Nuance is the job'));
+    assert.ok(defaults.PROMPT_LINE_MIGRATIONS.includes('CHARACTER THEME is atmosphere, not costume'));
+    assert.ok(defaults.WORLD_PROMPT_LINE_MIGRATIONS.includes('THEME IS PRESSURE, NOT COSTUME'));
+    assert.ok(defaults.WORLD_PROMPT_LINE_MIGRATIONS.includes('NSFW AND NSFL'));
+});
+
+// 0.13.0: theme picks must survive into the draw, from both screens and from bulk.
+test('theme steering is wired from the UI to the roll', () => {
+    for (const src of [indexSrc, worldSrc]) {
+        assert.match(src, /preRollSteer/);
+        assert.match(src, /steer: state\.preRollSteer/);
+    }
+    assert.match(indexSrc, /stcg-bulk-theme/);
+    assert.match(indexSrc, /rollPreRoll\(\{ avoid: preRollAvoid\(type, excludeDraftId\), type, steer/);
+    assert.match(worldSrc, /rollPreRoll\(\{ type: 'world', steer/);
+    assert.match(indexSrc, /stcg-theme/);
+    assert.match(worldSrc, /stcg-w-theme/);
+});
+
+// A fixer that never saw the roll can iron the card flat. The quality layer must receive it as
+// material to preserve, not as fresh context to replace.
+test('the quality layer receives the pre-roll block', () => {
+    assert.match(qualitySrc, /preRoll\?\.trim\(\)/);
+    assert.match(qualitySrc, /function reviewCard\(\{[^}]*preRoll/);
+    assert.match(qualitySrc, /function reviseCard\(\{[^}]*preRoll/);
+    assert.match(qualitySrc, /function autoFixCard\(\{[^}]*preRoll/);
+});
+
 test('a line the user edited is left alone', () => {
     const edited = 'my own playability wording, untouched';
     assert.strictEqual(quality.applyLineMigrations(edited, reviewPairs), edited);

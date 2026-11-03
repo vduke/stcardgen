@@ -202,10 +202,11 @@ function maxTokensFor(type) {
     return type === 'world' ? s.worldMaxTokens : s.maxTokens;
 }
 
-function contextBlock({ type, data, details, source }) {
+function contextBlock({ type, data, details, source, preRoll }) {
     return [
         source ? `The world is built around this persona ({{user}}):\nName: ${source.name}\n${source.description || ''}` : '',
         details?.trim() ? `The user's details (these take priority):\n${details.trim()}` : '',
+        preRoll?.trim() ? `The card is built on this pre-rolled material. Keep it where the details leave that channel open, and do not replace it with generic material:\n${preRoll.trim()}` : '',
         `Current ${typeWord(type)}:\n${serialize(type, data)}`,
     ].filter(Boolean).join('\n\n');
 }
@@ -228,7 +229,7 @@ async function ask(type, system, user, signal, { profileId = null } = {}) {
  * Scores a card and lists issues.
  * @returns {Promise<{scores: Record<string, number>, overall: number, issues: object[], summary: string, at: number}>}
  */
-export async function reviewCard({ type, data, details = '', source = null, signal = null, previousIssues = [] }) {
+export async function reviewCard({ type, data, details = '', preRoll = '', source = null, signal = null, previousIssues = [] }) {
     const s = api.settings();
     const criteria = type === 'world' ? WORLD_CRITERIA : CRITERIA;
     // On a re-review after a fix, keep the reviewer from flip-flopping on what it just asked for.
@@ -244,7 +245,7 @@ export async function reviewCard({ type, data, details = '', source = null, sign
         REVIEW_FORMAT.replace('{{criteria}}', criteria.map(c => `"${c}": 0`).join(', ')),
     ].filter(Boolean).join('\n\n');
     // A different model as critic grades much harder than the generator grading itself.
-    const parsed = await ask(type, system, `${contextBlock({ type, data, details, source })}\n\nReview it now. JSON only.`, signal, { profileId: s.reviewProfileId || null });
+    const parsed = await ask(type, system, `${contextBlock({ type, data, details, source, preRoll })}\n\nReview it now. JSON only.`, signal, { profileId: s.reviewProfileId || null });
 
     const scores = {};
     for (const c of criteria) {
@@ -440,7 +441,7 @@ export async function renameCard({ type, data, steer = '', details = '', source 
  * @param {'fix'|'enhance'|'optimize'} options.mode
  * @returns {Promise<{data: object, changed: string[]}>}
  */
-export async function reviseCard({ type, data, mode, issues = [], steer = '', details = '', source = null, signal = null }) {
+export async function reviseCard({ type, data, mode, issues = [], steer = '', details = '', preRoll = '', source = null, signal = null }) {
     const s = api.settings();
     // Unticked issues are ones the user disagrees with; an unticked name issue means "keep this name".
     const active = issues.filter(i => !i.skip);
@@ -464,7 +465,7 @@ export async function reviseCard({ type, data, mode, issues = [], steer = '', de
         const issueText = mode === 'fix' && contentIssues.length
             ? `\n\nIssues to fix:\n${contentIssues.map((i, n) => `${n + 1}. [${i.entry !== null ? `entry ${i.entry} ` : ''}${i.field}] ${i.problem} Fix: ${i.fix}`).join('\n')}`
             : '';
-        const user = [`${contextBlock({ type, data, details, source })}${issueText}`, steerText, 'Return the patch JSON only.'].filter(Boolean).join('\n\n');
+        const user = [`${contextBlock({ type, data, details, source, preRoll })}${issueText}`, steerText, 'Return the patch JSON only.'].filter(Boolean).join('\n\n');
         const patch = await ask(type, system, user, signal);
         next = applyPatch(type, data, patch);
     }
@@ -485,7 +486,7 @@ export async function reviseCard({ type, data, mode, issues = [], steer = '', de
  * Rewrites a single field (or one lorebook entry's content) in enhance/optimize mode.
  * @returns {Promise<string|string[]>} The new value
  */
-export async function reviseField({ type, data, field, entryIndex = null, mode, steer = '', details = '', source = null, signal = null }) {
+export async function reviseField({ type, data, field, entryIndex = null, mode, steer = '', details = '', preRoll = '', source = null, signal = null }) {
     const s = api.settings();
     const instruction = mode === 'enhance' ? s.enhancePrompt : s.optimizePrompt;
     const target = entryIndex === null ? `the field "${field}"` : `the "content" of lorebook entry ${entryIndex} ("${data.entries[entryIndex]?.title}")`;
@@ -500,7 +501,7 @@ export async function reviseField({ type, data, field, entryIndex = null, mode, 
         `Respond ONLY with JSON: {"value": ${isList ? '["complete array of strings"]' : '"the new full text of this one field, as plain prose (not JSON, not the whole card)"'}}`,
     ].filter(Boolean).join('\n\n');
     const user = [
-        contextBlock({ type, data, details, source }),
+        contextBlock({ type, data, details, source, preRoll }),
         `Current text of ${target}:\n<<<\n${currentText}\n>>>`,
         steerBlock(steer),
         `Rewrite only that text now. JSON only.`,
@@ -549,19 +550,19 @@ function unwrapFieldValue(parsed, field, depth = 0) {
  * Review, and if the score is under the auto-fix threshold, fix once and review again.
  * @returns {Promise<{data: object, review: object}>}
  */
-export async function qualityPass({ type, data, details = '', source = null, signal = null, onStatus = () => { } }) {
+export async function qualityPass({ type, data, details = '', preRoll = '', source = null, signal = null, onStatus = () => { } }) {
     const s = api.settings();
     onStatus('Reviewing…');
-    let review = await reviewCard({ type, data, details, source, signal });
+    let review = await reviewCard({ type, data, details, preRoll, source, signal });
     const threshold = Number(s.autoFixBelow) || 0;
     const hasBannedNames = review.issues.some(i => i.field === 'names');
     if (threshold > 0 && review.issues.length && (review.overall < threshold || hasBannedNames)) {
         onStatus(`Score ${review.overall}/10 is under ${threshold}. Fixing issues…`);
-        const fixed = await reviseCard({ type, data, mode: 'fix', issues: review.issues, details, source, signal });
+        const fixed = await reviseCard({ type, data, mode: 'fix', issues: review.issues, details, preRoll, source, signal });
         data = fixed.data;
         onStatus('Re-reviewing…');
         const before = review;
-        review = await reviewCard({ type, data, details, source, signal, previousIssues: before.issues });
+        review = await reviewCard({ type, data, details, preRoll, source, signal, previousIssues: before.issues });
         review.previous = before.overall;
     }
     return { data, review };
@@ -601,7 +602,7 @@ export function autoFixStep({ score, threshold, hasBannedNames = false, fixableI
  * so a fix that makes things worse never costs the caller the card they had.
  * @returns {Promise<{data: object, review: object, fixes: number, threshold: number, reached: boolean}>}
  */
-export async function autoFixCard({ type, data, details = '', source = null, steer = '', signal = null, onStatus = () => { }, onProgress = () => { }, maxRounds = null }) {
+export async function autoFixCard({ type, data, details = '', preRoll = '', source = null, steer = '', signal = null, onStatus = () => { }, onProgress = () => { }, maxRounds = null }) {
     const threshold = autoFixTarget();
     if (threshold <= 0) throw new Error('Set "Auto-fix when the score is below" in Quality pass settings first.');
     const cap = maxRounds === null ? autoFixRoundCap() : Math.min(8, Math.max(1, Number(maxRounds) || 3));
@@ -611,7 +612,7 @@ export async function autoFixCard({ type, data, details = '', source = null, ste
     let fixes = 0;
     for (;;) {
         onStatus(fixes === 0 ? 'Reviewing…' : `Reviewing after fix ${fixes}/${cap}…`);
-        const review = await reviewCard({ type, data: current, details, source, signal, previousIssues: next?.issues || [] });
+        const review = await reviewCard({ type, data: current, details, preRoll, source, signal, previousIssues: next?.issues || [] });
         if (next) review.previous = next.overall;
         const banned = review.issues.some(i => i.field === 'names');
         if (!best || review.overall > best.review.overall) best = { data: current, review };
@@ -626,7 +627,7 @@ export async function autoFixCard({ type, data, details = '', source = null, ste
             return { data: best.data, review: best.review, fixes, threshold, reached: best.review.overall >= threshold && !best.review.issues.some(i => i.field === 'names') };
         }
         onStatus(`Score ${review.overall}/10, under ${threshold}. Fixing issues (round ${fixes + 1}/${cap})…`);
-        const fixed = await reviseCard({ type, data: current, mode: 'fix', issues: review.issues, details, source, steer, signal });
+        const fixed = await reviseCard({ type, data: current, mode: 'fix', issues: review.issues, details, preRoll, source, steer, signal });
         if (!fixed.changed.length) {
             onStatus('The model made no changes; keeping the card.');
             return { data: best.data, review: best.review, fixes, threshold, reached: best.review.overall >= threshold && !best.review.issues.some(i => i.field === 'names') };
