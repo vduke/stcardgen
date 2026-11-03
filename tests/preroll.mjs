@@ -265,6 +265,16 @@ test('an experience tier draws within itself and filters by orientation', () => 
     assert.ok(sourceChannel.groups.experienced.some(entry => sourceChannel.orientationTags[entry] === 'm'));
 });
 
+test('the world prompt stays mixed and leaves creative room', () => {
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    assert.ok(world.includes('TONE — MIXED, NOT BLEAK'), 'tone guidance missing');
+    assert.ok(world.includes('CREATIVE LIBERTY'), 'creative liberty guidance missing');
+    assert.ok(world.includes('Start in motion'), 'opening variation missing');
+    assert.ok(world.includes('Use at most one explicit nod to the persona'), 'persona-trait limit missing');
+    assert.ok(!world.includes('Include one line on what the world does not care about'), 'old formula line still demanded');
+    assert.ok(WORLD_THEMES.find(theme => theme.label === 'Suburban night').text.includes('lake town'), 'suburban theme should allow a lake town');
+});
+
 test('Suburban night exists and world consequences are spelled out', () => {
     assert.ok(WORLD_THEMES.some(theme => theme.label === 'Suburban night'), 'Suburban night theme missing');
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
