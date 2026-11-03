@@ -323,6 +323,23 @@ test('the persona prompt explains the axes and orientation filtering', () => {
     }
 });
 
+// Lifecycle races: a deleted draft must not resurrect, and a reload must not double-approve.
+test('deleted drafts cannot resurrect and Auto Fix is abortable', () => {
+    assert.match(indexSrc, /if \(getDraft\(draft\.id\)\) upsertDraft\(draft\)/);
+    assert.match(indexSrc, /autoFixingDrafts\.add\(draft\.id\);\n    const controller = new AbortController\(\);\n    activeRequests\.set\(draft\.id, controller\)/);
+    assert.match(indexSrc, /if \(autoFixingDrafts\.has\(id\)\) activeRequests\.get\(id\)\?\.abort\(\)/);
+});
+test('the save lock survives a reload', () => {
+    assert.match(indexSrc, /d\.saving = true; upsertDraft\(d\)/);
+    assert.match(indexSrc, /if \(!draft\.saving\) continue;/);
+    assert.match(indexSrc, /savingDrafts\.add\(draft\.id\)/);
+});
+test('character creation exposes sexuality and experience steers', () => {
+    assert.match(indexSrc, /stcg-char-steer/);
+    assert.match(indexSrc, /stcg-bulk-char-steer/);
+    assert.match(indexSrc, /steerRowHtml\('stcg-char-steer', \['SEXUALITY', 'SOURCE'\]\)/);
+});
+
 test('a line the user edited is left alone', () => {
     const edited = 'my own playability wording, untouched';
     assert.strictEqual(quality.applyLineMigrations(edited, reviewPairs), edited);

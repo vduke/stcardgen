@@ -510,21 +510,71 @@ export const CHARACTER_CHANNELS = [
         ],
     },
     {
-        key: 'LIMITS',
-        label: 'LIMITS',
+        key: 'SEXUALITY',
+        label: 'SEXUALITY',
         entries: [
-            'Oral sex (giving and receiving), vaginal sex, and several one-night stands.',
-            'Only her own hands: a virgin.',
-            'Vaginal sex with two long-term partners, oral both ways.',
-            'Sleeps around: oral, vaginal, toys, light bondage.',
-            'Anal sex, oral both ways, and handcuffs.',
-            'Vaginal sex, and a lot of practice on her own.',
-            'Oral sex both ways, vaginal sex, a threesome, and anal sex.',
-            'Vaginal sex and oral (receiving), always with the light left on.',
-            'Oral sex (giving), handjobs, vaginal sex.',
-            'Vaginal sex with several people, oral (giving), and anal she thinks about.',
+            'Default to the gender: Bisexual for a female card, Heterosexual for a male card, Bisexual for non-binary',
+            'Bisexual',
+            'Heterosexual',
+            'Lesbian',
+            'Gay',
+        ],
+    },
+    {
+        key: 'EXPERIENCE',
+        label: 'EXPERIENCE',
+        // Older drafts wrote this channel as LIMITS; the parser still reads that label.
+        aliases: ['LIMITS'],
+        groups: {
+            "virgin": [
+                "Virgin: her own hands and a lot of reading.",
+                "Only her own hands, and a very good idea of what she likes.",
+                "Virgin: a year of thorough reading and her own hands.",
+                "Only ever her own hands, and happy to keep it that way."
+            ],
+            "some": [
+                "Oral sex with one trusted partner, and long enough with them to know what she likes.",
+                "Vaginal sex with two boyfriends, all of it asked for.",
+                "A summer with one woman, and a lot of firsts she still flinches about.",
+                "Vaginal sex and oral (receiving), always after asking."
+            ],
+            "experienced": [
+                "Oral sex (giving and receiving), vaginal sex, and a few one-night stands.",
+                "Oral sex both ways, vaginal sex, and a threesome with two men.",
+                "Anal sex, oral both ways, and rope.",
+                "Oral sex with women and men, vaginal sex, and a summer she only half remembers."
+            ],
+            "hedonist": [
+                "Sleeps around: oral, vaginal, toys, light bondage.",
+                "Vaginal sex with several people, oral both ways, and group sex.",
+                "Toys, bondage, exhibitionism, oral both ways, and a lot of partners.",
+                "Oral sex with men and women, vaginal and anal sex, and a rotating cast of partners."
+            ]
+        },
+        orientationTags: {
+            "Vaginal sex with two boyfriends, all of it asked for.": "m",
+            "A summer with one woman, and a lot of firsts she still flinches about.": "w",
+            "Oral sex both ways, vaginal sex, and a threesome with two men.": "m",
+            "Oral sex with women and men, vaginal sex, and a summer she only half remembers.": "b",
+            "Oral sex with men and women, vaginal and anal sex, and a rotating cast of partners.": "b"
+        },
+        entries: [
+            'Virgin: her own hands and a lot of reading.',
             'Only her own hands, and a very good idea of what she likes.',
-            'Vaginal sex and oral both ways, in the back of a car more than once.',
+            'Virgin: a year of thorough reading and her own hands.',
+            'Only ever her own hands, and happy to keep it that way.',
+            'Oral sex with one trusted partner, and long enough with them to know what she likes.',
+            'Vaginal sex with two boyfriends, all of it asked for.',
+            'A summer with one woman, and a lot of firsts she still flinches about.',
+            'Vaginal sex and oral (receiving), always after asking.',
+            'Oral sex (giving and receiving), vaginal sex, and a few one-night stands.',
+            'Oral sex both ways, vaginal sex, and a threesome with two men.',
+            'Anal sex, oral both ways, and rope.',
+            'Oral sex with women and men, vaginal sex, and a summer she only half remembers.',
+            'Sleeps around: oral, vaginal, toys, light bondage.',
+            'Vaginal sex with several people, oral both ways, and group sex.',
+            'Toys, bondage, exhibitionism, oral both ways, and a lot of partners.',
+            'Oral sex with men and women, vaginal and anal sex, and a rotating cast of partners.',
         ],
     },
 ];
@@ -687,8 +737,8 @@ follow the details and ignore the rolled value for that channel, because the det
 the details only tint a channel, bend the rolled value. A channel the details leave open is used as
 rolled.`,
     character: `Build one person in whom STATION, WANT, SECRET, TROUBLE and HISTORY are all true at once. Let
-the VOICE shape every line of dialogue, let the APPETITE and LIMITS become the sexual profile, and give
-the WANT a life outside {{user}}. Appearance comes from the image; every channel the details leave
+the VOICE shape every line of dialogue, let the APPETITE, SEXUALITY and EXPERIENCE become the sexual profile (sexuality resolves the
+block's default by the card's gender), and give the WANT a life outside {{user}}. Appearance comes from the image; every channel the details leave
 open comes from here.
 
 CHARACTER THEME is atmosphere, not costume: let it colour the station, the room, the prose and the
@@ -762,7 +812,7 @@ export function rollPreRoll({ seed = Date.now(), avoid = {}, type = 'persona', s
                 continue;
             }
         }
-        if (channel.key === 'SOURCE OF EXPERIENCE') {
+        if (channel.key === 'SOURCE OF EXPERIENCE' || channel.key === 'EXPERIENCE') {
             const group = channel.groups?.[steer.SOURCE];
             if (group) {
                 const orientation = values.SEXUALITY;
@@ -812,9 +862,9 @@ export function parsePreRoll(text) {
     const all = [...PRE_ROLL_CHANNELS, ...CHARACTER_CHANNELS, ...WORLD_CHANNELS];
     for (const line of String(text || '').split('\n')) {
         for (const channel of all) {
-            if (line.startsWith(channel.label + ': ')) {
-                values[channel.key] = line.slice(channel.label.length + 2).trim();
-            }
+            const labels = [channel.label, ...(channel.aliases || [])];
+            const hit = labels.find(label => line.startsWith(label + ': '));
+            if (hit) values[channel.key] = line.slice(hit.length + 2).trim();
         }
     }
     return Object.keys(values).length ? values : null;

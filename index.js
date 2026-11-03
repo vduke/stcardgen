@@ -333,7 +333,7 @@ const CHARACTER_FORMAT_LINE_MIGRATIONS = [
 ];
 
 // Shipped-prompt identity for the character prompt; see refreshShippedPrompt() in loadSettings.
-const CHARACTER_PROMPT_STAMP = '### DESCRIPTION — THE WORKING SHEET (0.13.0)';
+const CHARACTER_PROMPT_STAMP = '### DESCRIPTION — THE WORKING SHEET (0.15.0)';
 const CHARACTER_PROMPT_HEADER = 'You are an expert character card writer for SillyTavern roleplay.';
 
 const DEFAULT_CHARACTER_PROMPT = `You are an expert character card writer for SillyTavern roleplay. You turn a reference image (plus
@@ -374,7 +374,7 @@ kind of work in the room — and it should sit inside concrete detail, never as 
 - Theme is a pressure, not a filter. A gothic character can be funny; a sunlit one can be cruel.
 - Never write "a neon-noir character". Show the rain and the debt.
 
-### DESCRIPTION — THE WORKING SHEET (0.13.0)
+### DESCRIPTION — THE WORKING SHEET (0.15.0)
 Use these headings in this order, as a working sheet. Roughly 600-900 words; let a section run
 longer when the character earns it and cut a section short when it does not. Every line is a fact the
 model can act on; no filler, no summary sentence about their essence. If a sentence says nothing you
@@ -406,9 +406,9 @@ person wants from them.)
 History: (three to five concrete facts, each with a detail that could be referenced in dialogue)
 Daily life: (routine, haunts, money, transport, what a Tuesday looks like)
 Sexual profile: Experience (acts done only; say "virgin" only with no partner acts, own hands
-allowed), Sexuality (one word: Bisexual, Heterosexual, Lesbian, Gay or Pansexual; write Heterosexual
-when the notes say straight; Bisexual by default for a female character, Heterosexual for a male one,
-Bisexual for non-binary or unspecified), Intimacy (adjective list), Kinks (each: recognised name, the
+allowed), Sexuality (one word: take it from the block unless the notes say otherwise; if the block says
+"default to the gender", resolve it: Bisexual by default for a female character, Heterosexual for a
+male one, Bisexual for non-binary; write Heterosexual when the notes say straight), Intimacy (adjective list), Kinks (each: recognised name, the
 act in general terms, what it does for them)
 Boundaries: (two things they refuse, and how they refuse them — the words they use, what they do with
 their hands)
@@ -434,7 +434,7 @@ Make one of them easy and one of them hard.
 
 ### PRE-ROLLED DEFAULTS
 If a pre-rolled block appears above this prompt it is a default for this card: CHARACTER THEME, STATION, WANT,
-SECRET, VOICE, TROUBLE, HISTORY, APPETITE and EXPERIENCE. A channel the user's details already answer
+SECRET, VOICE, TROUBLE, HISTORY, APPETITE, SEXUALITY and EXPERIENCE. A channel the user's details already answer
 is settled: write from the details and ignore the rolled value. A channel the details only tint is
 bent to fit. The rest is used as rolled. The block exists so a batch from the same image does not
 come back as the same person eight times.
@@ -650,6 +650,12 @@ function loadSettings() {
     // Drafts that were mid-generation when the page closed go back to the queue.
     for (const draft of s.drafts) {
         if (draft.status === 'generating') draft.status = 'queued';
+    }
+    // A save lock survives a reload for a couple of minutes; an older one is stale.
+    for (const draft of s.drafts) {
+        if (!draft.saving) continue;
+        if (Date.now() - (draft.createdAt || 0) > 120000) draft.saving = false;
+        else savingDrafts.add(draft.id);
     }
 }
 
@@ -1407,18 +1413,13 @@ const VISION_DESCRIPTION_HTML = `
  */
 const steerOption = (value, label) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`;
 /** Four persona steers, shared by the editor and the bulk dialog. */
-function steerRowHtml(prefix) {
-    const any = steerOption('', 'Any');
-    const sex = steerOption('', 'Default (by gender)') + PERSONA_STEER_OPTIONS.SEXUALITY.map(v => steerOption(v, v === 'Heterosexual' ? 'Straight' : v)).join('');
-    const tiers = any + PERSONA_STEER_OPTIONS.SOURCE.map(o => steerOption(o.value, o.label)).join('');
-    const energies = any + PERSONA_STEER_OPTIONS.VIBE.map(v => steerOption(v, v)).join('');
-    const warmth = any + PERSONA_STEER_OPTIONS.WARMTH.map(v => steerOption(v, v)).join('');
-    return `<div class="stcg-steer-row ${prefix}">
-        <label>Vibe<select class="text_pole ${prefix}-vibe" data-key="VIBE">${energies}</select></label>
-        <label>Warmth<select class="text_pole ${prefix}-warmth" data-key="WARMTH">${warmth}</select></label>
-        <label>Sexuality<select class="text_pole ${prefix}-sexuality" data-key="SEXUALITY">${sex}</select></label>
-        <label>Experience<select class="text_pole ${prefix}-experience" data-key="SOURCE">${tiers}</select></label>
-    </div>`;
+function steerRowHtml(prefix, keys = ['VIBE', 'WARMTH', 'SEXUALITY', 'SOURCE']) {
+    const fields = [];
+    if (keys.includes('VIBE')) fields.push(`<label>Vibe<select class="text_pole" data-key="VIBE">${steerOption('', 'Any') + PERSONA_STEER_OPTIONS.VIBE.map(v => steerOption(v, v)).join('')}</select></label>`);
+    if (keys.includes('WARMTH')) fields.push(`<label>Warmth<select class="text_pole" data-key="WARMTH">${steerOption('', 'Any') + PERSONA_STEER_OPTIONS.WARMTH.map(v => steerOption(v, v)).join('')}</select></label>`);
+    if (keys.includes('SEXUALITY')) fields.push(`<label>Sexuality<select class="text_pole" data-key="SEXUALITY">${steerOption('', 'Default (by gender)') + PERSONA_STEER_OPTIONS.SEXUALITY.map(v => steerOption(v, v === 'Heterosexual' ? 'Straight' : v)).join('')}</select></label>`);
+    if (keys.includes('SOURCE')) fields.push(`<label>Experience<select class="text_pole" data-key="SOURCE">${steerOption('', 'Any') + PERSONA_STEER_OPTIONS.SOURCE.map(o => steerOption(o.value, o.label)).join('')}</select></label>`);
+    return `<div class="stcg-steer-row stcg-steer-inputs ${prefix}">${fields.join('')}</div>`;
 }
 
 const PRE_ROLL_HTML = `
@@ -1501,6 +1502,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
                 ${VISION_DESCRIPTION_HTML}
                 ${state.type === 'character' ? `<label>Theme (used when the pre-roll is drawn)<select class="text_pole stcg-theme">${THEME_OPTIONS.character.map(o => `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`).join('')}</select></label>` : ''}
                 ${state.type === 'persona' && !personaId ? steerRowHtml('stcg-steer') : ''}
+                ${state.type === 'character' && !personaId ? steerRowHtml('stcg-char-steer', ['SEXUALITY', 'SOURCE']) : ''}
                 ${state.type !== 'world' ? PRE_ROLL_HTML : ''}
                 <label>Optional details / requirements</label>
                 <textarea class="text_pole stcg-details" rows="5" placeholder="e.g. She's a 28 year old starship mechanic, sarcastic, from Mars..."></textarea>
@@ -1539,7 +1541,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
     const $conflict = $root.find('.stcg-conflict');
     const $theme = $root.find('.stcg-theme');
     if ($theme.length) $theme.val(state.preRollSteer.THEME || '').on('change', e => { state.preRollSteer.THEME = String($(e.target).val()); });
-    $root.find('.stcg-steer select').each((_, el) => {
+    $root.find('.stcg-steer-inputs select').each((_, el) => {
         const $el = $(el);
         const key = $el.data('key');
         $el.val(state.preRollSteer[key] || '').on('change', e => { state.preRollSteer[key] = String($(e.target).val()); });
@@ -2050,7 +2052,9 @@ async function processDraft(draft, onStatus = () => { }) {
     } finally {
         activeRequests.delete(draft.id);
     }
-    upsertDraft(draft);
+    // The draft may have been deleted while the request was in flight; the guard at the end would
+    // otherwise resurrect it pointing at an image deleteDraft already removed.
+    if (getDraft(draft.id)) upsertDraft(draft);
 }
 
 /** Drafts whose Auto Fix loop is running; the grid disables their buttons and says so. */
@@ -2070,6 +2074,7 @@ async function autoFixDraft(draft) {
     }
     autoFixingDrafts.add(draft.id);
     const controller = new AbortController();
+    activeRequests.set(draft.id, controller);
     const task = startTask(`Auto-fixing ${draftLabel(draft)}`, {
         total: autoFixRoundCap(),
         detail: `Reviewing against a ${threshold}/10 target`,
@@ -2113,6 +2118,7 @@ async function autoFixDraft(draft) {
         }
     } finally {
         autoFixingDrafts.delete(draft.id);
+        if (activeRequests.get(draft.id) === controller) activeRequests.delete(draft.id);
         notifyDrafts();
     }
 }
@@ -2133,6 +2139,8 @@ function inQueueScope(draft) {
 /** Generates just these (already queued) drafts: joins the running queue, or starts a run limited to them. */
 function generateDrafts(ids) {
     if (!ids.length) return;
+    // Regenerating a draft that is mid-Auto-Fix must stop the loop first, or both write it.
+    for (const id of ids) if (autoFixingDrafts.has(id)) activeRequests.get(id)?.abort();
     if (!queueRunning) {
         runQueue({ only: ids });
     } else if (queueStopRequested) {
@@ -2240,6 +2248,7 @@ async function openBulk() {
             <select class="text_pole stcg-bulk-theme">${THEME_OPTIONS.character.map(o => `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`).join('')}</select>
         </label>
         <div class="stcg-bulk-steer-row" style="display:none">${steerRowHtml('stcg-bulk-steer')}</div>
+        <div class="stcg-bulk-char-steer-row" style="display:none">${steerRowHtml('stcg-bulk-char-steer', ['SEXUALITY', 'SOURCE'])}</div>
         <label>Shared details (applied to every image, optional)</label>
         <textarea class="text_pole stcg-bulk-shared" rows="3" placeholder="e.g. All of them live in a cyberpunk city in 2140."></textarea>
         <label class="checkbox_label"><input type="checkbox" class="stcg-bulk-filename"> Use each file name as a hint</label>
@@ -2251,7 +2260,8 @@ async function openBulk() {
     const $type = $root.find('.stcg-bulk-type');
     const $themeRow = $root.find('.stcg-bulk-theme-row');
     const $steerRow = $root.find('.stcg-bulk-steer-row');
-    $type.on('change', () => { $themeRow.toggle($type.val() === 'character'); $steerRow.toggle($type.val() === 'persona'); });
+    const $charSteerRow = $root.find('.stcg-bulk-char-steer-row');
+    $type.on('change', () => { $themeRow.toggle($type.val() === 'character'); $steerRow.toggle($type.val() === 'persona'); $charSteerRow.toggle($type.val() === 'character'); });
 
     function render() {
         $list.empty();
@@ -2306,7 +2316,9 @@ async function openBulk() {
             if (!items.length) { toastr.warning('Add at least one image.'); return false; }
             const type = String($root.find('.stcg-bulk-type').val());
             const theme = type === 'character' ? String($root.find('.stcg-bulk-theme').val() || '') : '';
-            const steer = type === 'persona' ? Object.fromEntries($root.find('.stcg-bulk-steer-row select').map((_, el) => [$(el).data('key'), String($(el).val() || '')]).get().filter(([, value]) => value)) : {};
+            const readSteer = (row) => Object.fromEntries($root.find(row + ' select').map((_, el) => [$(el).data('key'), String($(el).val() || '')]).get().filter(([, value]) => value));
+            const steer = type === 'persona' ? readSteer('.stcg-bulk-steer-row') : type === 'character' ? readSteer('.stcg-bulk-char-steer-row') : {};
+            if (type === 'character' && theme) steer.THEME = theme;
             const shared = String($root.find('.stcg-bulk-shared').val() || '').trim();
             const useFileName = $root.find('.stcg-bulk-filename').prop('checked');
             const task = startTask(`Queuing ${items.length} ${type}${items.length === 1 ? '' : 's'}`, { total: items.length });
@@ -2321,7 +2333,7 @@ async function openBulk() {
                 ].filter(Boolean).join('\n');
                 try {
                     const image = await storeFile(item.file, id);
-                    upsertDraft({ id, type, status: 'queued', image, details, data: emptyData(type), raw: '', error: '', createdAt: Date.now(), preRollSteer: type === 'character' && theme ? { THEME: theme } : steer });
+                    upsertDraft({ id, type, status: 'queued', image, details, data: emptyData(type), raw: '', error: '', createdAt: Date.now(), preRollSteer: steer });
                     queuedIds.push(id);
                 } catch (error) {
                     toastr.error(`${item.file.name}: ${error.message}`, 'Card Generator');
@@ -2542,7 +2554,8 @@ function approveDrafts(ids) {
         let processed = 0;
         const skipped = [];
         const task = startTask(`Creating ${ready.length} from drafts`, { total: ready.length });
-        ready.forEach(d => savingDrafts.add(d.id));
+        // Persisted too, so a reload mid-save cannot approve the same draft again.
+        ready.forEach(d => { savingDrafts.add(d.id); d.saving = true; upsertDraft(d); });
         notifyDrafts();
         try {
             for (const draft of ready) {
@@ -2562,12 +2575,18 @@ function approveDrafts(ids) {
                     skipped.push(`${draft.data.name} (${error.message})`);
                 } finally {
                     savingDrafts.delete(draft.id);
+                    const live = getDraft(draft.id);
+                    if (live) { live.saving = false; upsertDraft(live); }
                     task.update({ done: ++processed });
                     notifyDrafts();
                 }
             }
         } finally {
-            ready.forEach(d => savingDrafts.delete(d.id));
+            ready.forEach(d => {
+                savingDrafts.delete(d.id);
+                const live = getDraft(d.id);
+                if (live?.saving) { live.saving = false; upsertDraft(live); }
+            });
             notifyDrafts();
         }
         task.finish(`Created ${created}${skipped.length ? `, skipped ${skipped.length}` : ''}.`, { error: skipped.length > 0 });

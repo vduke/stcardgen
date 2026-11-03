@@ -2,8 +2,7 @@
 
 Status: implemented through phase 3 (0.14.0). All steers ship: VIBE/WARMTH mask cells, SEXUALITY,
 tiered EXPERIENCE with orientation filtering, theme pickers for characters and worlds, and persona
-pickers in Bulk and Create Persona. Phases 4–5 (character parity beyond theme, presets, weights,
-per-image overrides) remain.
+pickers in Bulk and Create Persona. Phase 5 (presets, weights, per-image overrides) remains.
 
 ## Implemented so far (0.13.0)
 
@@ -126,7 +125,7 @@ An act pool that says "two boyfriends" must not land on a Lesbian card or a male
 - 1 Semantics, data, tests. Gate: all tests green, no UI. — done
 - 2 Bulk UI. Gate: manual batch proves picks hold. — done
 - 3 Create Persona UI. Gate: same. — done
-- 4 Characters: hetero male default, own APPETITE/EXPERIENCE tiers, same contract.
+- 4 Characters: hetero male default, own APPETITE/EXPERIENCE tiers, same contract. — done (THEME, SEXUALITY and tiered EXPERIENCE channels with pickers)
 - 5 Polish: presets, weights, per-image overrides.
 
 ## Open questions

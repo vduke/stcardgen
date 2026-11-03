@@ -133,9 +133,18 @@ for (const [type, channels] of Object.entries(sets)) {
         }
     });
 }
-test('labels are distinct across every set, so one parser can read any editor', () => {
-    const labels = Object.values(sets).flat().map(c => c.label);
-    assert.strictEqual(new Set(labels).size, labels.length, 'a label is shared between two channels');
+test('labels are distinct unless two sets share a channel and its entries', () => {
+    const seen = new Map();
+    for (const type of Object.keys(sets)) {
+        for (const channel of sets[type]) {
+            const first = seen.get(channel.label);
+            if (first) {
+                assert.ok(first.key === channel.key && JSON.stringify(first.entries) === JSON.stringify(channel.entries),
+                    `a label is shared between different channels: ${channel.label}`);
+            }
+            seen.set(channel.label, channel);
+        }
+    }
 });
 for (const type of ['character', 'world']) {
     test(`${type}: the block names every channel and does not include persona lines`, () => {
@@ -178,7 +187,7 @@ test('character and world entries avoid the slop phrases the prompts ban', () =>
 // The experience list is an inventory of what happened. "No anal" and "never" are limits, and the
 // model was copying them in; the lists must name acts done only.
 test('experience lists name only acts done', () => {
-    const channels = [PRE_ROLL_CHANNELS.find(c => c.key === 'SOURCE OF EXPERIENCE'), CHARACTER_CHANNELS.find(c => c.key === 'LIMITS')];
+    const channels = [PRE_ROLL_CHANNELS.find(c => c.key === 'SOURCE OF EXPERIENCE'), CHARACTER_CHANNELS.find(c => c.key === 'EXPERIENCE')];
     for (const channel of channels) {
         for (const entry of channel.entries) {
             assert.ok(!/\b(no|never|nothing|not yet|does not)\b/i.test(entry), `${channel.key} entry tracks a negative: ${entry}`);
