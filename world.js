@@ -16,12 +16,12 @@ export const WORLD_FORMAT_LINE_MIGRATIONS = [
 
 // Shipped-prompt identity: a saved world prompt that still opens with this line and lacks the stamp is
 // the shipped text, and gets replaced when the shape changes. Anything rewritten from line one is kept.
-export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.13.0)';
+export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.17.0)';
 export const WORLD_PROMPT_HEADER = 'You are a world-builder for SillyTavern roleplay.';
 
 export const DEFAULT_WORLD_PROMPT = `You are a world-builder for SillyTavern roleplay. You turn a user persona into a living sandbox: a world/narrator character card plus a lorebook (World Info) that makes the setting feel real and reactive.
 
-### THE WORLD HAS ITS OWN LIFE (0.13.0)
+### THE WORLD HAS ITS OWN LIFE (0.17.0)
 The persona is the character the USER plays. Refer to them as {{user}} everywhere. The sandbox card ({{char}}) is not one person: it is the narrator / game master who describes the world and voices every NPC.
 
 ### THE WORLD IS NOT BUILT AROUND THE PERSONA
@@ -78,6 +78,18 @@ The world is for adult roleplay. Do not round it off.
 - NSFL is allowed when the theme carries it (disease, gore, addiction, collapse). Do not stop to explain it; show the cost in the room.
 - A world can be cosy and still contain a death.
 
+### REAL CONSEQUENCES, NO PROTAGONIST PRIVILEGE
+The world does not bend around {{user}}. There is no plot armour.
+- Bad choices compound. Leave a drink unwatched and it can be spiked; black out at a party and something can happen; walk into a dark alley and you can be mugged.
+- Good choices pay too. Revise and the scholarship is real; turn up and the boss remembers; keep a promise and the favour comes back; a proud parent can buy the first car.
+- Chance exists, but preparation changes the odds. Luck is a roll, not a verdict.
+- Failure is possible and leaves a mark: the money is gone, the term is failed, the person stops calling. Recovery costs time, effort or somebody's help.
+- Opportunities expire and NPCs move on. The bus leaves; the job goes to someone else; the rumour reaches the wrong ear.
+- Do not punish every scene. Let some good intentions land safely, or "consequence" becomes a grind.
+
+### WORLD RULES LINE
+A "WORLD RULES" line, when supplied, sets registers explicitly: NSFW, NSFL and real consequences are each on or off. Obey it. When it is absent, treat all three as on.
+
 ### WHAT THE WORLD MUST COVER
 {{user}}'s practical circumstances. Work out what their life needs and fill it in:
 - Home and family: where they live, parents/siblings/partner, household dynamics, who pays.
@@ -91,6 +103,7 @@ The world is for adult roleplay. Do not round it off.
 Examples: a college student needs the campus, their dorm or apartment, parents, roommate, friend group, professors, a part-time job, parties and local spots. A starship captain needs the ship, the crew, the star system being traveled, political powers and alliances, rivals, ports of call and the current mission, plus the dull maintenance that keeps a ship alive.
 
 ### PRE-ROLLED DEFAULTS
+A WORLD RULES line above the block, when present, sets the content registers and consequences; it is separate from the rolled channels.
 If a pre-rolled block appears above this prompt it is a default for this world: WORLD THEME, PLACE, PRESSURE, POWER, TEXTURE, SEASON and OPENING. A channel the user's details already answer is settled: write from the details and ignore the rolled value. A channel the details only tint is bent to fit. The rest is used as rolled. The world is built out of those seven, not out of the persona. OPENING is where {{user}}'s story starts.
 The block exists so a batch of worlds from the same persona cannot converge on the same setting.
 
@@ -270,9 +283,16 @@ function banText(source, excludeDraftId) {
         .replace(/{{type}}/g, "world's NPCs, places and factions");
 }
 
-function buildSystem({ includeImagePrompt, source, excludeDraftId, preRollBlock = '' }) {
+/** Explicit on/off registers for this world; all default on when unset. */
+function worldRulesLine(flags = {}) {
+    const state = (value) => (value === false ? 'off' : 'on');
+    return `WORLD RULES: NSFW ${state(flags.nsfw)}, NSFL ${state(flags.nsfl)}, real consequences ${state(flags.consequences)}.`;
+}
+
+function buildSystem({ includeImagePrompt, source, excludeDraftId, preRollBlock = '', flags = {} }) {
     const s = api.settings();
-    const parts = [String(preRollBlock || '').trim(), s.worldPrompt.trim(), s.worldFormat.trim(), banText(source, excludeDraftId)];
+    const rules = worldRulesLine(flags);
+    const parts = [String(preRollBlock || '').trim(), rules, s.worldPrompt.trim(), s.worldFormat.trim(), banText(source, excludeDraftId)];
     if (includeImagePrompt) parts.push(WORLD_IMAGE_PROMPT_INSTRUCTION);
     return parts.filter(Boolean).join('\n\n');
 }
@@ -299,7 +319,7 @@ async function request(messages, signal) {
  * @param {string} [options.imageDescription] A vision description of the world art to reuse
  * @returns {Promise<{data: object, raw: string, imageDescription: string}>}
  */
-export async function generateWorld({ source, imageBlob = null, details = '', excludeDraftId = null, imageDescription = '', preRoll = '', steer = null, signal = null, onStatus = () => { } }) {
+export async function generateWorld({ source, imageBlob = null, details = '', excludeDraftId = null, imageDescription = '', preRoll = '', steer = null, flags = {}, signal = null, onStatus = () => { } }) {
     if (!source?.name) throw new Error('Pick a persona to live in this world.');
     const s = api.settings();
     const count = clampInt(s.worldEntryCount, 3, 80, 20);
@@ -316,7 +336,7 @@ export async function generateWorld({ source, imageBlob = null, details = '', ex
     ].filter(Boolean).join('\n\n');
 
     const messages = [
-        { role: 'system', content: buildSystem({ includeImagePrompt: !imageBlob && s.suggestImagePrompt, source, excludeDraftId, preRollBlock }) },
+        { role: 'system', content: buildSystem({ includeImagePrompt: !imageBlob && s.suggestImagePrompt, source, excludeDraftId, preRollBlock, flags }) },
         { role: 'user', content: userContent(text, image) },
     ];
     const raw = await request(messages, signal);
@@ -326,7 +346,7 @@ export async function generateWorld({ source, imageBlob = null, details = '', ex
 }
 
 /** Asks for additional entries that fill gaps in an existing world. */
-async function generateMoreEntries({ source, world, details, count, excludeDraftId, preRoll = '', signal }) {
+async function generateMoreEntries({ source, world, details, count, excludeDraftId, preRoll = '', flags = {}, signal }) {
     const existing = world.entries.map(e => `- ${e.title} [${e.category}] keys: ${e.keys.join(', ')}`).join('\n');
     const text = [
         `This world already exists and the persona below already lives in it. Add ${count} NEW lorebook entries that fill gaps: more NPCs, places, factions, customs, events and story hooks. Do not repeat or rewrite existing topics, but you may connect new entries to them.`,
@@ -339,7 +359,7 @@ async function generateMoreEntries({ source, world, details, count, excludeDraft
     ].filter(Boolean).join('\n\n');
 
     const messages = [
-        { role: 'system', content: buildSystem({ includeImagePrompt: false, source, excludeDraftId, preRollBlock: preRoll }) },
+        { role: 'system', content: buildSystem({ includeImagePrompt: false, source, excludeDraftId, preRollBlock: preRoll, flags }) },
         { role: 'user', content: text },
     ];
     const raw = await request(messages, signal);
@@ -482,6 +502,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
         imageDescription: draft?.imageDescription ?? '',
         preRoll: draft?.preRoll ?? '',
         preRollSteer: draft?.preRollSteer ?? {},
+        worldFlags: draft?.worldFlags ?? { nsfw: true, nsfl: true, consequences: true },
         imageBlob: null,
         imageUrl: '',
         imageChanged: false,
@@ -521,6 +542,9 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
                 <label>Entries per generation
                     <input class="text_pole stcg-w-count" type="number" min="3" max="80">
                 </label>
+                <label class="checkbox_label"><input type="checkbox" class="stcg-w-nsfw"> NSFW content</label>
+                <label class="checkbox_label"><input type="checkbox" class="stcg-w-nsfl"> NSFL: violence, death, gore</label>
+                <label class="checkbox_label"><input type="checkbox" class="stcg-w-consequences"> Real consequences (no protagonist privilege)</label>
                 <label>Theme (used when the pre-roll is drawn)<select class="text_pole stcg-w-theme">${THEME_OPTIONS.world.map(o => `<option value="${api.escapeHtml(o.value)}">${api.escapeHtml(o.label)}</option>`).join('')}</select></label>
                 <details class="stcg-w-preroll">
                     <summary>Pre-rolled for this world</summary>
@@ -560,6 +584,10 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
     const s = api.settings();
     const $theme = $root.find('.stcg-w-theme');
     if ($theme.length) $theme.val(state.preRollSteer.THEME || '').on('change', e => { state.preRollSteer.THEME = String($(e.target).val()); });
+    for (const key of ['nsfw', 'nsfl', 'consequences']) {
+        $root.find('.stcg-w-' + key).prop('checked', state.worldFlags[key] !== false)
+            .on('change', e => { state.worldFlags[key] = Boolean($(e.target).prop('checked')); });
+    }
 
     // Persona picker. A draft's persona may have been deleted since; keep its snapshot selectable.
     const $persona = $root.find('.stcg-w-persona');
@@ -744,7 +772,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
         state.task?.update({ detail: text });
     }
 
-    const quality = signal => ({ type: 'world', details: state.details, preRoll: state.preRoll, source: state.source, steer: state.steer, signal });
+    const quality = signal => ({ type: 'world', details: [state.details, worldRulesLine(state.worldFlags)].filter(Boolean).join('\n'), preRoll: state.preRoll, source: state.source, steer: state.steer, signal });
 
     function refresh() {
         writeCard();
@@ -833,6 +861,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
                     imageDescription: state.imageDescription,
                     preRoll: state.preRoll,
                     steer: state.preRollSteer,
+                    flags: state.worldFlags,
                     signal,
                     onStatus: status,
                 });
@@ -854,6 +883,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
                 return `Done. ${state.data.entries.length} entries.${score} Review and edit before saving.`;
             }
             const result = await generateMoreEntries({
+                flags: state.worldFlags,
                 source: state.source,
                 world: state.data,
                 details: state.details,
@@ -1071,6 +1101,7 @@ async function saveWorldDraft(state, existing) {
     }
     draft.source = structuredClone(state.source);
     draft.preRollSteer = { ...state.preRollSteer };
+    draft.worldFlags = { ...state.worldFlags };
     draft.data = structuredClone(state.data);
     draft.raw = state.raw;
     draft.details = state.details;

@@ -345,6 +345,15 @@ test('character creation exposes sexuality and experience steers', () => {
     assert.match(indexSrc, /steerRowHtml\('stcg-char-steer', \['SEXUALITY', 'SOURCE'\]\)/);
 });
 
+test('world content and consequence flags are wired', () => {
+    assert.match(worldSrc, /stcg-w-nsfw/);
+    assert.match(worldSrc, /stcg-w-nsfl/);
+    assert.match(worldSrc, /stcg-w-consequences/);
+    assert.match(worldSrc, /WORLD RULES: NSFW/);
+    assert.match(worldSrc, /flags: state\.worldFlags/);
+    assert.match(worldSrc, /draft\.worldFlags = \{ \.\.\.state\.worldFlags \}/);
+});
+
 test('the persona title carries the age', () => {
     assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('[Age] - a short tagline'));
     assert.ok(defaults.PERSONA_FORMAT_LINE_MIGRATIONS.includes('[Age] - a short tagline'));

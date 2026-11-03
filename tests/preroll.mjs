@@ -8,7 +8,7 @@ import assert from 'node:assert';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PRE_ROLL_CHANNELS, CHARACTER_CHANNELS, WORLD_CHANNELS, channelsFor, rollPreRoll, formatPreRoll, parsePreRoll } from '../preroll.js';
+import { PRE_ROLL_CHANNELS, CHARACTER_CHANNELS, WORLD_CHANNELS, WORLD_THEMES, channelsFor, rollPreRoll, formatPreRoll, parsePreRoll } from '../preroll.js';
 import { extractTemplate } from './extract.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -263,6 +263,14 @@ test('an experience tier draws within itself and filters by orientation', () => 
         assert.notStrictEqual(tag, 'm', 'a lesbian card got a man-only act');
     }
     assert.ok(sourceChannel.groups.experienced.some(entry => sourceChannel.orientationTags[entry] === 'm'));
+});
+
+test('Suburban night exists and world consequences are spelled out', () => {
+    assert.ok(WORLD_THEMES.some(theme => theme.label === 'Suburban night'), 'Suburban night theme missing');
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    assert.ok(world.includes('REAL CONSEQUENCES, NO PROTAGONIST PRIVILEGE'), 'consequence guidance missing');
+    assert.ok(world.includes('Bad choices compound'), 'consequence examples missing');
+    assert.ok(world.includes('WORLD RULES LINE'), 'rules line guidance missing');
 });
 
 test('the prompts say theme is atmosphere and ask for nuance', () => {

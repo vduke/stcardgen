@@ -55,6 +55,7 @@ export const WORLD_THEMES = [
     { label: 'Weird fiction', text: 'Weird fiction: a town with one unexplained rule, a survey office, locals who correct outsiders, a season that repeats.' },
     { label: 'Industrial river city', text: 'Industrial river city: foundries, bridges, shift whistles, a river that carries what is dumped in it.' },
     { label: 'Academic town', text: 'Academic town: a college, a library with restricted floors, term rhythms, a reputation to keep.' },
+    { label: 'Suburban night', text: 'Suburban night: cul-de-sacs and a strip-mall lot, a house with the parents away, one diner that stays open, a lake road with no lights, and a rumour mill faster than the school\'s.' },
 ];
 
 /** Theme pickers for the character and world screens; the value sent as a steer is the entry text. */
