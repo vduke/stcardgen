@@ -55,7 +55,7 @@ export const WORLD_THEMES = [
     { label: 'Weird fiction', text: 'Weird fiction: a town with one unexplained rule, a survey office, locals who correct outsiders, a season that repeats.' },
     { label: 'Industrial river city', text: 'Industrial river city: foundries, bridges, shift whistles, a river that carries what is dumped in it.' },
     { label: 'Academic town', text: 'Academic town: a college, a library with restricted floors, term rhythms, a reputation to keep.' },
-    { label: 'Suburban night', text: 'Suburban night: cul-de-sacs and a strip-mall lot, a house with the parents away, a late diner, a dark lake road, a rumour mill faster than the school\'s — a modern suburb or small city with a big high school.' },
+    { label: 'Suburban night', text: 'Suburban night: cul-de-sacs and a strip-mall lot twenty minutes from a city, a big high school with a packed lot, a house with the parents away, a late diner, a rumour mill faster than the school\'s.' },
 ];
 
 /** Theme pickers for the character and world screens; the value sent as a steer is the entry text. */
@@ -164,7 +164,7 @@ export const THEME_SCALES = {
     'Weird fiction': [0, 1, 2],
     'Industrial river city': [2, 4],
     'Academic town': [2, 3],
-    'Suburban night': [2, 3],
+    'Suburban night': [3],
 };
 
 /** Which place kinds each world theme tolerates; a mismatch is moved rather than forced. */
@@ -721,6 +721,8 @@ export const WORLD_CHANNELS = [
             "A mountain resort town with two schools on one campus and staff housing behind the hotel.": "mountain",
             "A rural county seat with a courthouse square and a Walmart twenty minutes out.": "rural",
             "A metro suburb of forty-five thousand with three high schools, a mall and a commuter lot.": "suburban",
+            "A gated subdivision beside a six-lane road, with a business park where an orchard used to be.": "suburban",
+            "A suburb of shrunken lawns and new driveways, with a chain coffee place where the video shop was.": "suburban",
             "A small city of ninety thousand with a downtown strip, a community college and a party district.": "smallcity",
             "A city neighbourhood where the high school lets out onto six lanes and a bus shelter.": "urban"
         },
@@ -748,6 +750,8 @@ export const WORLD_CHANNELS = [
             'A mountain resort town with two schools on one campus and staff housing behind the hotel.',
             'A rural county seat with a courthouse square and a Walmart twenty minutes out.',
             'A metro suburb of forty-five thousand with three high schools, a mall and a commuter lot.',
+            'A gated subdivision beside a six-lane road, with a business park where an orchard used to be.',
+            'A suburb of shrunken lawns and new driveways, with a chain coffee place where the video shop was.',
             'A small city of ninety thousand with a downtown strip, a community college and a party district.',
             'A city neighbourhood where the high school lets out onto six lanes and a bus shelter.',
         ],

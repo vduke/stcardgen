@@ -287,7 +287,7 @@ test('scale follows the theme and is written into the description', () => {
     const suburban = WORLD_THEMES.find(theme => theme.label === 'Suburban night').text;
     for (let seed = 1; seed <= 12; seed++) {
         const rolled = rollPreRoll({ seed, type: 'world', steer: { THEME: suburban } }).values.SCALE;
-        assert.ok(/small city|suburb/.test(rolled), 'Suburban night got ' + rolled);
+        assert.match(rolled, /metro suburb/, 'Suburban night got ' + rolled);
     }
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     assert.ok(world.includes('Open with the PLACE and SCALE'), 'description does not lead with scale');
@@ -315,7 +315,7 @@ test('the world prompt stays mixed and leaves creative room', () => {
     assert.ok(world.includes('Start in motion'), 'opening variation missing');
     assert.ok(world.includes('Use at most one explicit nod to the persona'), 'persona-trait limit missing');
     assert.ok(!world.includes('Include one line on what the world does not care about'), 'old formula line still demanded');
-    assert.ok(WORLD_THEMES.find(theme => theme.label === 'Suburban night').text.includes('lake'), 'suburban theme should allow a lake');
+    assert.ok(WORLD_THEMES.find(theme => theme.label === 'Suburban night').text.includes('twenty minutes from a city'), 'suburban theme should describe a city suburb');
 });
 
 test('NPC entries must be self-contained', () => {

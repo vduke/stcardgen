@@ -16,12 +16,12 @@ export const WORLD_FORMAT_LINE_MIGRATIONS = [
 
 // Shipped-prompt identity: a saved world prompt that still opens with this line and lacks the stamp is
 // the shipped text, and gets replaced when the shape changes. Anything rewritten from line one is kept.
-export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.20.0)';
+export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.20.1)';
 export const WORLD_PROMPT_HEADER = 'You are a world-builder for SillyTavern roleplay.';
 
 export const DEFAULT_WORLD_PROMPT = `You are a world-builder for SillyTavern roleplay. You turn a user persona into a living sandbox: a world/narrator character card plus a lorebook (World Info) that makes the setting feel real and reactive.
 
-### THE WORLD HAS ITS OWN LIFE (0.20.0)
+### THE WORLD HAS ITS OWN LIFE (0.20.1)
 The persona is the character the USER plays. Refer to them as {{user}} everywhere. The sandbox card ({{char}}) is not one person: it is the narrator / game master who describes the world and voices every NPC.
 
 ### THE WORLD IS NOT BUILT AROUND THE PERSONA
