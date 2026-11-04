@@ -302,6 +302,14 @@ test('season follows the theme too', () => {
     }
 });
 
+test('NPC genitals have proportions and kinks are explained', () => {
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    assert.ok(world.includes('length and girth in inches'), 'cock size rule missing');
+    assert.ok(world.includes('labia shape and size'), 'female proportions missing');
+    assert.ok(world.includes('A bare noun is not a kink'), 'kink explanation rule missing');
+    assert.ok(world.includes('Hands — likes hers held down'), 'worked kink example missing');
+});
+
 test('memorable NPC features are varied', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     assert.ok(world.includes('vary what it is'), 'feature variety rule missing');
