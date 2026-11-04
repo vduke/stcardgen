@@ -152,6 +152,102 @@ export const PERSONA_STEER_OPTIONS = {
     ],
 };
 
+/** Seasons each theme tolerates, so summer themes cannot draw Christmas. */
+export const THEME_SEASONS = {
+    "Cozy but fraying": [
+        1,
+        3,
+        11
+    ],
+    "Neon noir": [
+        4,
+        6
+    ],
+    "Dystopian austerity": [
+        2,
+        4
+    ],
+    "Pastoral gothic": [
+        1,
+        4
+    ],
+    "Solarpunk": [
+        0,
+        1
+    ],
+    "Post-collapse": [
+        1,
+        2
+    ],
+    "Corporate arcology": [
+        3,
+        6
+    ],
+    "Mythic": [
+        0,
+        8
+    ],
+    "Liminal": [
+        2,
+        5
+    ],
+    "Coastal working town": [
+        0,
+        10
+    ],
+    "Frontier": [
+        1,
+        4
+    ],
+    "Underground": [
+        2,
+        7
+    ],
+    "Orbital": [
+        6
+    ],
+    "Weird fiction": [
+        1,
+        4
+    ],
+    "Industrial river city": [
+        1,
+        4
+    ],
+    "Academic town": [
+        3,
+        6
+    ],
+    "Suburban night": [
+        0,
+        3
+    ],
+    "Endless summer": [
+        0,
+        8
+    ],
+    "Pool-and-cookout suburb": [
+        0,
+        8
+    ],
+    "Festival week": [
+        0,
+        8
+    ],
+    "Party town": [
+        3,
+        6
+    ],
+    "Holiday resort": [
+        2,
+        7
+    ],
+    "Main-street revival": [
+        0,
+        1
+    ]
+};
+
 /** Population bands each theme tolerates. */
 export const THEME_SCALES = {
     'Cozy but fraying': [1, 2],
@@ -791,32 +887,6 @@ export const WORLD_CHANNELS = [
         ],
     },
     {
-        key: 'PRESSURE',
-        label: 'PRESSURE',
-        entries: [
-            'The biggest employer announced a consultation everyone knows the answer to.',
-            'Rent rose for the whole street in the same month and nobody knows who bought the buildings.',
-            'A council vote next week decides whether the market stays or becomes a car park.',
-            'Wages are four weeks late and the payroll clerk has stopped answering.',
-            'Two families have fallen out over a boundary nobody can find on a map.',
-            'The tourist season starts in nine days and half the seasonal staff have not come back.',
-            'A water bill for the whole block was paid to the wrong account and the taps are still on.',
-            'The school is being merged with one six miles away.',
-            'A public health notice about the water was withdrawn without explanation.',
-            'The old manager died in spring and nobody was ever officially put in charge.',
-            'The highway will bypass the town in two years and everyone talks about nothing else.',
-            'The only pharmacy is closing on Fridays from next month.',
-            'The summer fair is in nine days and the committee is two people short.',
-            'A local band got the Friday slot at the hall and the whole town is invited.',
-            "Someone's parents are away for the weekend and the group chat knows.",
-            'A heatwave, and the lake is the only plan anyone has.',
-            'The football team made the playoffs for the first time in eleven years.',
-            'A new arcade opens next week and the argument is only about parking.',
-            'The school dance is Saturday and the seating chart is already drama.',
-            'A community pool reopens after two summers shut and everyone turns up at once.',
-        ],
-    },
-    {
         key: 'POWER',
         label: 'POWER',
         entries: [
@@ -875,32 +945,6 @@ export const WORLD_CHANNELS = [
             'Late autumn, wind off the water, and the first shop has already put up tinsel.',
         ],
     },
-    {
-        key: 'OPENING',
-        label: 'OPENING',
-        entries: [
-            'A wake for someone the town knew and nobody liked, at the back of the pub.',
-            'A job left unstaffed for six weeks, and the person everyone suspects of quitting.',
-            'A stranger at the bar asking where the swimming spot is, in a town with one.',
-            'A shared shift with a person who will not stop talking and a person who will not talk at all.',
-            'A shelf of unclaimed lost property and a search for an item that matters more than it should.',
-            'A late-night doorbell ring, then nobody there, and then it rings again.',
-            'A bus that does not arrive, a crowd that waits, and the small talk that happens while it does not.',
-            'A mutual friend\'s spare room and a sofa for the night, with rules nobody has written down.',
-            'A queue for rationed fuel where everyone has to talk to whoever is next to them.',
-            'A rehearsal for something the persona has been talked into taking part in.',
-            'A bad day in a quiet week, and a knock about a small thing that is not small.',
-            'A power cut that leaves the same faces in the same doorway for twenty minutes.',
-            'The first warm evening of the year, and the whole street outside at once.',
-            'A text that says come over, with no explanation and no time.',
-            'The last hour of a shift, and the person closing up with her.',
-            'A town event being set up badly, and somebody asking for a second pair of hands.',
-            'A text with an address and no explanation, and the good speakers already in the car.',
-            'The first hour of a pool party and the shallow end is still quiet.',
-            'A fairground at dusk, the lights just coming on, and a wristband to burn.',
-            'A losing game on the TV and five people who care too much about it.',
-        ],
-    },
 ];
 
 /** Small deterministic PRNG (mulberry32), so a seed reproduces a roll exactly. */
@@ -957,7 +1001,7 @@ bend a channel only where the details tint it.
 Go through these channels before writing. Any channel the user's details already answer is settled:
 follow the details and ignore the rolled value for that channel. Where they only tint a channel, bend
 it to fit. A channel the details leave open is used as rolled.`,
-    world: `Build the world out of WORLD THEME, PLACE, PRESSURE, POWER, TEXTURE, SEASON and OPENING. WORLD THEME is the
+    world: `Build the world out of WORLD THEME, PLACE, POWER, TEXTURE and SEASON. Derive the pressures and the opening from them. WORLD THEME is the
 physical and social atmosphere — light, materials, sound, money, weather — not a genre sticker, and
 it must show in the entries rather than be announced. The persona's card is how
 they experience this world, not a specification for what the world contains or what people know about
@@ -1021,6 +1065,12 @@ export function rollPreRoll({ seed = Date.now(), avoid = {}, type = 'persona', s
             }
         }
         const themeLabel = WORLD_THEMES.find(theme => theme.text === values.THEME)?.label;
+        if (channel.key === 'SEASON' && THEME_SEASONS[themeLabel]) {
+            const allowed = THEME_SEASONS[themeLabel];
+            const fitting = channel.entries.filter((entry, index) => allowed.includes(index));
+            values[channel.key] = pick(fitting.length ? fitting : channel.entries);
+            continue;
+        }
         if (channel.key === 'SCALE' && THEME_SCALES[themeLabel]) {
             const allowed = THEME_SCALES[themeLabel];
             const fitting = channel.entries.filter((entry, index) => allowed.includes(index));

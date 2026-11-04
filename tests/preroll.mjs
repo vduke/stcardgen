@@ -8,7 +8,7 @@ import assert from 'node:assert';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PRE_ROLL_CHANNELS, CHARACTER_CHANNELS, WORLD_CHANNELS, WORLD_THEMES, THEME_PLACE_KINDS, THEME_SCALES, channelsFor, rollPreRoll, formatPreRoll, parsePreRoll } from '../preroll.js';
+import { PRE_ROLL_CHANNELS, CHARACTER_CHANNELS, WORLD_CHANNELS, WORLD_THEMES, THEME_PLACE_KINDS, THEME_SCALES, THEME_SEASONS, channelsFor, rollPreRoll, formatPreRoll, parsePreRoll } from '../preroll.js';
 import { extractTemplate } from './extract.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -293,19 +293,28 @@ test('scale follows the theme and is written into the description', () => {
     assert.ok(world.includes('the PLACE and SCALE in one sentence'), 'description does not lead with scale');
 });
 
+test('season follows the theme too', () => {
+    assert.strictEqual(Object.keys(THEME_SEASONS).length, WORLD_THEMES.length, 'a theme has no allowed seasons');
+    const summer = WORLD_THEMES.find(theme => theme.label === 'Endless summer').text;
+    for (let seed = 1; seed <= 10; seed++) {
+        const rolled = rollPreRoll({ seed, type: 'world', steer: { THEME: summer } }).values.SEASON;
+        assert.match(rolled, /summer|festival/, 'Endless summer got ' + rolled);
+    }
+});
+
 test('texture includes modern technology', () => {
     const texture = WORLD_CHANNELS.find(c => c.key === 'TEXTURE').entries.join(' ');
     assert.ok(/phone|group chat/i.test(texture), 'no modern phone texture');
     assert.ok(/coffee|speaker/i.test(texture), 'no modern teenage texture');
 });
 
-test('world openings are allowed to be ordinary', () => {
+test('openings and pressures are derived, not catalogued', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
-    assert.ok(world.includes('not necessarily a problem'), 'scenario still demands a problem');
-    assert.ok(world.includes('Not every opening needs trouble'), 'opening tension rule missing');
-    assert.ok(world.includes('Pressure is not a crisis'), 'theme pressure line missing');
-    const openings = WORLD_CHANNELS.find(c => c.key === 'OPENING').entries;
-    assert.ok(openings.some(entry => /warm evening|come over/.test(entry)), 'no low-stakes opening option');
+    assert.ok(world.includes('INVENT THE PRESSURE AND THE OPENING'), 'derivation section missing');
+    assert.ok(world.includes('Derive pressure from what the theme makes scarce'), 'derivation rule missing');
+    assert.ok(world.includes('Vary its shape between worlds'), 'opening variation missing');
+    assert.match(world, /not necessarily a problem/i);
+    assert.ok(!WORLD_CHANNELS.some(c => c.key === 'PRESSURE' || c.key === 'OPENING'), 'catalogue channels still present');
 });
 
 test('positive themes exist and every world needs a pleasure', () => {
@@ -315,8 +324,6 @@ test('positive themes exist and every world needs a pleasure', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     assert.ok(world.includes('Every world needs a pleasure'), 'pleasure rule missing');
     assert.ok(world.includes('Not every world is a town with a problem'), 'non-problem worlds missing');
-    const pressures = WORLD_CHANNELS.find(c => c.key === 'PRESSURE').entries;
-    assert.ok(pressures.some(entry => /band|heatwave|playoffs|pool reopens/.test(entry)), 'no light pressures');
 });
 
 test('the world prompt stays mixed and leaves creative room', () => {
