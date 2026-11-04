@@ -308,6 +308,17 @@ test('world openings are allowed to be ordinary', () => {
     assert.ok(openings.some(entry => /warm evening|come over/.test(entry)), 'no low-stakes opening option');
 });
 
+test('positive themes exist and every world needs a pleasure', () => {
+    for (const label of ['Endless summer', 'Pool-and-cookout suburb', 'Festival week', 'Party town', 'Holiday resort', 'Main-street revival']) {
+        assert.ok(WORLD_THEMES.some(theme => theme.label === label), 'positive theme missing: ' + label);
+    }
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    assert.ok(world.includes('Every world needs a pleasure'), 'pleasure rule missing');
+    assert.ok(world.includes('Not every world is a town with a problem'), 'non-problem worlds missing');
+    const pressures = WORLD_CHANNELS.find(c => c.key === 'PRESSURE').entries;
+    assert.ok(pressures.some(entry => /band|heatwave|playoffs|pool reopens/.test(entry)), 'no light pressures');
+});
+
 test('the world prompt stays mixed and leaves creative room', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     assert.ok(world.includes('TONE — MIXED, NOT BLEAK'), 'tone guidance missing');

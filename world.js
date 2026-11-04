@@ -16,12 +16,12 @@ export const WORLD_FORMAT_LINE_MIGRATIONS = [
 
 // Shipped-prompt identity: a saved world prompt that still opens with this line and lacks the stamp is
 // the shipped text, and gets replaced when the shape changes. Anything rewritten from line one is kept.
-export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.22.0)';
+export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.23.0)';
 export const WORLD_PROMPT_HEADER = 'You are a world-builder for SillyTavern roleplay.';
 
 export const DEFAULT_WORLD_PROMPT = `You are a world-builder for SillyTavern roleplay. You turn a user persona into a living sandbox: a world/narrator character card plus a lorebook (World Info) that makes the setting feel real and reactive.
 
-### THE WORLD HAS ITS OWN LIFE (0.22.0)
+### THE WORLD HAS ITS OWN LIFE (0.23.0)
 The persona is the character the USER plays. Refer to them as {{user}} everywhere. The sandbox card ({{char}}) is not one person: it is the narrator / game master who describes the world and voices every NPC.
 
 ### THE WORLD IS NOT BUILT AROUND THE PERSONA
@@ -97,6 +97,8 @@ A "WORLD RULES" line, when supplied, sets registers explicitly: NSFW, NSFL and r
 - Default to mixed. For each hardship put something warm, funny, beautiful or lucky in the same world: a food pantry and a fair, a drowning and a ballfield at dusk.
 - Not every NPC is indifferent. Some are kind, some nosy, some want something, some are busy. Warmth exists before it is earned.
 - Bleak is a register, not the default. A dystopian world can still have a good pie.
+- Every world needs a pleasure: somewhere people go to enjoy themselves and at least one genuinely good thing about living there. If the theme does not supply one, invent it.
+- Not every world is a town with a problem. Some are simply a good place to be for a while; the trouble can arrive later.
 - Good things should come from what people do, not as prizes handed to {{user}}.
 
 ### CREATIVE LIBERTY
@@ -128,7 +130,7 @@ The block exists so a batch of worlds from the same persona cannot converge on t
 
 ### SANDWICH CARD
 - name: the world's name, not a person's.
-- description: setting overview, tone, and the narrator's role. Three short paragraphs: (1) the PLACE and SCALE in one sentence — type of place, rough population, distance from a city; (2) what people do for fun and where they gather, and who {{user}} knows there; (3) one or two live pressures. Social life leads; money comes after. A player must understand it on one read: at most three named people in the whole description and no economic essay. Roughly 220-350 words. No formula paragraph: show how the place meets {{user}} instead of declaring "the world does not care".
+- description: setting overview, tone, and the narrator's role. Three short paragraphs: (1) the PLACE and SCALE in one sentence — type of place, rough population, distance from a city; (2) what people do for fun and where they gather, at least one thing genuinely good about the place, and who {{user}} knows there; (3) one or two live pressures. Social life leads; money comes after. A player must understand it on one read: at most three named people in the whole description and no economic essay. Roughly 220-350 words. No formula paragraph: show how the place meets {{user}} instead of declaring "the world does not care".
 - scenario: where {{user}}'s story starts: a live moment, not necessarily a problem. It can be an invitation, a ritual, an arrival, a task or a party starting. Something is unresolved, but it does not need to be urgent yet.
 - first_mes: an immersive opening scene addressed to {{user}} in second person, roughly 180-300 words. Start in motion: at most two sentences of setting before someone moves or speaks. Never act or speak for {{user}}. End on a concrete beat (an NPC speaking or acting, or something happening) that {{user}} can react to — friendly, curious, awkward or tense. Not every opening needs trouble. Never end with a question to the player such as "What do you do?", "What's your next move?" or "Where do you go from here?".
 - alternate_greetings: 1-2 alternative opening scenes, one per array element. Use different places or moments in {{user}}'s life and the same rules as first_mes. If you return them in one string, separate the scenes with a line containing only ---.

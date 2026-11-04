@@ -140,7 +140,7 @@ An act pool that says "two boyfriends" must not land on a Lesbian card or a male
 - Do we need a "Chaos" axis later, or does Warmth cover enough?
 - Should THEME entries stay long enough to carry props, or be short labels with a prompt-side palette
   table? Long entries cost context but survive hand edits.
-- World registers (NSFW, NSFL, real consequences) are explicit checkboxes stored on the draft and sent as a WORLD RULES line; consequence realism is spelled out in the world prompt, alongside tone (mixed, not bleak), creative-liberty rules and theme-filtered places and scales. NPC entries are self-contained because titles are labels only; NPC body/genitals/kinks are conditional on the NSFW register, world descriptions are capped at three short paragraphs and greetings are split per array entry.
+- World registers (NSFW, NSFL, real consequences) are explicit checkboxes stored on the draft and sent as a WORLD RULES line; consequence realism is spelled out in the world prompt, alongside tone (mixed, not bleak), creative-liberty rules and theme-filtered places and scales. NPC entries are self-contained because titles are labels only; NPC body/genitals/kinks are conditional on the NSFW register, every world must contain a pleasure, world descriptions are capped at three short paragraphs and greetings are split per array entry.
 - World PLACE entries are kind-tagged and narrowed by the rolled theme; notes that name a year or technology outrank TEXTURE.
 - Does a theme pick belong on every card, or only worlds and characters? Personas currently use the
   VIBE/WARMTH axes instead and get setting from SETTING.

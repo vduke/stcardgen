@@ -55,7 +55,13 @@ export const WORLD_THEMES = [
     { label: 'Weird fiction', text: 'Weird fiction: a town with one unexplained rule, a survey office, locals who correct outsiders, a season that repeats.' },
     { label: 'Industrial river city', text: 'Industrial river city: foundries, bridges, shift whistles, a river that carries what is dumped in it.' },
     { label: 'Academic town', text: 'Academic town: a college, a library with restricted floors, term rhythms, a reputation to keep.' },
-    { label: 'Suburban night', text: 'Suburban night: cul-de-sacs and a strip-mall lot twenty minutes from a city, a big high school with a packed lot, a house with the parents away, a late diner, a rumour mill faster than the school\'s.' },
+    { label: 'Suburban night', text: 'Suburban night: cul-de-sacs and a strip-mall lot twenty minutes from a city, a big high school, a pool with a diving board, a late diner, a bonfire that runs past curfew.' },
+    { label: "Endless summer", text: "Endless summer: lake days, a boardwalk, ice cream before dinner, fireworks over water, and a curfew everyone ignores." },
+    { label: "Pool-and-cookout suburb", text: "Pool-and-cookout suburb: a community pool, block parties, sprinklers, fireflies, and a grill going every evening." },
+    { label: "Festival week", text: "Festival week: fairgrounds, food trucks, a Ferris wheel, bunting across the street, and a committee that has lost control of the schedule." },
+    { label: "Party town", text: "Party town: house parties, a main street of bars and arcades, a rented hall, and somebody's speakers always in the boot." },
+    { label: "Holiday resort", text: "Holiday resort: a ski hill, a rented lodge, karaoke, hot tubs, and staff housing behind the hotel." },
+    { label: "Main-street revival", text: "Main-street revival: a new bakery, a mural going up, a farmers market, and locals arguing about parking with real affection." },
 ];
 
 /** Theme pickers for the character and world screens; the value sent as a steer is the entry text. */
@@ -165,6 +171,12 @@ export const THEME_SCALES = {
     'Industrial river city': [2, 4],
     'Academic town': [2, 3],
     'Suburban night': [3],
+    'Endless summer': [2, 3],
+    'Pool-and-cookout suburb': [3],
+    'Festival week': [2, 3],
+    'Party town': [3, 4],
+    'Holiday resort': [2, 3],
+    'Main-street revival': [2, 3],
 };
 
 /** Which place kinds each world theme tolerates; a mismatch is moved rather than forced. */
@@ -233,12 +245,34 @@ export const THEME_PLACE_KINDS = {
         "smallcity",
         "suburban"
     ],
-    "Suburban night": [
-        "suburban",
-        "lake",
-        "smallcity",
-        "urban"
-    ]
+        "Suburban night": [
+            "suburban"
+        ],
+        "Endless summer": [
+            "lake",
+            "coastal",
+            "suburban"
+        ],
+        "Pool-and-cookout suburb": [
+            "suburban"
+        ],
+        "Festival week": [
+            "smallcity",
+            "rural",
+            "suburban"
+        ],
+        "Party town": [
+            "urban",
+            "smallcity"
+        ],
+        "Holiday resort": [
+            "mountain",
+            "lake"
+        ],
+        "Main-street revival": [
+            "smallcity",
+            "suburban"
+        ]
 };
 
 export const PRE_ROLL_CHANNELS = [
@@ -772,6 +806,14 @@ export const WORLD_CHANNELS = [
             'The old manager died in spring and nobody was ever officially put in charge.',
             'The highway will bypass the town in two years and everyone talks about nothing else.',
             'The only pharmacy is closing on Fridays from next month.',
+            'The summer fair is in nine days and the committee is two people short.',
+            'A local band got the Friday slot at the hall and the whole town is invited.',
+            "Someone's parents are away for the weekend and the group chat knows.",
+            'A heatwave, and the lake is the only plan anyone has.',
+            'The football team made the playoffs for the first time in eleven years.',
+            'A new arcade opens next week and the argument is only about parking.',
+            'The school dance is Saturday and the seating chart is already drama.',
+            'A community pool reopens after two summers shut and everyone turns up at once.',
         ],
     },
     {
@@ -853,6 +895,10 @@ export const WORLD_CHANNELS = [
             'A text that says come over, with no explanation and no time.',
             'The last hour of a shift, and the person closing up with her.',
             'A town event being set up badly, and somebody asking for a second pair of hands.',
+            'A text with an address and no explanation, and the good speakers already in the car.',
+            'The first hour of a pool party and the shallow end is still quiet.',
+            'A fairground at dusk, the lights just coming on, and a wristband to burn.',
+            'A losing game on the TV and five people who care too much about it.',
         ],
     },
 ];
