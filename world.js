@@ -16,12 +16,12 @@ export const WORLD_FORMAT_LINE_MIGRATIONS = [
 
 // Shipped-prompt identity: a saved world prompt that still opens with this line and lacks the stamp is
 // the shipped text, and gets replaced when the shape changes. Anything rewritten from line one is kept.
-export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.20.1)';
+export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.21.0)';
 export const WORLD_PROMPT_HEADER = 'You are a world-builder for SillyTavern roleplay.';
 
 export const DEFAULT_WORLD_PROMPT = `You are a world-builder for SillyTavern roleplay. You turn a user persona into a living sandbox: a world/narrator character card plus a lorebook (World Info) that makes the setting feel real and reactive.
 
-### THE WORLD HAS ITS OWN LIFE (0.20.1)
+### THE WORLD HAS ITS OWN LIFE (0.21.0)
 The persona is the character the USER plays. Refer to them as {{user}} everywhere. The sandbox card ({{char}}) is not one person: it is the narrator / game master who describes the world and voices every NPC.
 
 ### THE WORLD IS NOT BUILT AROUND THE PERSONA
@@ -127,11 +127,12 @@ The block exists so a batch of worlds from the same persona cannot converge on t
 
 ### SANDWICH CARD
 - name: the world's name, not a person's.
-- description: setting overview, tone, and the narrator's role (voices all NPCs, describes the world, keeps continuity, lets {{user}} drive). Open with the PLACE and SCALE in one sentence — type of place and rough population — then what people do for fun and where they gather. Money and pressure come after the social life, not before it. Pressures sit underneath; do not stack hardship. Roughly 300-600 words. No formula paragraph: show how the place meets {{user}} instead of declaring "the world does not care", and end on live pressure rather than a summary.
+- description: setting overview, tone, and the narrator's role. Three short paragraphs: (1) the PLACE and SCALE in one sentence — type of place, rough population, distance from a city; (2) what people do for fun and where they gather, and who {{user}} knows there; (3) one or two live pressures. Social life leads; money comes after. A player must understand it on one read: at most three named people in the whole description and no economic essay. Roughly 220-350 words. No formula paragraph: show how the place meets {{user}} instead of declaring "the world does not care".
 - scenario: where {{user}}'s story starts: a live moment, not necessarily a problem. It can be an invitation, a ritual, an arrival, a task or a party starting. Something is unresolved, but it does not need to be urgent yet.
 - first_mes: an immersive opening scene addressed to {{user}} in second person, roughly 180-300 words. Start in motion: at most two sentences of setting before someone moves or speaks. Never act or speak for {{user}}. End on a concrete beat (an NPC speaking or acting, or something happening) that {{user}} can react to — friendly, curious, awkward or tense. Not every opening needs trouble. Never end with a question to the player such as "What do you do?", "What's your next move?" or "Where do you go from here?".
-- alternate_greetings: 1-2 alternative opening scenes set at different places or moments in {{user}}'s life, following the same rules as first_mes.
+- alternate_greetings: 1-2 alternative opening scenes, one per array element. Use different places or moments in {{user}}'s life and the same rules as first_mes. If you return them in one string, separate the scenes with a line containing only ---.
 - mes_example: 2-3 short example exchanges, each starting with <START> and using {{user}}: and {{char}}: prefixes, where {{char}} narrates and voices different NPCs so their distinct speech styles show.
+- creator_notes: two or three sentences for the human reader, about what the world is for and how to play against it. Do not recap the persona or list her skills — her card already carries them.
 - tags: 3-8 genre/setting tags.
 
 ### LOREBOOK ENTRIES
@@ -247,6 +248,14 @@ export function normalizeEntry(e = {}) {
     };
 }
 
+/** Models sometimes return both greetings in one string separated by ---; make them separate entries. */
+function splitGreetings(value) {
+    return api.toStringList(value)
+        .flatMap(item => String(item).split(/\n\s*---+[ \t]*\n/))
+        .map(item => item.trim())
+        .filter(Boolean);
+}
+
 export function normalizeWorld(obj = {}) {
     const str = v => api.asText(v).trim();
     return {
@@ -254,7 +263,7 @@ export function normalizeWorld(obj = {}) {
         description: str(obj.description),
         scenario: str(obj.scenario),
         first_mes: str(obj.first_mes ?? obj.first_message),
-        alternate_greetings: api.toStringList(obj.alternate_greetings),
+        alternate_greetings: splitGreetings(obj.alternate_greetings),
         mes_example: str(obj.mes_example ?? obj.example_messages),
         creator_notes: str(obj.creator_notes),
         tags: keyList(obj.tags),

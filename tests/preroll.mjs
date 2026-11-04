@@ -290,7 +290,7 @@ test('scale follows the theme and is written into the description', () => {
         assert.match(rolled, /metro suburb/, 'Suburban night got ' + rolled);
     }
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
-    assert.ok(world.includes('Open with the PLACE and SCALE'), 'description does not lead with scale');
+    assert.ok(world.includes('the PLACE and SCALE in one sentence'), 'description does not lead with scale');
 });
 
 test('texture includes modern technology', () => {
@@ -316,6 +316,16 @@ test('the world prompt stays mixed and leaves creative room', () => {
     assert.ok(world.includes('Use at most one explicit nod to the persona'), 'persona-trait limit missing');
     assert.ok(!world.includes('Include one line on what the world does not care about'), 'old formula line still demanded');
     assert.ok(WORLD_THEMES.find(theme => theme.label === 'Suburban night').text.includes('twenty minutes from a city'), 'suburban theme should describe a city suburb');
+});
+
+test('greetings split on --- and descriptions stay legible', () => {
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    assert.ok(world.includes('one per array element'), 'array-per-greeting rule missing');
+    assert.ok(world.includes('line containing only ---'), 'fallback separator instruction missing');
+    assert.ok(world.includes('at most three named people'), 'name budget missing');
+    assert.ok(world.includes('Do not recap the persona'), 'creator notes rule missing');
+    assert.match(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), /function splitGreetings/);
+    assert.match(fs.readFileSync(path.join(root, 'index.js'), 'utf8'), /function splitGreetings/);
 });
 
 test('NPC entries must be self-contained', () => {

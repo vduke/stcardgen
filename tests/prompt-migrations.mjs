@@ -354,6 +354,11 @@ test('world content and consequence flags are wired', () => {
     assert.match(worldSrc, /draft\.worldFlags = \{ \.\.\.state\.worldFlags \}/);
 });
 
+test('persona complexion carries no scent', () => {
+    assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('No scent in Appearance'));
+    assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('No scent, no tan lines'));
+});
+
 test('the persona title carries the age', () => {
     assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('[Age] - a short tagline'));
     assert.ok(defaults.PERSONA_FORMAT_LINE_MIGRATIONS.includes('[Age] - a short tagline'));
