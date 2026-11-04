@@ -328,6 +328,16 @@ test('greetings split on --- and descriptions stay legible', () => {
     assert.match(fs.readFileSync(path.join(root, 'index.js'), 'utf8'), /function splitGreetings/);
 });
 
+test('NPC entries carry body and appetite when NSFW is on', () => {
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    assert.ok(world.includes('When WORLD RULES says NSFW on'), 'NSFW has no effect on NPC entries');
+    assert.ok(world.includes('"Body:"'), 'Body line missing');
+    assert.ok(world.includes('"Genitals:"'), 'Genitals line missing');
+    assert.ok(world.includes('"Sexuality:"'), 'Sexuality line missing');
+    assert.ok(world.includes('"Kinks:"'), 'Kinks line missing');
+    assert.ok(world.includes('150-240 words when NSFW is on'), 'length allowance missing');
+});
+
 test('NPC entries must be self-contained', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     assert.ok(world.includes('The title is a label only and is not sent to the model'), 'title dependency not stated');
