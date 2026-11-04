@@ -302,6 +302,12 @@ test('season follows the theme too', () => {
     }
 });
 
+test('memorable NPC features are varied', () => {
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    assert.ok(world.includes('vary what it is'), 'feature variety rule missing');
+    assert.ok(world.includes('Do not give every NPC a scar or a chipped tooth'), 'anti-common quirk rule missing');
+});
+
 test('world pressures reach the user and people look like people', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     assert.ok(world.includes('Some of it reaches {{user}} through friends, family, school'), 'personal stakes missing');
