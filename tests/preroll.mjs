@@ -302,6 +302,17 @@ test('season follows the theme too', () => {
     }
 });
 
+test('world pressures reach the user and people look like people', () => {
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    assert.ok(world.includes('Some of it reaches {{user}} through friends, family, school'), 'personal stakes missing');
+    assert.ok(world.includes('do not write that none of the pressures concern her'), 'anti-indifference guard missing');
+    assert.ok(world.includes('warm, funny or easy beat'), 'warm opening beat missing');
+    assert.ok(world.includes('attractive in their own way'), 'NPC attractiveness rule missing');
+    const kinds = THEME_PLACE_KINDS['Party town'];
+    assert.ok(kinds.includes('nightlife'), 'Party town cannot draw a nightlife place');
+    assert.ok(WORLD_CHANNELS.find(c => c.key === 'PLACE').entries.some(e => /party strip|bowling alley/.test(e)), 'no playful places');
+});
+
 test('texture includes modern technology', () => {
     const texture = WORLD_CHANNELS.find(c => c.key === 'TEXTURE').entries.join(' ');
     assert.ok(/phone|group chat/i.test(texture), 'no modern phone texture');

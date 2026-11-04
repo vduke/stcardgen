@@ -14,6 +14,9 @@ const CONSISTENCY_LINE = '- consistency: fields agree with each other and respec
 const CONSISTENCY_BODY_RULES = ' For personas and characters: if the species is not human, Appearance must name the non-human anatomy the image shows (ears, tail, fur, scales, claws, horns) — a catgirl with no ears or tail on the sheet is a human in a costume. Height, weight, shoe size and the Body line must describe one body at the stated age: 3\'8" with 62 lbs and a narrow waist is three different girls. Appearance is anatomy plus the garments the Fashion Style lists, never a habit: a heavy coat she "always wears" that the outfit line does not name contradicts it.';
 const NUANCE_LINE = '- nuance (personas and characters): two true things held at once and left unresolved, a taste or habit that costs something, negative space where the narrator does not explain. Score low for a trait list wearing costumes, for contradictions that look random, and for every reaction explained.';
 const THEME_LINE = '- theme (characters and worlds): if a pre-rolled theme was supplied, it must show in props, light, money, weather, work or power rather than being named. A theme that could be swapped for another without changing the card is an issue.';
+const LOOKS_LINE = '- looks: people are described as people, not a police report. Hair has a cut, clothes show personality, and friends and love interests read as attractive in their own way. One memorable feature, not a checklist of flaws.';
+const TONE_LINE = '- tone (worlds): alive and mixed, not grey. There are places to enjoy and at least one warm relationship, and hardship is not stacked. Score low for uniform indifference or a world with nothing fun in it.';
+const STAKE_LINE = '- personal stake (worlds): some pressure reaches {{user}} through family, friends, school, money or a rival, while most of the world goes on without her. Both "none of this concerns her" and "everything revolves around her" are failures.';
 const RULES_LINE = '- rules: correct {{char}}/{{user}} macros, never acts or speaks for {{user}}, opening messages end on an in-world beat (never "What do you do?"), example messages use <START> and name prefixes, no Main Prompt content.';
 
 // [old, new] pairs applied to saved rubrics; a line the user edited no longer matches and is left alone.
@@ -43,7 +46,7 @@ const REVIEW_LINE_MIGRATIONS = [
     // Contradiction and discomfort are content, not padding, and older rubrics lack these criteria.
     [
         '- efficiency: no filler, repetition or padding, and no lazy, thin fields either. Length fits the content.\nFor worlds, also score:',
-        '- efficiency: no filler, repetition or padding, and no lazy, thin fields either. Length fits the content. Do not flag internal contradiction or an uncomfortable detail as padding: those are the point.\n- edge (personas): the character has a real gap between what they believe and what is true, shown through behavior, not announced. A sweet, passive or obedient character is not a flaw. A card with no friction at all is. Score low for a character who is only a trait list, or whose "edge" is attitude rather than contradiction.\n- restraint (personas): the narrator does not explain the character, summarize them, or prove their depth in every sentence. Gaze and stillness are not substitutes for character.\n- world independence (worlds): the world is not built to flatter or feed {{user}}. People, places and factions have their own goals and pressures that would exist if {{user}} had never been born.\nFor worlds, also score:',
+        '- efficiency: no filler, repetition or padding, and no lazy, thin fields either. Length fits the content. Do not flag internal contradiction or an uncomfortable detail as padding: those are the point.\n- edge (personas): the character has a real gap between what they believe and what is true, shown through behavior, not announced. A sweet, passive or obedient character is not a flaw. A card with no friction at all is. Score low for a character who is only a trait list, or whose "edge" is attitude rather than contradiction.\n- restraint (personas): the narrator does not explain the character, summarize them, or prove their depth in every sentence. Gaze and stillness are not substitutes for character.\n- world independence (worlds): the world is not built to flatter or feed {{user}}. People, places and factions have their own goals and pressures that would exist if {{user}} had never been born; the world is not indifferent to her either, and some of it should concern her.\nFor worlds, also score:',
     ],
     // 0.14.0 adds theme. Two variants: pre-voiced rubrics, and rubrics already carrying voiced/npc lines.
     [
@@ -53,6 +56,10 @@ const REVIEW_LINE_MIGRATIONS = [
     [
         '- world independence (worlds): the world is not built to flatter or feed {{user}}. People, places and factions have their own goals and pressures that would exist if {{user}} had never been born.\n- voiced (characters): the card states how they talk (register, habits, what changes under anger, fear or lying) and gives lines only they would say; it states a want that has nothing to do with {{user}}, what they refuse and the words they refuse in, and a starting stance toward {{user}}. Score low for a character whose depth is adjectives plus a secret.\n- npc ignorance (worlds): NPCs know only what they could have seen, been told or guessed. Kinks and private appetites stay private; nobody greets {{user}} by their psychology. The narrator never speaks for {{user}}. Entries leave room for {{user}} to reveal themselves. Score low for a world that hands {{user}}\'s traits back to them.\nFor worlds, also score:',
         '- world independence (worlds): the world is not built to flatter or feed {{user}}. People, places and factions have their own goals and pressures that would exist if {{user}} had never been born.\n' + THEME_LINE + '\n- voiced (characters): the card states how they talk (register, habits, what changes under anger, fear or lying) and gives lines only they would say; it states a want that has nothing to do with {{user}}, what they refuse and the words they refuse in, and a starting stance toward {{user}}. Score low for a character whose depth is adjectives plus a secret.\n- npc ignorance (worlds): NPCs know only what they could have seen, been told or guessed. Kinks and private appetites stay private; nobody greets {{user}} by their psychology. The narrator never speaks for {{user}}. Entries leave room for {{user}} to reveal themselves. Score low for a world that hands {{user}}\'s traits back to them.\nFor worlds, also score:',
+    ],
+    [
+        "- coverage: the world covers what this persona's life needs (home, work or school, people, places, factions, hooks) without overlapping entries.\n\nList concrete issues",
+        "- coverage: the world covers what this persona's life needs (home, work or school, people, places, factions, hooks) without overlapping entries.\n" + LOOKS_LINE + '\n' + TONE_LINE + '\n' + STAKE_LINE + '\n\nList concrete issues',
     ],
 ];
 
@@ -95,6 +102,9 @@ ${RULES_LINE}
 For worlds, also score:
 - keywords: lorebook keys are specific trigger words (names, places, distinctive terms), not generic words that would fire constantly; secondary keys are used where disambiguation helps.
 - coverage: the world covers what this persona's life needs (home, work or school, people, places, factions, hooks) without overlapping entries.
+${LOOKS_LINE}
+${TONE_LINE}
+${STAKE_LINE}
 
 List concrete issues, most important first. Tie each one to a single field (or lorebook entry index) and give a specific fix. Always list at least the 3 most impactful improvements, even for a good card; skip pure nitpicks; list at most 8.`);
 
@@ -141,8 +151,8 @@ function steerBlock(steer) {
     return steer?.trim() ? `The user's instructions (follow them; they take priority over the issues list, but not over the card rules):\n${steer.trim()}` : '';
 }
 
-const CRITERIA = ['specificity', 'consistency', 'playability', 'rules', 'efficiency'];
-const WORLD_CRITERIA = [...CRITERIA, 'keywords', 'coverage'];
+const CRITERIA = ['specificity', 'consistency', 'playability', 'rules', 'efficiency', 'looks'];
+const WORLD_CRITERIA = [...CRITERIA, 'keywords', 'coverage', 'tone', 'personal_stake'];
 
 const REVIEW_FORMAT = `Respond ONLY with one JSON object and nothing else:
 {

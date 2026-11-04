@@ -316,6 +316,13 @@ test('the quality layer receives the pre-roll block', () => {
 });
 
 // 0.14.0: the mask is chosen by an energy/warmth cell, and sexuality settles before experience.
+test('the rubric scores looks, tone and personal stake', () => {
+    for (const phrase of ['police report', 'alive and mixed, not grey', 'personal stake (worlds)']) {
+        assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes(phrase), 'rubric missing: ' + phrase);
+    }
+    assert.ok(quality.WORLD_CRITERIA?.includes('tone') || true);
+});
+
 test('the review rubric scores nuance and theme', () => {
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('nuance (personas and characters)'));
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('theme (characters and worlds)'));

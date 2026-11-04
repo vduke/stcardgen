@@ -59,7 +59,7 @@ export const WORLD_THEMES = [
     { label: "Endless summer", text: "Endless summer: lake days, a boardwalk, ice cream before dinner, fireworks over water, and a curfew everyone ignores." },
     { label: "Pool-and-cookout suburb", text: "Pool-and-cookout suburb: a community pool, block parties, sprinklers, fireflies, and a grill going every evening." },
     { label: "Festival week", text: "Festival week: fairgrounds, food trucks, a Ferris wheel, bunting across the street, and a committee that has lost control of the schedule." },
-    { label: "Party town", text: "Party town: house parties, a main street of bars and arcades, a rented hall, and somebody's speakers always in the boot." },
+    { label: "Party town", text: "Party town: house parties, a strip of bars and arcades, a rented hall, flyers nobody throws away, and a Friday crowd that starts early." },
     { label: "Holiday resort", text: "Holiday resort: a ski hill, a rented lodge, karaoke, hot tubs, and staff housing behind the hotel." },
     { label: "Main-street revival", text: "Main-street revival: a new bakery, a mural going up, a farmers market, and locals arguing about parking with real affection." },
 ];
@@ -235,8 +235,9 @@ export const THEME_SEASONS = {
         8
     ],
     "Party town": [
+        0,
         3,
-        6
+        8
     ],
     "Holiday resort": [
         2,
@@ -359,7 +360,7 @@ export const THEME_PLACE_KINDS = {
         ],
         "Party town": [
             "urban",
-            "smallcity"
+            "nightlife"
         ],
         "Holiday resort": [
             "mountain",
@@ -854,7 +855,11 @@ export const WORLD_CHANNELS = [
             "A gated subdivision beside a six-lane road, with a business park where an orchard used to be.": "suburban",
             "A suburb of shrunken lawns and new driveways, with a chain coffee place where the video shop was.": "suburban",
             "A small city of ninety thousand with a downtown strip, a community college and a party district.": "smallcity",
-            "A city neighbourhood where the high school lets out onto six lanes and a bus shelter.": "urban"
+            "A city neighbourhood where the high school lets out onto six lanes and a bus shelter.": "urban",
+            "A small city with a party strip: two bars, an arcade, a kebab van and a rented hall on Saturdays.": "nightlife",
+            "A downtown strip with a music venue, three bars and a twenty-four-hour diner.": "urbanlively",
+            "A city neighbourhood where the high school lets out onto six lanes and a bus shelter.": "urbanlively",
+            "A suburb with a retail park, a bowling alley, a cinema and a drive-thru that stays open late.": "nightlife"
         },
         entries: [
             'A harbour town where the fishing quota was cut this spring.',
@@ -884,6 +889,9 @@ export const WORLD_CHANNELS = [
             'A suburb of shrunken lawns and new driveways, with a chain coffee place where the video shop was.',
             'A small city of ninety thousand with a downtown strip, a community college and a party district.',
             'A city neighbourhood where the high school lets out onto six lanes and a bus shelter.',
+            'A small city with a party strip: two bars, an arcade, a kebab van and a rented hall on Saturdays.',
+            'A downtown strip with a music venue, three bars and a twenty-four-hour diner.',
+            'A suburb with a retail park, a bowling alley, a cinema and a drive-thru that stays open late.',
         ],
     },
     {
