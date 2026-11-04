@@ -55,7 +55,7 @@ export const WORLD_THEMES = [
     { label: 'Weird fiction', text: 'Weird fiction: a town with one unexplained rule, a survey office, locals who correct outsiders, a season that repeats.' },
     { label: 'Industrial river city', text: 'Industrial river city: foundries, bridges, shift whistles, a river that carries what is dumped in it.' },
     { label: 'Academic town', text: 'Academic town: a college, a library with restricted floors, term rhythms, a reputation to keep.' },
-    { label: 'Suburban night', text: 'Suburban night: cul-de-sacs and a strip-mall lot, a house with the parents away, one diner that stays open, a lake road with no lights, a rumour mill faster than the school\'s — a suburb, a lake town or the edge of a campus.' },
+    { label: 'Suburban night', text: 'Suburban night: cul-de-sacs and a strip-mall lot, a house with the parents away, a late diner, a dark lake road, a rumour mill faster than the school\'s — a modern suburb or small city with a big high school.' },
 ];
 
 /** Theme pickers for the character and world screens; the value sent as a steer is the entry text. */
@@ -144,6 +144,27 @@ export const PERSONA_STEER_OPTIONS = {
         { value: 'experienced', label: 'Experienced' },
         { value: 'hedonist', label: 'Hedonist' },
     ],
+};
+
+/** Population bands each theme tolerates. */
+export const THEME_SCALES = {
+    'Cozy but fraying': [1, 2],
+    'Neon noir': [4, 5],
+    'Dystopian austerity': [3, 5],
+    'Pastoral gothic': [0, 1],
+    'Solarpunk': [2, 3],
+    'Post-collapse': [0, 1],
+    'Corporate arcology': [5],
+    'Mythic': [0, 1, 2],
+    'Liminal': [2, 3, 4],
+    'Coastal working town': [1, 2],
+    'Frontier': [0, 1],
+    'Underground': [4, 5],
+    'Orbital': [4, 5],
+    'Weird fiction': [0, 1, 2],
+    'Industrial river city': [2, 4],
+    'Academic town': [2, 3],
+    'Suburban night': [2, 3],
 };
 
 /** Which place kinds each world theme tolerates; a mismatch is moved rather than forced. */
@@ -661,6 +682,18 @@ export const WORLD_CHANNELS = [
         entries: WORLD_THEMES.map(theme => theme.text),
     },
     {
+        key: 'SCALE',
+        label: 'SCALE',
+        // Population band. The theme narrows it; the notes outrank both.
+        entries: [
+            'A village under a thousand people.',
+            'A town of a few thousand.',
+            'A small city of sixty thousand.',
+            'A metro suburb of forty-five thousand with a big high school.',
+            'A city neighbourhood in a metro of half a million.',
+        ],
+    },
+    {
         key: 'PLACE',
         label: 'PLACE',
         // Kind lets the theme narrow the place pool; the notes still outrank both.
@@ -686,7 +719,10 @@ export const WORLD_CHANNELS = [
             "A coastal tourist town in high season: boardwalk, seasonal staff, locals priced out.": "coastal",
             "A city neighbourhood with a high school, a corner shop and a transit stop.": "urban",
             "A mountain resort town with two schools on one campus and staff housing behind the hotel.": "mountain",
-            "A rural county seat with a courthouse square and a Walmart twenty minutes out.": "rural"
+            "A rural county seat with a courthouse square and a Walmart twenty minutes out.": "rural",
+            "A metro suburb of forty-five thousand with three high schools, a mall and a commuter lot.": "suburban",
+            "A small city of ninety thousand with a downtown strip, a community college and a party district.": "smallcity",
+            "A city neighbourhood where the high school lets out onto six lanes and a bus shelter.": "urban"
         },
         entries: [
             'A harbour town where the fishing quota was cut this spring.',
@@ -711,6 +747,9 @@ export const WORLD_CHANNELS = [
             'A city neighbourhood with a high school, a corner shop and a transit stop.',
             'A mountain resort town with two schools on one campus and staff housing behind the hotel.',
             'A rural county seat with a courthouse square and a Walmart twenty minutes out.',
+            'A metro suburb of forty-five thousand with three high schools, a mall and a commuter lot.',
+            'A small city of ninety thousand with a downtown strip, a community college and a party district.',
+            'A city neighbourhood where the high school lets out onto six lanes and a bus shelter.',
         ],
     },
     {
@@ -931,8 +970,15 @@ export function rollPreRoll({ seed = Date.now(), avoid = {}, type = 'persona', s
                 continue;
             }
         }
-        if (channel.key === 'PLACE' && channel.kinds && THEME_PLACE_KINDS[values.THEME]) {
-            const allowed = THEME_PLACE_KINDS[values.THEME];
+        const themeLabel = WORLD_THEMES.find(theme => theme.text === values.THEME)?.label;
+        if (channel.key === 'SCALE' && THEME_SCALES[themeLabel]) {
+            const allowed = THEME_SCALES[themeLabel];
+            const fitting = channel.entries.filter((entry, index) => allowed.includes(index));
+            values[channel.key] = pick(fitting.length ? fitting : channel.entries);
+            continue;
+        }
+        if (channel.key === 'PLACE' && channel.kinds && THEME_PLACE_KINDS[themeLabel]) {
+            const allowed = THEME_PLACE_KINDS[themeLabel];
             const fitting = channel.entries.filter(entry => allowed.includes(channel.kinds[entry]));
             if (fitting.length) values[channel.key] = pick(fitting);
             else values[channel.key] = pick(channel.entries);

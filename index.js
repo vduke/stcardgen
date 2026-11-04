@@ -1511,7 +1511,7 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
                     <div class="menu_button stcg-clear-img"><i class="fa-solid fa-xmark"></i> Remove</div>
                 </div>
                 ${VISION_DESCRIPTION_HTML}
-                ${state.type === 'character' ? `<label>Theme (used when the pre-roll is drawn)<select class="text_pole stcg-theme">${THEME_OPTIONS.character.map(o => `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`).join('')}</select></label>` : ''}
+                ${state.type === 'character' ? `<label>Theme (used when the pre-roll is drawn)<select class="text_pole stcg-theme"><option value="">Any (rolled)</option>${THEME_OPTIONS.character.map(o => `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`).join('')}</select></label>` : ''}
                 ${state.type === 'persona' && !personaId ? steerRowHtml('stcg-steer') : ''}
                 ${state.type === 'character' && !personaId ? steerRowHtml('stcg-char-steer', ['SEXUALITY', 'SOURCE']) : ''}
                 ${state.type !== 'world' ? PRE_ROLL_HTML : ''}

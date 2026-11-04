@@ -8,7 +8,7 @@ import assert from 'node:assert';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PRE_ROLL_CHANNELS, CHARACTER_CHANNELS, WORLD_CHANNELS, WORLD_THEMES, THEME_PLACE_KINDS, channelsFor, rollPreRoll, formatPreRoll, parsePreRoll } from '../preroll.js';
+import { PRE_ROLL_CHANNELS, CHARACTER_CHANNELS, WORLD_CHANNELS, WORLD_THEMES, THEME_PLACE_KINDS, THEME_SCALES, channelsFor, rollPreRoll, formatPreRoll, parsePreRoll } from '../preroll.js';
 import { extractTemplate } from './extract.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -124,7 +124,7 @@ for (const [type, channels] of Object.entries(sets)) {
     test(`${type}: every channel carries at least ten distinct entries`, () => {
         assert.ok(channels.length >= 5, `${type} has only ${channels.length} channels`);
         for (const channel of channels) {
-            const min = channel.key === 'WARMTH' ? 3 : ['VIBE', 'SEXUALITY'].includes(channel.key) ? 5 : 10;
+            const min = channel.key === 'WARMTH' ? 3 : ['VIBE', 'SEXUALITY', 'SCALE'].includes(channel.key) ? 5 : 10;
             assert.ok(channel.entries.length >= min, `${type}/${channel.key} has ${channel.entries.length} entries`);
             assert.strictEqual(new Set(channel.entries).size, channel.entries.length, `${type}/${channel.key} repeats an entry`);
             for (const entry of channel.entries) {
@@ -280,6 +280,19 @@ test('places are tagged and follow the theme', () => {
         assert.notStrictEqual(place.kinds[rolled], 'island', 'Suburban night still lands on an island');
     }
 });
+test('scale follows the theme and is written into the description', () => {
+    const scale = WORLD_CHANNELS.find(c => c.key === 'SCALE');
+    assert.strictEqual(scale.entries.length, 5);
+    assert.strictEqual(Object.keys(THEME_SCALES).length, WORLD_THEMES.length, 'a theme has no allowed scales');
+    const suburban = WORLD_THEMES.find(theme => theme.label === 'Suburban night').text;
+    for (let seed = 1; seed <= 12; seed++) {
+        const rolled = rollPreRoll({ seed, type: 'world', steer: { THEME: suburban } }).values.SCALE;
+        assert.ok(/small city|suburb/.test(rolled), 'Suburban night got ' + rolled);
+    }
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    assert.ok(world.includes('Open with the PLACE and SCALE'), 'description does not lead with scale');
+});
+
 test('texture includes modern technology', () => {
     const texture = WORLD_CHANNELS.find(c => c.key === 'TEXTURE').entries.join(' ');
     assert.ok(/phone|group chat/i.test(texture), 'no modern phone texture');
@@ -302,7 +315,14 @@ test('the world prompt stays mixed and leaves creative room', () => {
     assert.ok(world.includes('Start in motion'), 'opening variation missing');
     assert.ok(world.includes('Use at most one explicit nod to the persona'), 'persona-trait limit missing');
     assert.ok(!world.includes('Include one line on what the world does not care about'), 'old formula line still demanded');
-    assert.ok(WORLD_THEMES.find(theme => theme.label === 'Suburban night').text.includes('lake town'), 'suburban theme should allow a lake town');
+    assert.ok(WORLD_THEMES.find(theme => theme.label === 'Suburban night').text.includes('lake'), 'suburban theme should allow a lake');
+});
+
+test('NPC entries must be self-contained', () => {
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    assert.ok(world.includes('The title is a label only and is not sent to the model'), 'title dependency not stated');
+    assert.ok(world.includes('Name: full name. Age: n.'), 'named NPC lines missing');
+    assert.ok(world.includes('Do not compress away the name, the age or the body'), 'NPC look requirement missing');
 });
 
 test('Suburban night exists and world consequences are spelled out', () => {

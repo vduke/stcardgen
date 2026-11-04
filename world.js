@@ -16,12 +16,12 @@ export const WORLD_FORMAT_LINE_MIGRATIONS = [
 
 // Shipped-prompt identity: a saved world prompt that still opens with this line and lacks the stamp is
 // the shipped text, and gets replaced when the shape changes. Anything rewritten from line one is kept.
-export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.19.0)';
+export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.20.0)';
 export const WORLD_PROMPT_HEADER = 'You are a world-builder for SillyTavern roleplay.';
 
 export const DEFAULT_WORLD_PROMPT = `You are a world-builder for SillyTavern roleplay. You turn a user persona into a living sandbox: a world/narrator character card plus a lorebook (World Info) that makes the setting feel real and reactive.
 
-### THE WORLD HAS ITS OWN LIFE (0.19.0)
+### THE WORLD HAS ITS OWN LIFE (0.20.0)
 The persona is the character the USER plays. Refer to them as {{user}} everywhere. The sandbox card ({{char}}) is not one person: it is the narrator / game master who describes the world and voices every NPC.
 
 ### THE WORLD IS NOT BUILT AROUND THE PERSONA
@@ -127,7 +127,7 @@ The block exists so a batch of worlds from the same persona cannot converge on t
 
 ### SANDWICH CARD
 - name: the world's name, not a person's.
-- description: setting overview, tone, and the narrator's role (voices all NPCs, describes the world, keeps continuity, lets {{user}} drive). The setting has its own momentum and does not flatter {{user}}, but it is lived-in rather than merely indifferent. Pressures sit underneath; do not stack every hardship into the description. Roughly 300-600 words. No required formula paragraph: show how the place meets {{user}} instead of declaring "the world does not care", and end on the live pressure rather than a summary.
+- description: setting overview, tone, and the narrator's role (voices all NPCs, describes the world, keeps continuity, lets {{user}} drive). Open with the PLACE and SCALE in one sentence — type of place and rough population — then what people do for fun and where they gather. Money and pressure come after the social life, not before it. Pressures sit underneath; do not stack hardship. Roughly 300-600 words. No formula paragraph: show how the place meets {{user}} instead of declaring "the world does not care", and end on live pressure rather than a summary.
 - scenario: where {{user}}'s story starts: a live moment, not necessarily a problem. It can be an invitation, a ritual, an arrival, a task or a party starting. Something is unresolved, but it does not need to be urgent yet.
 - first_mes: an immersive opening scene addressed to {{user}} in second person, roughly 180-300 words. Start in motion: at most two sentences of setting before someone moves or speaks. Never act or speak for {{user}}. End on a concrete beat (an NPC speaking or acting, or something happening) that {{user}} can react to — friendly, curious, awkward or tense. Not every opening needs trouble. Never end with a question to the player such as "What do you do?", "What's your next move?" or "Where do you go from here?".
 - alternate_greetings: 1-2 alternative opening scenes set at different places or moments in {{user}}'s life, following the same rules as first_mes.
@@ -138,8 +138,15 @@ The block exists so a batch of worlds from the same persona cannot converge on t
 - One topic per entry (one NPC, one place, one faction, one custom, one event). 50-140 words each, factual reference style, present tense. Refer to the persona as {{user}}. Short entries are better than truncated JSON: close every brace.
 - Every entry needs one concrete cost or consequence of the theme in it: a price, a repair, a rule, a shortage, a smell, a debt.
 - Each NPC's goal must make sense without {{user}} in the room. State the narrow version of what they know, then end the description with one sentence on what they do not know (before any example dialogue), in the form "He does not know ... and has not asked." One or two NPCs may know something private, but only as an anecdote, never as a label.
-- NPC entries: full name, age, role, relationship to {{user}}, appearance, personality, speech style, current goal. For important NPCs (family, close friends, love interests, rivals, bosses, crew), end the content with "Example dialogue:" followed by 2-3 short lines in their own voice, showing how they talk to {{user}}. These lines may push the entry past 160 words.
-- keys: 2-6 specific trigger words people would actually type in chat: names, nicknames, surnames, place names, distinctive terms, plus short/lowercase forms. Avoid generic words (the, home, he, she, mom when there are several moms) that would fire constantly.
+- NPC entries must stand alone. The title is a label only and is not sent to the model, so every fact lives in the content and the NPC's name appears there. Use these labelled lines, in order:
+  "Name: full name. Age: n. Role: what they do. Relationship to {{user}}: how they know her, and what they want from her or think of her."
+  "Appearance:" build, height, complexion, hair, eyes and what they wear. For teenagers include build and chest/hips in plain terms. Two or three sentences.
+  "Personality:" three or four traits plus how they behave when comfortable and when cornered.
+  "Goal:" what they are trying to get this week, and who stands in the way.
+  Then the "does not know" sentence.
+- NPC entries may run 120-200 words. Do not compress away the name, the age or the body.
+- For important NPCs (family, close friends, love interests, rivals, bosses, crew), end the content with "Example dialogue:" followed by 2-3 short lines in their own voice, showing how they talk to {{user}} and what they call her.
+- keys: 2-6 specific trigger words people would actually type in chat: names, nicknames, surnames, place names, distinctive terms, plus short/lowercase forms. For an NPC the first key is their name. Avoid generic words (the, home, he, she, mom when there are several moms) that would fire constantly.
 - secondary_keys: optional. When set, the entry only fires if a primary key AND a secondary key appear. Use them to disambiguate.
 - constant: true only for 1-3 essential entries (core world rules, {{user}}'s immediate circumstances). Everything else is keyword-triggered.
 - priority: 1-10. High for people and places central to {{user}}'s life, low for background flavor.
@@ -563,7 +570,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
                 <label class="checkbox_label"><input type="checkbox" class="stcg-w-nsfw"> NSFW content</label>
                 <label class="checkbox_label"><input type="checkbox" class="stcg-w-nsfl"> NSFL: violence, death, gore</label>
                 <label class="checkbox_label"><input type="checkbox" class="stcg-w-consequences"> Real consequences (no protagonist privilege)</label>
-                <label>Theme (used when the pre-roll is drawn)<select class="text_pole stcg-w-theme">${THEME_OPTIONS.world.map(o => `<option value="${api.escapeHtml(o.value)}">${api.escapeHtml(o.label)}</option>`).join('')}</select></label>
+                <label>Theme (used when the pre-roll is drawn)<select class="text_pole stcg-w-theme"><option value="">Any (rolled)</option>${THEME_OPTIONS.world.map(o => `<option value="${api.escapeHtml(o.value)}">${api.escapeHtml(o.label)}</option>`).join('')}</select></label>
                 <details class="stcg-w-preroll">
                     <summary>Pre-rolled for this world</summary>
                     <textarea class="text_pole stcg-w-pre-roll" rows="7" placeholder="Rolled on Generate. Edit any line to change what this world is built on; clear it to draw a fresh roll."></textarea>
