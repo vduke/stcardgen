@@ -310,6 +310,14 @@ test('NPC genitals have proportions and kinks are explained', () => {
     assert.ok(world.includes('Hands — likes hers held down'), 'worked kink example missing');
 });
 
+test('worlds get a premise, voice, cast and levers', () => {
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    for (const phrase of ['GIVE {{user}} A REASON TO BE HERE', 'A sandbox needs an entry point', 'SANDBOX LEVERS', 'a knowledge route', '\"Voice:\"', '\"Cast:\"', 'plain facts, not prose', '\"Quirks:\"']) {
+        assert.ok(world.includes(phrase), 'missing: ' + phrase);
+    }
+    assert.ok(world.includes('Competence and quiet company go under Quirks'), 'quirk/kink split missing');
+});
+
 test('memorable NPC features are varied', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     assert.ok(world.includes('vary what it is'), 'feature variety rule missing');
@@ -365,7 +373,7 @@ test('greetings split on --- and descriptions stay legible', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     assert.ok(world.includes('one per array element'), 'array-per-greeting rule missing');
     assert.ok(world.includes('line containing only ---'), 'fallback separator instruction missing');
-    assert.ok(world.includes('at most three named people'), 'name budget missing');
+    assert.ok(world.includes('three named people in the prose at most'), 'name budget missing');
     assert.ok(world.includes('Do not recap the persona'), 'creator notes rule missing');
     assert.match(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), /function splitGreetings/);
     assert.match(fs.readFileSync(path.join(root, 'index.js'), 'utf8'), /function splitGreetings/);
