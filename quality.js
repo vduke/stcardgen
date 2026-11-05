@@ -2,7 +2,7 @@
 // (fix issues, enhance, optimize) without rewriting what is already good.
 
 const LEGACY_REVIEW_CALIBRATION = 'Score it honestly; a 10 is rare.';
-const REVIEW_CALIBRATION = 'Score it honestly and be hard to impress. Calibration: a solid first draft usually scores 6-7; 8 is genuinely strong; 9+ means you looked hard and found nothing meaningful to improve. You are likely reviewing AI-generated text, so watch for its habits: stock names, generic adjectives ("mysterious", "enigmatic"), tidy summaries instead of specifics, and repeated phrasing.';
+const REVIEW_CALIBRATION = 'Score it honestly and be hard to impress. Calibration: a solid first draft usually scores 6-7; 8 is genuinely strong; 9+ means you looked hard and found nothing meaningful to improve. You are likely reviewing AI-generated text, so watch for its habits: stock names, generic adjectives ("mysterious", "enigmatic"), tidy summaries instead of specifics, and repeated phrasing. Do not reward restraint for its own sake: crude, specific and explicit beats tasteful and vague.';
 
 const PLAYABILITY_LINE = '- playability: gives the AI what it needs to roleplay well: motivations, speech style, relationships, conflicts and hooks. For worlds: NPCs have goals and distinct voices, places have things to do.';
 // 0.12.0: what a card states about its own body has to agree with itself. The reviewer was scoring
@@ -15,6 +15,7 @@ const CONSISTENCY_BODY_RULES = ' For personas and characters: if the species is 
 const NUANCE_LINE = '- nuance (personas and characters): two true things held at once and left unresolved, a taste or habit that costs something, negative space where the narrator does not explain. Score low for a trait list wearing costumes, for contradictions that look random, and for every reaction explained.';
 const THEME_LINE = '- theme (characters and worlds): if a pre-rolled theme was supplied, it must show in props, light, money, weather, work or power rather than being named. A theme that could be swapped for another without changing the card is an issue.';
 const LOOKS_LINE = '- looks: people are described as people, not a police report. Hair has a cut, clothes show personality, and friends and love interests read as attractive in their own way. One memorable feature, not a checklist of flaws.';
+const HEAT_LINE = '- heat (personas and characters): sexual fields are explicit where the card allows it. Name acts, kinks and bodies in crude words, not "member" or "core". Score low for euphemism, PG summaries, or sex reduced to adjectives. Explicit detail is not bloat.';
 const TONE_LINE = '- tone (worlds): alive and mixed, not grey. There are places to enjoy and at least one warm relationship, and hardship is not stacked. Score low for uniform indifference or a world with nothing fun in it.';
 const STAKE_LINE = '- personal stake (worlds): some pressure reaches {{user}} through family, friends, school, money or a rival, while most of the world goes on without her. Both "none of this concerns her" and "everything revolves around her" are failures.';
 const RULES_LINE = '- rules: correct {{char}}/{{user}} macros, never acts or speaks for {{user}}, opening messages end on an in-world beat (never "What do you do?"), example messages use <START> and name prefixes, no Main Prompt content.';
@@ -46,7 +47,7 @@ const REVIEW_LINE_MIGRATIONS = [
     // Contradiction and discomfort are content, not padding, and older rubrics lack these criteria.
     [
         '- efficiency: no filler, repetition or padding, and no lazy, thin fields either. Length fits the content.\nFor worlds, also score:',
-        '- efficiency: no filler, repetition or padding, and no lazy, thin fields either. Length fits the content. Do not flag internal contradiction or an uncomfortable detail as padding: those are the point.\n- edge (personas): the character has a real gap between what they believe and what is true, shown through behavior, not announced. A sweet, passive or obedient character is not a flaw. A card with no friction at all is. Score low for a character who is only a trait list, or whose "edge" is attitude rather than contradiction.\n- restraint (personas): the narrator does not explain the character, summarize them, or prove their depth in every sentence. Gaze and stillness are not substitutes for character.\n- world independence (worlds): the world is not built to flatter or feed {{user}}. People, places and factions have their own goals and pressures that would exist if {{user}} had never been born; the world is not indifferent to her either, and some of it should concern her.\nFor worlds, also score:',
+        '- efficiency: no filler, repetition or padding, and no lazy, thin fields either. Length fits the content. Do not flag internal contradiction, an uncomfortable detail or crude sexual detail as padding: those are the point.\n- edge (personas): the character has a real gap between what they believe and what is true, shown through behavior, not announced. A sweet, passive or obedient character is not a flaw. A card with no friction at all is. Score low for a character who is only a trait list, or whose "edge" is attitude rather than contradiction.\n- restraint (personas): the narrator does not explain the character, summarize them, or prove their depth in every sentence. Gaze and stillness are not substitutes for character.\n- world independence (worlds): the world is not built to flatter or feed {{user}}. People, places and factions have their own goals and pressures that would exist if {{user}} had never been born; the world is not indifferent to her either, and some of it should concern her.\nFor worlds, also score:',
     ],
     // 0.14.0 adds theme. Two variants: pre-voiced rubrics, and rubrics already carrying voiced/npc lines.
     [
@@ -61,6 +62,7 @@ const REVIEW_LINE_MIGRATIONS = [
         "- coverage: the world covers what this persona's life needs (home, work or school, people, places, factions, hooks) without overlapping entries.\n\nList concrete issues",
         "- coverage: the world covers what this persona's life needs (home, work or school, people, places, factions, hooks) without overlapping entries.\n" + LOOKS_LINE + '\n' + TONE_LINE + '\n' + STAKE_LINE + '\n\nList concrete issues',
     ],
+    [LOOKS_LINE + '\n' + TONE_LINE, LOOKS_LINE + '\n' + HEAT_LINE + '\n' + TONE_LINE],
 ];
 
 /**
@@ -88,7 +90,7 @@ export function migrateReviewPrompt(text) {
     return applyLineMigrations(text, REVIEW_LINE_MIGRATIONS);
 }
 
-export const DEFAULT_REVIEW_PROMPT = migrateReviewPrompt(`You are a strict editor reviewing a SillyTavern {{type}} before it is published. ${REVIEW_CALIBRATION} A good card is vivid and specific without bloat, and it is written for the player to inhabit.
+export const DEFAULT_REVIEW_PROMPT = migrateReviewPrompt(`You are a strict editor reviewing a SillyTavern {{type}} before it is published. ${REVIEW_CALIBRATION} A good card is vivid, specific and unafraid of crude detail; it is written for the player to inhabit, not for a tasteful excerpt.
 
 Score each criterion from 1 to 10:
 - specificity: concrete details (habits, history, sensory facts) instead of generic tropes, cliches or purple prose. Specificity means facts about THIS character, not decorative quirks added to seem original.
@@ -103,16 +105,17 @@ For worlds, also score:
 - keywords: lorebook keys are specific trigger words (names, places, distinctive terms), not generic words that would fire constantly; secondary keys are used where disambiguation helps.
 - coverage: the world covers what this persona's life needs (home, work or school, people, places, factions, hooks) without overlapping entries.
 ${LOOKS_LINE}
+${HEAT_LINE}
 ${TONE_LINE}
 ${STAKE_LINE}
 
 List concrete issues, most important first. Tie each one to a single field (or lorebook entry index) and give a specific fix. Always list at least the 3 most impactful improvements, even for a good card; skip pure nitpicks; list at most 8.`);
 
-export const DEFAULT_ENHANCE_PROMPT = `Enhance the {{type}}: add concrete, specific details that make it better to roleplay with (history, habits, relationships, sensory details, speech quirks, conflicts, story hooks). Stay consistent with everything already established. Grow the text by roughly 30-60%. No filler, no purple prose, no repetition. Every detail you add must be a fact about the character or the world, not an adjective about them. Do not soften, explain, summarize or tidy the character, and do not smooth over contradictions: deepen them if anything. Keep the voice.`;
+export const DEFAULT_ENHANCE_PROMPT = `Enhance the {{type}}: add concrete, specific details that make it better to roleplay with (history, habits, relationships, sensory details, speech quirks, conflicts, story hooks). Stay consistent with everything already established. Grow the text by roughly 30-60%. No filler, no purple prose, no repetition. Every detail you add must be a fact about the character or the world, not an adjective about them. Do not soften, explain, summarize or tidy the character, and do not smooth over contradictions: deepen them if anything. Do not clean up the language; add bodily and sexual specificity where it fits. Keep the voice.`;
 
-export const DEFAULT_OPTIMIZE_PROMPT = `Optimize the {{type}} for token efficiency: cut filler, repetition, purple prose and anything that does not change how the AI plays it. Keep every fact, name, relationship and behavior that matters, and keep the voice. Use tight prose (do not switch to W++ or bullet lists unless the text already uses them). Aim for roughly 30-50% fewer tokens.`;
+export const DEFAULT_OPTIMIZE_PROMPT = `Optimize the {{type}} for token efficiency: cut filler, repetition, purple prose and anything that does not change how the AI plays it. Keep every fact, name, relationship, crude word and sexual specific that matters, and keep the voice. Cut summary and repetition, not facts. Use tight prose (do not switch to W++ or bullet lists unless the text already uses them). Aim for roughly 30-50% fewer tokens.`;
 
-const FIX_INSTRUCTION = 'Revise the {{type}} to resolve the issues below. Change only what is needed to fix them; keep everything else exactly as it is.';
+const FIX_INSTRUCTION = 'Revise the {{type}} to resolve the issues below. Change only what is needed to fix them; keep everything else exactly as it is. Do not tidy the language or make it more polite: a fix may make the card cruder.';
 const STEER_INSTRUCTION = 'Revise the {{type}} to follow the user\'s instructions below. Change only what they ask for; keep everything else exactly as it is.';
 
 // The fields each type really has. Reviews of a persona kept asking for a first message and example
@@ -151,7 +154,7 @@ function steerBlock(steer) {
     return steer?.trim() ? `The user's instructions (follow them; they take priority over the issues list, but not over the card rules):\n${steer.trim()}` : '';
 }
 
-const CRITERIA = ['specificity', 'consistency', 'playability', 'rules', 'efficiency', 'looks'];
+const CRITERIA = ['specificity', 'consistency', 'playability', 'rules', 'efficiency', 'looks', 'heat'];
 const WORLD_CRITERIA = [...CRITERIA, 'keywords', 'coverage', 'tone', 'personal_stake'];
 
 const REVIEW_FORMAT = `Respond ONLY with one JSON object and nothing else:

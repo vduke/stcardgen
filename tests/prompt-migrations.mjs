@@ -316,6 +316,15 @@ test('the quality layer receives the pre-roll block', () => {
 });
 
 // 0.14.0: the mask is chosen by an energy/warmth cell, and sexuality settles before experience.
+test('the rubric cannot sand the heat off', () => {
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('heat (personas and characters)'), 'heat criterion missing');
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('Explicit detail is not bloat'), 'explicit-not-bloat rule missing');
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('crude, specific and explicit beats tasteful and vague'), 'calibration missing');
+    assert.ok(quality.DEFAULT_ENHANCE_PROMPT.includes('Do not clean up the language'), 'enhance softens');
+    assert.ok(quality.DEFAULT_OPTIMIZE_PROMPT.includes('crude word'), 'optimize strips crude words');
+    assert.match(qualitySrc, /a fix may make the card cruder/);
+});
+
 test('the rubric scores looks, tone and personal stake', () => {
     for (const phrase of ['police report', 'alive and mixed, not grey', 'personal stake (worlds)']) {
         assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes(phrase), 'rubric missing: ' + phrase);
