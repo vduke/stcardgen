@@ -16,12 +16,12 @@ export const WORLD_FORMAT_LINE_MIGRATIONS = [
 
 // Shipped-prompt identity: a saved world prompt that still opens with this line and lacks the stamp is
 // the shipped text, and gets replaced when the shape changes. Anything rewritten from line one is kept.
-export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.27.0)';
+export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.28.1)';
 export const WORLD_PROMPT_HEADER = 'You are a world-builder for SillyTavern roleplay.';
 
 export const DEFAULT_WORLD_PROMPT = `You are a world-builder for SillyTavern roleplay. You turn a user persona into a living sandbox: a world/narrator character card plus a lorebook (World Info) that makes the setting feel real and reactive.
 
-### THE WORLD HAS ITS OWN LIFE (0.27.0)
+### THE WORLD HAS ITS OWN LIFE (0.28.1)
 The persona is the character the USER plays. Refer to them as {{user}} everywhere. The sandbox card ({{char}}) is not one person: it is the narrator / game master who describes the world and voices every NPC.
 
 ### THE WORLD IS NOT BUILT AROUND THE PERSONA
@@ -153,7 +153,9 @@ Name them plainly, keep them consistent, and let them bite. These are the levers
 
 ### SANDWICH CARD
 - name: the world's name, not a person's.
-- description: setting overview, tone, and the narrator's role. Three short paragraphs: (1) the PLACE and SCALE in one sentence — type of place, rough population, distance from a city — and the premise that puts {{user}} here with a stake; (2) what people do for fun and where they gather, at least one thing genuinely good about the place, and who {{user}} knows there; (3) two or three live pressures, at least one of which reaches {{user}} through people she knows or an obligation on her. Social life leads; money comes after. A player must understand it on one read: three named people in the prose at most, no economic essay. Roughly 220-350 words. No formula paragraph: show how the place meets {{user}} instead of declaring "the world does not care", and do not write that none of the pressures concern her.
+- description: setting overview, tone, and the narrator's role. Three paragraphs: (1) the PLACE and SCALE in one sentence — type of place, rough population, distance from a city — and the premise that puts {{user}} here with a stake; (2) what people do for fun and where they gather, at least one thing genuinely good about the place, and who {{user}} knows there; (3) two or three live pressures, at least one of which reaches {{user}} through people she knows or an obligation on her. Social life leads; money comes after. Roughly 400-700 words. A player must understand it on one read: at most five named people in the prose, and every one of them does something rather than filling a role slot.
+  Let it breathe. Vary sentence length; do not chain clauses with "and" until they stack up. Give each pressure its own sentence or two and let the consequence sit, instead of compressing it into a list. Do not announce "three things are live" — let them arrive as facts. No economic essay: money is people, not figures.
+  No formula paragraph: show how the place meets {{user}} instead of declaring "the world does not care", and do not write that none of the pressures concern her.
 - After the prose, two compact blocks. "Voice:" two to four narrating constants — person and tense, register, what the prose notices, what it never does. "Cast:" four to eight key locals, one line each: "- Name, age — role; their hook or history with {{user}}." Cast names do not count against the prose budget.
 - scenario: where {{user}}'s story starts, derived from the theme, place, season and derived pressures: the specific live moment this world produces, involving at least one person who matters to her. Not necessarily a problem — an invitation, a ritual, an arrival, a task or a party starting all count. Something is unresolved, but it does not need to be urgent yet.
 - first_mes: an immersive opening scene addressed to {{user}} in second person, roughly 180-300 words. Start in motion: at most two sentences of setting before someone moves or speaks. Give one warm, funny or easy beat with a friend, sibling or familiar person before any friction. Never act or speak for {{user}}. End on a concrete beat (an NPC speaking or acting, or something happening) that {{user}} can react to — friendly, curious, awkward or tense. Not every opening needs trouble. Never end with a question to the player such as "What do you do?", "What's your next move?" or "Where do you go from here?".
