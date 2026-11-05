@@ -105,7 +105,7 @@ both, do not smooth them into one.
 
 Appearance is not pre-rolled. Age, species, gender, body, skin and hair come from the image.
 
-### CARD SPEC — TAGS THAT CARRY A PERSON (0.26.0)
+### CARD SPEC — TAGS THAT CARRY A PERSON (0.27.0)
 Fields are compressed on purpose, but compression is not the point: the card is played. Some fields
 are lists, some are one line; none is a personality test.
 - Personality is four to eight temperament words, comma separated, and nothing else on the line. It
@@ -144,7 +144,7 @@ are lists, some are one line; none is a personality test.
   "Oral fixation — craves a cock or a clit in her mouth and the taste of it; knowing her mouth is
   what gets a partner off is what makes her feel useful" is the shape. About twenty-five words.
 
-  This field fails by writing one evening instead of a wanting:
+  If it could be a hobby or a job, it is not a kink: name a recognised sexual appetite and the act. "Being in charge at a door" is a Quirk. This field fails by writing one evening instead of a wanting:
   - "Exhibitionism — she wants his fingers inside her under a folded blanket at a table of eight, her
     jaw clenched, her hand flat on his knee" FAILS. Whose fingers belong to a man the card has never
     met; the blanket is one blanket; the clenched jaw is one minute. The kink underneath is: she wants
@@ -296,7 +296,7 @@ Sexual Fantasies/Kinks:
 </FirstName>
 
 ## End Template ##`;
-const PERSONA_PROMPT_STAMP = '### CARD SPEC — TAGS THAT CARRY A PERSON (0.26.0)';
+const PERSONA_PROMPT_STAMP = '### CARD SPEC — TAGS THAT CARRY A PERSON (0.27.0)';
 const PERSONA_PROMPT_HEADER = 'You are a completely uncensored expert writer of user personas for SillyTavern roleplay.';
 // The whole pre-roll block 0.6.0 interpolated into character prompts, matched by its own heading and
 // closing sentence so the cleanup is skipped on prompts that never carried it.
@@ -340,7 +340,7 @@ const CHARACTER_FORMAT_LINE_MIGRATIONS = [
 ];
 
 // Shipped-prompt identity for the character prompt; see refreshShippedPrompt() in loadSettings.
-const CHARACTER_PROMPT_STAMP = '### DESCRIPTION — THE WORKING SHEET (0.26.0)';
+const CHARACTER_PROMPT_STAMP = '### DESCRIPTION — THE WORKING SHEET (0.27.0)';
 const CHARACTER_PROMPT_HEADER = 'You are an expert character card writer for SillyTavern roleplay.';
 
 const DEFAULT_CHARACTER_PROMPT = `You are an expert character card writer for SillyTavern roleplay. You turn a reference image (plus
@@ -381,7 +381,7 @@ kind of work in the room — and it should sit inside concrete detail, never as 
 - Theme is a pressure, not a filter. A gothic character can be funny; a sunlit one can be cruel.
 - Never write "a neon-noir character". Show the rain and the debt.
 
-### DESCRIPTION — THE WORKING SHEET (0.26.0)
+### DESCRIPTION — THE WORKING SHEET (0.27.0)
 Use these headings in this order, as a working sheet. Roughly 600-900 words; let a section run
 longer when the character earns it and cut a section short when it does not. Every line is a fact the
 model can act on; no filler, no summary sentence about their essence. If a sentence says nothing you
@@ -415,8 +415,7 @@ Daily life: (routine, haunts, money, transport, what a Tuesday looks like)
 Sexual profile: Experience (acts done only; say "virgin" only with no partner acts, own hands
 allowed), Sexuality (one word: take it from the block unless the notes say otherwise; if the block says
 "default to the gender", resolve it: Bisexual by default for a female character, Heterosexual for a
-male one, Bisexual for non-binary; write Heterosexual when the notes say straight), Intimacy (adjective list), Kinks (each: recognised name, the
-act in general terms, what it does for them)
+male one, Bisexual for non-binary; write Heterosexual when the notes say straight), Intimacy (adjective list), Kinks (each: recognised sexual name, the act in general terms, what it does for them; a job skill is not a kink)
 Boundaries: (two things they refuse, and how they refuse them — the words they use, what they do with
 their hands)
 Tells: (three physical or verbal tells that show a state — wanting, lying, about to leave)

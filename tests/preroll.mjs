@@ -307,7 +307,7 @@ test('NPC genitals have proportions and kinks are explained', () => {
     assert.ok(world.includes('length and girth in inches'), 'cock size rule missing');
     assert.ok(world.includes('labia shape and size'), 'female proportions missing');
     assert.ok(world.includes('A bare noun is not a kink'), 'kink explanation rule missing');
-    assert.ok(world.includes('Hands — likes hers held down'), 'worked kink example missing');
+    assert.ok(world.includes('Praise (sub) — needs to be told out loud'), 'worked kink example missing');
 });
 
 test('worlds get a premise, voice, cast and levers', () => {
@@ -315,7 +315,23 @@ test('worlds get a premise, voice, cast and levers', () => {
     for (const phrase of ['GIVE {{user}} A REASON TO BE HERE', 'A sandbox needs an entry point', 'SANDBOX LEVERS', 'a knowledge route', '\"Voice:\"', '\"Cast:\"', 'plain facts, not prose', '\"Quirks:\"']) {
         assert.ok(world.includes(phrase), 'missing: ' + phrase);
     }
-    assert.ok(world.includes('Competence and quiet company go under Quirks'), 'quirk/kink split missing');
+    assert.ok(world.includes('Competence, clipboard duty'), 'quirk/kink split missing');
+});
+
+test('NSFL changes the consent contract', () => {
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    assert.ok(world.includes('consent is negotiable rather than assumed'), 'consent-by-NSFL rule missing');
+    assert.ok(world.includes('CNC'), 'CNC missing');
+    assert.ok(world.includes('If NSFL is off, the default is ask first'), 'consent-first default missing');
+    assert.ok(world.includes('NPCs may act before asking'), 'NSFL acting rule missing');
+});
+
+test('kinks are recognisable sexual appetites, not duties', () => {
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    for (const phrase of ['if it could be a hobby, a job or a social skill', 'Use recognisable kink names', 'exhibitionism', 'breath play', 'hair-pulling', 'dom/sub', 'Competence, clipboard duty']) {
+        assert.ok(world.includes(phrase), 'missing: ' + phrase);
+    }
+    assert.ok(!world.includes('Kinks: Being in charge at a door'), 'old duty-style example still present');
 });
 
 test('memorable NPC features are varied', () => {
