@@ -1762,17 +1762,27 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
             pushHistory(snap);
             state.data = result.data;
             writeFields();
+            // Any revision makes the displayed issue list stale. Clear it at once, then re-review:
+            // if the review fails, the old issues must not sit there as if nothing happened.
+            const before = state.review;
             if (mode === 'fix') {
-                // The fix consumed these instructions. Left in the box they would be sent again with
-                // the next Fix, against a fresh review, where the previous ask reads as new steer and
-                // can undo what the re-review is now asking for.
                 state.steer = '';
                 $root.find('.stcg-steer').val('').trigger('input');
-                status('Re-reviewing…');
-                const before = state.review;
-                const fixed = (before?.issues || []).filter(i => !i.skip);
-                state.review = { ...await reviewCard({ type: state.type, data: state.data, details: state.details, preRoll: state.preRoll, signal, previousIssues: fixed }), previous: before?.overall };
             }
+            const fixed = mode === 'fix' ? (before?.issues || []).filter(i => !i.skip) : [];
+            state.review = { ...(before || {}), issues: [], summary: 'Revision applied. Re-reviewing…' };
+            renderQuality();
+            status('Re-reviewing…');
+            try {
+                state.review = {
+                    ...await reviewCard({ type: state.type, data: state.data, details: state.details, preRoll: state.preRoll, signal, previousIssues: fixed }),
+                    previous: before?.overall,
+                };
+            } catch (error) {
+                if (error?.name === 'AbortError' || signal.aborted) throw error;
+                state.review = { ...(before || {}), issues: [], summary: `Revision applied, but the re-review failed: ${error.message}. Run Review again.` };
+            }
+            renderQuality();
             return result.changed.length ? `Changed: ${result.changed.join(', ')}.` : 'The model made no changes.';
         });
     }

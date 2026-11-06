@@ -927,12 +927,23 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
                 pushHistory(snap);
                 state.data = result.data;
                 refresh();
-                if (kind === 'fix') {
-                    status('Re-reviewing…');
-                    const before = state.review;
-                    const fixed = (before?.issues || []).filter(i => !i.skip);
-                    state.review = { ...await reviewCard({ ...quality(signal), data: state.data, previousIssues: fixed }), previous: before?.overall };
+                // A revision invalidates the list on screen. Clear it and re-review, and never let a
+                // failed re-review leave the old issues looking current.
+                const before = state.review;
+                const fixed = kind === 'fix' ? (before?.issues || []).filter(i => !i.skip) : [];
+                state.review = { ...(before || {}), issues: [], summary: 'Revision applied. Re-reviewing…' };
+                refresh();
+                status('Re-reviewing…');
+                try {
+                    state.review = {
+                        ...await reviewCard({ ...quality(signal), data: state.data, previousIssues: fixed }),
+                        previous: before?.overall,
+                    };
+                } catch (error) {
+                    if (error?.name === 'AbortError' || signal.aborted) throw error;
+                    state.review = { ...(before || {}), issues: [], summary: `Revision applied, but the re-review failed: ${error.message}. Run Review again.` };
                 }
+                refresh();
                 return result.changed.length ? `Changed: ${result.changed.join(', ')}.` : 'The model made no changes.';
             }
             if (kind === 'world') {
