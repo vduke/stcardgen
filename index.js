@@ -1594,6 +1594,9 @@ async function openEditor({ type, draft = null, data = null, imageBlob = null, a
         for (const f of fields) {
             $root.find(`[data-key="${f.key}"]`).val(renderFieldValue(f, state.data[f.key]));
         }
+        // The raw pane must follow the data. It used to keep the first model output, so Parse Raw
+        // after a fix reverted every fix and the next review found the same issues again.
+        state.raw = JSON.stringify(state.data, null, 2);
         $root.find('.stcg-raw-text').val(state.raw);
         checkConflict();
     }

@@ -380,6 +380,11 @@ test('stations are not mandatory jobs', () => {
     assert.ok(defaults.PROMPT_LINE_MIGRATIONS.includes('A job is one way to fill a day, not a requirement'));
 });
 
+test('the raw pane follows fixed data', () => {
+    assert.match(indexSrc, /state\.raw = JSON\.stringify\(state\.data, null, 2\)/);
+    assert.match(worldSrc, /state\.raw = JSON\.stringify\(state\.data, null, 2\)/);
+});
+
 test('the persona title carries the age', () => {
     assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('[Age] - a short tagline'));
     assert.ok(defaults.PERSONA_FORMAT_LINE_MIGRATIONS.includes('[Age] - a short tagline'));

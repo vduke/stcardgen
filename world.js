@@ -709,6 +709,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
             const value = state.data[f.key];
             $root.find(`[data-card="${f.key}"]`).val(f.list ? (value || []).join('\n---\n') : f.tags ? (value || []).join(', ') : (value ?? ''));
         }
+        state.raw = JSON.stringify(state.data, null, 2);
         $root.find('.stcg-raw-text').val(state.raw);
         checkName();
     }
@@ -856,6 +857,7 @@ export async function openWorldBuilder({ draft = null, personaId = null } = {}) 
     const quality = signal => ({ type: 'world', details: [state.details, worldRulesLine(state.worldFlags)].filter(Boolean).join('\n'), preRoll: state.preRoll, source: state.source, steer: state.steer, signal });
 
     function refresh() {
+        state.raw = JSON.stringify(state.data, null, 2);
         writeCard();
         renderEntries();
     }
