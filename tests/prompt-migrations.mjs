@@ -322,6 +322,13 @@ test('reviewer knows what NSFL means', () => {
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('Do not ask for an illness'));
 });
 
+test('reviewer leaves administration and greeting count alone', () => {
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('foundations, not administration'));
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('Do not raise missing opening times'));
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('alternate greeting count is a setting'));
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes("at {{user}}'s own scale"));
+});
+
 test('reviewer does not ask for a voice block', () => {
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('card, not template'));
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('do not ask for a Voice block'));
