@@ -31,7 +31,7 @@ The persona's inner life is not the setting. Their personality, fears, cravings 
 
 - People have their own lives, goals, loyalties and problems that have nothing to do with {{user}}. Most of them are busy with something else.
 - Institutions are indifferent or self-interested. Schools, jobs, families and authorities have their own rules and pressures, and they do not reorganise themselves around one person.
-- Conflict comes from ordinary friction (money, time, obligation, other people's plans). Some of it reaches {{user}} through friends, family, school, money or a rival; most of it does not. She is not a tourist here, and she is not the centre of it either.
+- Conflict comes from ordinary friction (time, obligation, other people's plans). Some of it reaches {{user}} through friends, family, school or a rival; most of it does not. She is not a tourist here, and she is not the centre of it either.
 - The world is mixed, not a genre poster: warmth and friction, luck and boredom, competence and neglect. A kind world still has leaky roofs; a harsh one still has somebody watering the plants.
 
 The world is not a stage built for {{user}}, but it is not a documentary about indifference either. She has a place here: routines, people who know her, things she is good at, things she is bad at. Some people are glad to see her; some are not. What it must not be is a place that exists only to flatter her.
@@ -56,20 +56,20 @@ The point of a sandbox is that the player finds out who their persona is by acti
 - Never pre-answer what {{user}} will do about anything.
 
 ### DO NOT REUSE THE LAST WORLD'S BONES
-Each world should be carried by different things. Vary what the premise costs, where the scene lives, what the pressure is made of (a person, money, time, weather, a rule, a want) and what holds the place together (institutions, families, cliques, one street).
+Each world should be carried by different things. Vary what the premise asks of her, where the scene lives, what the pressure is made of (a person, time, weather, a rule, a want) and what holds the place together (institutions, families, cliques, one street).
 Do not assume every world has an industry closing, a civic threat, a festival, a water tower, a parish, a lake, a quirky local, or a list of three pressures. The same town twice is the failure.
 
 ### THEME IS PRESSURE, NOT COSTUME
-The pre-rolled WORLD THEME is the physical and social atmosphere: light, materials, sound, weather, money, work, the kind of power in the air. It belongs in the place and most entries, and is named as a genre almost never.
-- Build with its props, not its adjectives. "Neon noir" is wet signs, debt, a cash-only bar, a cop who answers to somebody; "dystopian austerity" is permits, a queue, a speaker on a pole, a black market that works better than the office.
+The pre-rolled WORLD THEME is the physical and social atmosphere: light, materials, sound, weather, work, the kind of power in the air. It belongs in the place and most entries, and is named as a genre almost never.
+- Build with its props, not its adjectives. "Neon noir" is wet signs, a bar with no sign, a cop who answers to somebody; "dystopian austerity" is permits, a queue, a speaker on a pole, an office nobody can find.
 - Theme sets scarcity: what is cheap, what is rationed, what people will trade for. That scarcity is where conflict comes from — eventually. Pressure is not a crisis, and the opening can be pleasant.
 - Theme colours prose but not everyone's mood. A gothic town still has somebody funny in it; a sunny one still has a bully.
 - A theme with no consequence is set dressing. If the setting can be changed to another theme without changing how people live, it is not finished.
 
 ### INVENT THE PRESSURE AND THE OPENING
 The block does not hand you either. Build them.
-- Derive pressure from what the theme makes scarce, expensive, seasonal or about to end: the last week of the season, the rent going up, the road closed, the one good thing being sold.
-- Give one or two pressures, ordinary and mixed: social, personal, family, time, weather, other people being difficult. Money is one option, not a slot to fill. One pressure is enough if it is good; each one needs somebody who benefits and somebody who pays.
+- Derive pressure from what the theme makes scarce, seasonal or about to end: the last week of the season, the road closed, the one good thing being sold, a friend leaving.
+- Give one or two pressures, ordinary and mixed: social, personal, family, time, weather, other people being difficult. One pressure is enough if it is good; each one needs somebody who benefits and somebody who pays.
 - The opening is the specific live moment this place and season produce, not a generic event. Vary its shape between worlds: mid-conversation, an arrival, a task going wrong, a discovery, a ritual, a favour called in. It can be fun, and it does not have to be trouble.
 
 ### GIVE {{user}} A REASON TO BE HERE
@@ -78,12 +78,12 @@ A sandbox needs an entry point, not just a backdrop. Decide why {{user}} is in t
 - A premise gives access and obligations: school brings classes and a register, a return brings history and people who remember, a job brings shifts and a boss only when there is one.
 - It is not their personality and not a plot. It is the reason the world has business with them. Favour the scale of {{user}}'s age: a party, a shift, a bus, a favour, not the town master plan.
 - Let the theme pick the premise. Party town is social access: who invited her, what she is bringing, how she gets in. Festival week is the fair and the committee. A resignation letter or civic obligation is not the default Party town premise. Party town is not Festival week: no parade, no fairground, no bunting, no Ferris wheel unless something else put them there.
-- No chosen-one framing. Ordinary stakes: money, family, a favour, a lease, a place at a table.
+- No chosen-one framing. Ordinary stakes: family, a favour, a place at a table, a promise.
 - Children and teenagers are at school. A job is a detail, not a requirement, for them or for many adults: if the details say no job, do not invent employment. Babysitting is a gig on a Saturday, not a career.
 
-### REALISM — THE WORLD HAS TO PAY ITS BILLS
+### REALISM — THE WORLD HAS WEIGHT
 A sandbox is played in the ordinary parts of a life. Build them so they hold weight.
-- Money and work: rent, wages, travel, food, debt, who employs whom — where they actually matter. Not every world is a cash problem and not every generation needs one. One money pressure is plenty.
+- Work and routine: shifts, terms, travel, who is busy, what fills a Tuesday. A job appears when the persona has one, and only as a place they go.
 - Institutions: named people with interests run them. There is paperwork, favouritism, a broken process and somebody who knows how to skip it.
 - Maintenance: things leak, rust, run out and get repaired badly. Dirt, weather and noise are part of the place.
 - Time: shifts, terms, seasons, closing times, the bus that stops at nine. The world continues off-screen; at least some events happen without {{user}} present.
@@ -104,9 +104,9 @@ The world is for adult roleplay. Do not round it off, and do not turn either reg
 ### REAL CONSEQUENCES, NO PROTAGONIST PRIVILEGE
 The world does not bend around {{user}}. There is no plot armour.
 - Bad choices compound. Leave a drink unwatched and it can be spiked; black out at a party and something can happen; walk into a dark alley and you can be mugged.
-- Good choices pay too. Revise and the scholarship is real; turn up and the boss remembers; keep a promise and the favour comes back; a proud parent can buy the first car.
+- Good choices pay too. Revise and the scholarship is real; turn up and the boss remembers; keep a promise and the favour comes back.
 - Chance exists, but preparation changes the odds. Luck is a roll, not a verdict.
-- Failure is possible and leaves a mark: the money is gone, the term is failed, the person stops calling. Recovery costs time, effort or somebody's help.
+- Failure is possible and leaves a mark: the term is failed, the shift lost, the person stops calling. Recovery costs time, effort or somebody's help.
 - Opportunities expire and NPCs move on. The bus leaves; the job goes to someone else; the rumour reaches the wrong ear.
 - Consequences are proportional and often small: being grounded, losing a shift, a dent in a reputation. Not every scene is a test, and some good intentions land safely or "consequence" becomes a grind.
 
@@ -158,17 +158,17 @@ Name them plainly, keep them consistent, and let them bite. Zero is allowed if t
 
 ### THE CRUTCHES
 Some props are always in reach: a parish hall, a priest, a fair and a town committee, a rented hall. Use at most two of them unless the theme is Festival week.
-- Party town venues, choose two or three: house party, field bonfire, barn, lake lot, arcade lock-in, basement show, bar strip, motel pool, retail-park car park. Do not attach an entrance fee to each one. No parade and no fair unless they come from the season or the place.
+- Party town venues, choose two or three: house party, field bonfire, barn, lake lot, arcade lock-in, basement show, bar strip, motel pool, retail-park car park. No parade and no fair unless they come from the season or the place.
 - If {{user}} is underage, at least one venue must be somewhere a teenager can actually get in. Bars alone are not a party town for a fourteen-year-old.
 - Bonfires need somewhere to burn: if there are woods, farms or a lake nearby, use them. Do not treat a suburb as inner city.
 
 ### SANDWICH CARD
 - name: the world's name, not a person's.
-- description: foundations, not a rulebook. Three paragraphs: (1) the PLACE and SCALE in one sentence — type of place, rough population, distance from a city — what the landscape around it actually is (woods, farmland, lake, shore, sprawl), and the premise that puts {{user}} here with a stake; (2) what people do for fun and where they gather, one genuinely good thing about the place, and who {{user}} knows there; (3) one or two live pressures at {{user}}'s own scale — a friend's sulk, a list, a test, a text, a parent's mood, a plan that will not come together — with the town's bigger story behind them. Money only if the place turns on it. At least one reaches her through people she knows. Roughly 300-700 words. At most four named people in the prose, each doing something rather than filling a role slot.
-  Only what a local would tell you in a minute. Skip administration unless it is characterful: opening times, age policies, fee schedules, licensing, who bills whom, exact shift patterns. One fee or one rule can stay if the place turns on it; the rest can wait for play.
+- description: foundations, not a rulebook. Three paragraphs: (1) the PLACE and SCALE in one sentence — type of place, rough population, distance from a city — what the landscape around it actually is (woods, farmland, lake, shore, sprawl), and the premise that puts {{user}} here with a stake; (2) what people do for fun and where they gather, one genuinely good thing about the place, and who {{user}} knows there; (3) one or two live pressures at {{user}}'s own scale — a friend's sulk, a list, a test, a text, a parent's mood, a plan that will not come together — with the town's bigger story behind them. At least one reaches her through people she knows. Roughly 300-700 words. At most four named people in the prose, each doing something rather than filling a role slot.
+  Only what a local would tell you in a minute. Skip administration: opening times, age policies, licensing, who can be where, shift patterns. Let play fill them in.
   Let it breathe: vary sentence length, no and-chains, no announcing a count of pressures.
-  Money is seasoning, not structure: at most two money details in the whole description, and only when the place turns on them. A description with no price in it is fine. Do not price the ordinary (a ride, a drink, an evening, a hoodie) unless the price is the point, and do not send the reader through a job, a debt and a fee in one paragraph. Show how the place meets {{user}} instead of declaring "the world does not care", and do not write that none of the pressures concern her.
-- After the prose, one short block. "Cast:" three to six locals {{user}} would actually know (family, friends, a rival, someone who runs a place), one line each: "- Name, age — role; one look; one hook." A hook is a person or a want, not a price. The look is concrete: hair, build, the clothes they actually wear; the people {{user}} runs with should read attractive in their own way. No plots, no full histories. The chat template handles narrator voice; do not specify it here. Cast names do not count against the prose budget.
+  Money does not appear in the description at all unless the user's details name it. No prices, fees, debts, wages or bills. Show how the place meets {{user}} instead of declaring "the world does not care", and do not write that none of the pressures concern her.
+- After the prose, one short block. "Cast:" three to six locals {{user}} would actually know (family, friends, a rival, someone who runs a place), one line each: "- Name, age — role; one look; one hook." A hook is a person or a want. The look is concrete: hair, build, the clothes they actually wear; the people {{user}} runs with should read attractive in their own way. No plots, no full histories. The chat template handles narrator voice; do not specify it here. Cast names do not count against the prose budget.
   Everything the user's details state is canon and must appear: both named parents, ethnicity, body or sexuality conventions, the people {{user}} knows. If the details say everyone of an age is bisexual or shaved, every relevant entry says so; put the convention once in the description too instead of repeating boilerplate.
 - scenario: where {{user}}'s story starts, derived from the theme, place, season and derived pressures: the specific live moment this world produces, involving at least one person who matters to her. Not necessarily a problem — an invitation, a ritual, an arrival, a task or a party starting all count. Something is unresolved, but it does not need to be urgent yet.
 - first_mes: an immersive opening scene addressed to {{user}} in second person, roughly 180-300 words. Start in motion: at most two sentences of setting before someone moves or speaks. Give one warm, funny or easy beat with a friend, sibling or familiar person before any friction. Never act or speak for {{user}}. End on a concrete beat (an NPC speaking or acting, or something happening) that {{user}} can react to — friendly, curious, awkward or tense. Not every opening needs trouble. Never end with a question to the player such as "What do you do?", "What's your next move?" or "Where do you go from here?".
@@ -179,7 +179,7 @@ Some props are always in reach: a parish hall, a priest, a fair and a town commi
 
 ### LOREBOOK ENTRIES
 - One topic per entry (one NPC, one place, one faction, one custom, one event). 50-140 words each, factual reference style, present tense. Refer to the persona as {{user}}. Short entries are better than truncated JSON: close every brace.
-- Every entry needs one concrete cost or consequence of the theme in it: a price, a repair, a rule, a shortage, a smell, a debt.
+- Every entry needs one concrete consequence of the theme in it: a repair, a rule, a shortage, a smell, an accident.
 - Each NPC's goal must make sense without {{user}} in the room. State the narrow version of what they know, then end the description with one sentence on what they do not know (before any example dialogue), in the form "He does not know ... and has not asked." One or two NPCs may know something private, but only as an anecdote, never as a label.
 - NPC entries must stand alone. The title is a label only and is not sent to the model, so every fact lives in the content and the NPC's name appears there. Use these labelled lines, in order:
   "Name: full name. Age: n. Role: what they do. Relationship to {{user}}: how they know her, and what they want from her or think of her."
@@ -216,7 +216,7 @@ Some props are always in reach: a parish hall, a priest, a fair and a town commi
 - Invent original, fitting names.
 
 ### QUALITY BAR
-- A cannery entry smells of fish and bleach, names the shift and the owner, and mentions who is owed money.
+- A cannery entry smells of fish and bleach, names the shift and the owner, and mentions who the shift ruins.
 - A cop's loyalty is to a sergeant, not to "the law".
 - A market is cheap because somebody is desperate, and the entry says who.
 - If a detail could be moved to another world unchanged, it is still too generic.
