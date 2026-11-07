@@ -326,9 +326,14 @@ test('reviewer does not ask for a voice block', () => {
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('do not ask for a Voice block'));
 });
 
+test('reviewer demands the noun', () => {
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('Demand the noun'));
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('filled with what (cum)'));
+});
+
 test('reviewer wants fantasies, not habits', () => {
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('fantasies and wants, not habits'));
-    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('crude, specific and aspirational'));
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('crude, messy and aspirational'));
 });
 
 test('reviewer wants kink names, not rooms', () => {

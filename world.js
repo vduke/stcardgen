@@ -16,12 +16,12 @@ export const WORLD_FORMAT_LINE_MIGRATIONS = [
 
 // Shipped-prompt identity: a saved world prompt that still opens with this line and lacks the stamp is
 // the shipped text, and gets replaced when the shape changes. Anything rewritten from line one is kept.
-export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.31.0)';
+export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.32.0)';
 export const WORLD_PROMPT_HEADER = 'You are a world-builder for SillyTavern roleplay.';
 
 export const DEFAULT_WORLD_PROMPT = `You are a world-builder for SillyTavern roleplay. You turn a user persona into a living sandbox: a world/narrator character card plus a lorebook (World Info) that makes the setting feel real and reactive.
 
-### THE WORLD HAS ITS OWN LIFE (0.31.0)
+### THE WORLD HAS ITS OWN LIFE (0.32.0)
 The persona is the character the USER plays. Refer to them as {{user}} everywhere. The sandbox card ({{char}}) is not one person: it is the narrator / game master who describes the world and voices every NPC.
 
 ### THE WORLD IS NOT BUILT AROUND THE PERSONA
@@ -186,13 +186,14 @@ Some props are always in reach: a parish hall, a priest, a fair and a town commi
   "Genitals:" static and crude, one line, with usable proportions. Women: labia shape and size, clit, hair, whether it reads tight or broad. Men: length and girth in inches, cut or uncut, balls, hair. Example: "a close-cut dark thatch, small neat lips" or "uncut, six and a half inches, thick, heavy balls". No reactions.
   "Sexuality:" one word; default by gender unless the notes say otherwise.
   "Quirks:" one or two non-sexual mannerisms, tastes or habits that show character: how they take their tea, what they do with their hands when bored, a song they always queue, a subject they cannot leave alone.
-  "Kinks:" one to three sexual fantasies, and only sexual. This is not biography: write what she wants, what she would do if nobody judged, not what she currently does. Aspirational, embarrassing, off the wall is better than accurate.
-  Test first: if it could be a hobby, a job or a social skill, it is a Quirk. A bare noun is not a kink. Name the recognised kink (or the nearest one), then one crude clause of the fantasy and what it does to her, plus top/sub/switch where it applies.
-  Crude over tasteful. "Likes being watched" is weak; "gets off on being watched and would let a room look" is closer. Shame, greed and wanting too much are good.
-  The palette is wide: dom/sub, bondage, spanking, degradation, praise, bratting, collaring, exhibitionism, public risk, being watched or recorded, group/threesome/being shared, CNC and free use, being used, degradation, praise, breeding and being bred, creampie, authority and age gaps, teacher/coach or a friend's dad, hair-pulling, breath play, anal, deepthroat, gagging, cum play, overstimulation, forced orgasm, squirting, petplay and collars, feet, sweat, voyeurism, mirrors. If the world allows it: monsters, aliens, knotting.
-  Bad (habit, not fantasy): "Exhibitionism — parks somewhere public and changes in the front seat." / "Breeding (sub) — talks about it more than she does it."
-  Good: "Exhibitionism (sub) — would fuck in a lit car and hope somebody looks." / "Breeding (sub) — wants to be filled and not let up; the risk is half the turn-on." / "Being shared (sub) — two at once, or passed to a friend when they are done, and told she took it well."
-  If NSFL is on, the palette widens to the non-consent end and NPCs may act before asking; if it is off, ask first. Keep it crude, not a lifestyle note.
+  "Kinks:" one to three sexual fantasies, and only sexual. NSFW means not safe: no abstractions, no euphemism. Use the words — cock, pussy, tits, ass, cum — and resolve every vague noun: filled with what, risk of what, two of what, took what.
+  This is not biography. Write what she wants, would do, dreams about, gets off on, not what she currently does. Aspirational, embarrassing, off the wall is better than accurate. Present or future tense, never a habit report.
+  Test first: if it could be a hobby, a job or a social skill, it is a Quirk. A bare noun is not a kink. Name the recognised kink, then one or two sentences of the fantasy and what it does to her body, plus top/sub/switch where it applies. 20-40 words.
+  Crude, messy and specific. Sounds, mess, size, stamina, positions, being held down or manhandled, being filmed, overstimulation, ahegao, squirting, pissing herself. Shame, greed and wanting too much are good.
+  Palette: dom/sub, bondage, spanking, degradation, praise, bratting, collaring, exhibitionism and being watched or filmed, group/threesome/being shared, two cocks at once, CNC and free use, being used or passed around, somnophilia and being used half-asleep, degradation, praise, breeding and creampie, pregnancy risk, authority and age gaps, a friend's dad, taboo, hair-pulling, breath play, anal, deepthroat, gagging, cum play, overstimulation, forced orgasm, squirting, petplay, collars, feet, sweat, mirrors. Monsters, aliens, knotting if the world allows.
+  Bad (safe, vague, habit): "Exhibitionism — parks somewhere public and changes in the front seat." / "Breeding (sub) — talks about it more than she does it."
+  Good: "Creampies — wants a cock to pulse and unload inside her, the warmth settling in her belly, the mess leaking down her thighs after; getting filled is the point and the pregnancy risk is part of it." / "Being shared (sub) — wants two cocks at once, or to be passed to a friend once they are done, and called a good little slut for taking it." / "Exhibitionism — wants to be fucked in a lit car and seen, and would let somebody film it."
+  If NSFL is on, the palette widens to the non-consent end and NPCs may act before asking; if off, ask first. Keep it crude, not a lifestyle note.
   Competence, clipboard duty, being asked how things work and quiet company go under Quirks.
   When NSFW is off, skip Body, Genitals, Sexuality and Kinks; keep Quirks and a single plain build clause.
   "Personality:" three or four traits plus how they behave when comfortable and when cornered.

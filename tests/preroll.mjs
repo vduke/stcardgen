@@ -307,8 +307,10 @@ test('NPC genitals have proportions and kinks are explained', () => {
     assert.ok(world.includes('length and girth in inches'), 'cock size rule missing');
     assert.ok(world.includes('labia shape and size'), 'female proportions missing');
     assert.ok(world.includes('A bare noun is not a kink'), 'kink explanation rule missing');
-    assert.ok(world.includes('Breeding (sub) — wants to be filled'), 'worked kink example missing');
+    assert.ok(world.includes('Creampies — wants a cock to pulse'), 'worked kink example missing');
     assert.ok(world.includes('not biography'), 'fantasy-not-habit rule missing');
+    assert.ok(world.includes('filled with what'), 'noun-resolution rule missing');
+    assert.ok(world.includes('two cocks at once'), 'explicit example missing');
 });
 
 test('worlds get a premise, voice, cast and levers', () => {
