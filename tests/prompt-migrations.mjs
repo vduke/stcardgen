@@ -328,6 +328,7 @@ test('reviewer leaves administration and greeting count alone', () => {
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('alternate greeting count is a setting'));
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes("at {{user}}'s own scale"));
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('Money is not required at all'));
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('Party town is social access and a night map'));
 });
 
 test('reviewer does not ask for a voice block', () => {
@@ -450,6 +451,15 @@ test('persona genitals carry no scent and kinks say the nouns', () => {
     assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('Twenty to forty words'), 'kink length missing');
     assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('Creampies — wants a cock'), 'explicit kink example missing');
     assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('Bad: "Sensory deprivation'), 'soft example labelled');
+});
+
+test('prompt stamps match the manifest version', () => {
+    const version = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8')).version;
+    for (const [name, src] of [['persona', indexSrc], ['character', indexSrc], ['world', worldSrc]]) {
+        const stamp = src.match(new RegExp('const [A-Z_]*PROMPT_STAMP = [^\n]*\\(([^)]+)\\)'));
+        assert.ok(stamp, name + ' stamp missing');
+        assert.strictEqual(stamp[1], version, name + ' stamp is stale');
+    }
 });
 
 test('experience is acts, not props', () => {

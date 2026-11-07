@@ -360,7 +360,6 @@ export const THEME_PLACE_KINDS = {
             "suburban"
         ],
         "Party town": [
-            "urbanlively",
             "nightlife",
             "partyrural"
         ],
@@ -899,8 +898,8 @@ export const WORLD_CHANNELS = [
             "A small city of ninety thousand with a downtown strip, a community college and a party district.": "smallcity",
             "A city neighbourhood where the high school lets out onto six lanes and a bus shelter.": "urban",
             "A small city with a party strip: two bars, an arcade, a kebab van and a lake lot kids use at night.": "nightlife",
-            "A county-road hamlet with a barn, a bonfire field and a strip two towns over.": "partyrural",
-            "A downtown strip with a music venue, three bars and a twenty-four-hour diner.": "urbanlively",
+            "A county-road edge of town: a barn, a bonfire field and the strip twenty minutes in.": "partyrural",
+            "A downtown strip with a music venue, three bars and a twenty-four-hour diner.": "nightlife",
             "A city neighbourhood where the high school lets out onto six lanes and a bus shelter.": "urbanlively",
             "A suburb with a retail park, a bowling alley, a cinema and a dead-end where cars park.": "nightlife"
         },
@@ -933,7 +932,7 @@ export const WORLD_CHANNELS = [
             'A small city of ninety thousand with a downtown strip, a community college and a party district.',
             'A city neighbourhood where the high school lets out onto six lanes and a bus shelter.',
             'A small city with a party strip: two bars, an arcade, a kebab van and a lake lot kids use at night.',
-            'A county-road hamlet with a barn, a bonfire field and a strip two towns over.',
+            'A county-road edge of town: a barn, a bonfire field and the strip twenty minutes in.',
             'A downtown strip with a music venue, three bars and a twenty-four-hour diner.',
             'A suburb with a retail park, a bowling alley, a cinema and a dead-end where cars park.',
         ],
@@ -952,6 +951,8 @@ export const WORLD_CHANNELS = [
             'A tenants\' association of three people doing the work of forty.',
             'The clinic is understaffed and the nurse practitioner has become the local authority.',
             'A contractor controls every job site in a ninety-mile radius.',
+            'The one with the field and the burn barrel decides which Fridays happen.',
+            'The older siblings with cars and empty houses are the real transport and venue network.',
             'The gang is small and well-mannered, and the police visit it rather than the other way round.',
             'The union branch holds the vote but its chair answers to his brother-in-law.',
             'The head teacher has more real power in town than the council.',
@@ -966,13 +967,13 @@ export const WORLD_CHANNELS = [
             'Salt, diesel and hot tar, and everything metal rusting from the inside.',
             'Cars with manual windows and cassette decks, and a lot of driving.',
             'Snow four months of the year, and the shops sell boots rather than shoes.',
-            'Cheap plastic signs, sodium lights, a fried-food smell that never lifts.',
+            'Plastic signs, sodium lights, a fried-food smell that never lifts.',
             'Paper everywhere: forms, ledgers, carbon copies, rubber stamps.',
             'The street smells of yeast and bread from two o\'clock onwards.',
             'Everything is a ten-minute walk and everyone knows whose dog is barking.',
             'Soft mountains behind the town and no streetlights past the last house.',
             'The technology works, but the weather interferes with it four days in ten.',
-            'Old money made of wood and brass, and new money made of chrome and impatience.',
+            'Wood and brass on one street, chrome and impatience on the next.',
             'A single radio station, a single newspaper, and both of them careful.',
             'Phones in every hand, group chats faster than the adults, and one bar of signal at the school.',
             'Iced coffee cups, hair straighteners, a speaker in a tote bag, and a charger everyone borrows.',
@@ -1059,8 +1060,8 @@ Go through these channels before writing. Any channel the user's details already
 follow the details and ignore the rolled value for that channel. Where they only tint a channel, bend
 it to fit. A channel the details leave open is used as rolled.`,
     world: `Build the world out of WORLD THEME, PLACE, POWER, TEXTURE and SEASON. Derive the pressures and the opening from them. WORLD THEME is the
-physical and social atmosphere — light, materials, sound, money, weather — not a genre sticker, and
-it must show in the entries rather than be announced. The persona's card is how
+physical and social atmosphere — light, materials, sound, weather, work, power — not a genre sticker, and
+it must show in the place and most entries rather than be announced. The persona's card is how
 they experience this world, not a specification for what the world contains or what people know about
 them: nobody in this world has read their card.`,
 };

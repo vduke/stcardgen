@@ -354,6 +354,17 @@ test('world length allows 700 and remembers recent bones', () => {
     assert.ok(src.includes('getDrafts'));
 });
 
+test('Party town gets a night map, not a festival', () => {
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    for (const phrase of ['IF THE THEME IS PARTY TOWN', 'night map', 'No zoning', 'a host who cancels', 'the walk home']) {
+        assert.ok(world.includes(phrase), 'missing: ' + phrase);
+    }
+    const powers = WORLD_CHANNELS.find(c => c.key === 'POWER').entries;
+    assert.ok(powers.some(e => /burn barrel/.test(e)), 'no field power');
+    assert.ok(powers.some(e => /older siblings with cars/.test(e)), 'no transport power');
+    assert.ok(world.includes('at most one of them'), 'fair/priest still required as a pair');
+});
+
 test('money is absent unless the details name it', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     assert.ok(world.includes('Money does not appear in the description at all'));
