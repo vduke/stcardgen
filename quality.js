@@ -19,6 +19,7 @@ const HEAT_LINE = '- heat (personas and characters): sexual fields are explicit 
 const OLD_TONE_LINE = '- tone (worlds): alive and mixed, not grey. There are places to enjoy and at least one warm relationship, and hardship is not stacked. Score low for uniform indifference or a world with nothing fun in it.';
 const TONE_LINE = '- tone (worlds): alive and mixed, not grey. There are places to enjoy and at least one warm relationship, and hardship is not stacked. Score low for uniform indifference or a world with nothing fun in it. NSFL means harm and risk in play, not illness or apocalypse; NSFW means sexual tension and appetite, not constant explicitness. Do not ask for an illness to satisfy NSFL.';
 const STAKE_LINE = '- personal stake (worlds): some pressure reaches {{user}} through family, friends, school, money or a rival, while most of the world goes on without her. Both "none of this concerns her" and "everything revolves around her" are failures.';
+const CARD_ONLY_LINE = '- card, not template: judge only what the card supplies. Narrator voice, POV, tense and prose style belong to the chat template, so do not ask for a Voice block or a voice specification. Do not require the description to teach the model how to narrate.';
 const RULES_LINE = '- rules: correct {{char}}/{{user}} macros, never acts or speaks for {{user}}, opening messages end on an in-world beat (never "What do you do?"), example messages use <START> and name prefixes, no Main Prompt content.';
 
 // [old, new] pairs applied to saved rubrics; a line the user edited no longer matches and is left alone.
@@ -66,6 +67,7 @@ const REVIEW_LINE_MIGRATIONS = [
     [LOOKS_LINE + '\n' + TONE_LINE, LOOKS_LINE + '\n' + HEAT_LINE + '\n' + TONE_LINE],
     [HEAT_LINE, HEAT_LINE.replace('Explicit detail is not bloat.', 'Kink entries must lead with the name, not the room. Explicit detail is not bloat.')],
     [OLD_TONE_LINE, TONE_LINE],
+    [STAKE_LINE + '\n\nList concrete issues', STAKE_LINE + '\n' + CARD_ONLY_LINE + '\n\nList concrete issues'],
 ];
 
 /**
@@ -111,6 +113,7 @@ ${LOOKS_LINE}
 ${HEAT_LINE}
 ${TONE_LINE}
 ${STAKE_LINE}
+${CARD_ONLY_LINE}
 
 Only raise a concrete violation of a criterion, not a preference. If a field already works, leave it alone instead of inventing an issue to fill the list.
 Raise one issue per field where possible, and never ask the description and its matching entries to move in opposite directions. Aim for three to six issues: a fix round should be able to finish them.

@@ -321,6 +321,11 @@ test('reviewer knows what NSFL means', () => {
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('Do not ask for an illness'));
 });
 
+test('reviewer does not ask for a voice block', () => {
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('card, not template'));
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('do not ask for a Voice block'));
+});
+
 test('reviewer wants kink names, not rooms', () => {
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('Kink entries lead with the recognised kink name'), 'kink-name rule missing');
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('instead of appetites'), 'scene-list failure missing');

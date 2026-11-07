@@ -6,7 +6,7 @@
   "js": "index.js",
   "css": "style.css",
   "author": "Ember Studios",
-  "version": "0.30.2",
+  "version": "0.30.3",
   "homePage": "",
   "auto_update": false
 }
