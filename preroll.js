@@ -39,29 +39,29 @@ export const CHARACTER_THEMES = [
 ];
 
 export const WORLD_THEMES = [
-    { label: 'Cozy but fraying', text: 'Cozy but fraying: a town with one bakery and one problem nobody has fixed; warmth that has started to run down.' },
-    { label: 'Neon noir', text: 'Neon noir: rain, signs, debt, a police force on the take, beauty in the reflection, rot under the arcade.' },
-    { label: 'Dystopian austerity', text: 'Dystopian austerity: quotas, permits, a loudspeaker, a black market, a bureaucracy that works for somebody else.' },
-    { label: 'Pastoral gothic', text: 'Pastoral gothic: fields, a chapel, a family that has owned the land too long, weather as a character.' },
-    { label: 'Solarpunk', text: 'Solarpunk: scaffolding with plants on it, civic pride, repairs instead of replacements, an argument about water.' },
-    { label: 'Post-collapse', text: 'Post-collapse: salvage, convoys, local treaties, a working radio and no working grid.' },
-    { label: 'Corporate arcology', text: 'Corporate arcology: company housing, floors as class, a transit atrium, contracts that include your sleep.' },
-    { label: 'Mythic', text: 'Mythic: a harbour with gods in the ledger, oaths that bind, storms with intent, festivals that must be kept.' },
-    { label: 'Liminal', text: 'Liminal: an airport town, a motel with long stays, shift work, a place people pass through.' },
-    { label: 'Coastal working town', text: 'Coastal working town: a cannery, a ferry timetable, tourists in summer, everyone knows the water.' },
-    { label: 'Frontier', text: 'Frontier: distance, a land office, a rail head, a sheriff who was elected because nobody else would.' },
-    { label: 'Underground', text: 'Underground: tunnels, a lift with a queue, damp concrete, hydroponics, a whole economy that never sees sky.' },
-    { label: 'Orbital', text: 'Orbital: a station ring, maintenance rotas, Earth as weather, air as a billed utility.' },
-    { label: 'Weird fiction', text: 'Weird fiction: a town with one unexplained rule, a survey office, locals who correct outsiders, a season that repeats.' },
-    { label: 'Industrial river city', text: 'Industrial river city: foundries, bridges, shift whistles, a river that carries what is dumped in it.' },
-    { label: 'Academic town', text: 'Academic town: a college, a library with restricted floors, term rhythms, a reputation to keep.' },
-    { label: 'Suburban night', text: 'Suburban night: cul-de-sacs and a strip-mall lot twenty minutes from a city, a big high school, a pool with a diving board, a late diner, a bonfire that runs past curfew.' },
-    { label: "Endless summer", text: "Endless summer: lake days, a boardwalk, ice cream before dinner, fireworks over water, and a curfew everyone ignores." },
-    { label: "Pool-and-cookout suburb", text: "Pool-and-cookout suburb: a community pool, block parties, sprinklers, fireflies, and a grill going every evening." },
-    { label: "Festival week", text: "Festival week: fairgrounds, food trucks, a Ferris wheel, bunting across the street, and a committee that has lost control of the schedule." },
-    { label: "Party town", text: "Party town: house parties off the county road, a bar strip and an arcade, a lake lot at night, flyers nobody throws away, and a Friday crowd that starts early." },
-    { label: "Holiday resort", text: "Holiday resort: a ski hill, a rented lodge, karaoke, hot tubs, and staff housing behind the hotel." },
-    { label: "Main-street revival", text: "Main-street revival: a new bakery, a mural going up, a farmers market, and locals arguing about parking with real affection." },
+    { label: "Cozy but fraying", text: "Cozy but fraying: warmth covers a system that is failing — the lift stays broken for weeks, the rota has gaps nobody fills, a volunteer has stopped coming." },
+    { label: "Neon noir", text: "Neon noir: it rains most nights, every sign is neon, and the police answer to somebody; beauty in the reflection, rot under the arcade." },
+    { label: "Dystopian austerity", text: "Dystopian austerity: permits and quotas decide who works, travels and gets served, and the office always finds a reason." },
+    { label: "Pastoral gothic", text: "Pastoral gothic: old families own the land, the past is treated as current, and weather decides the week." },
+    { label: "Solarpunk", text: "Solarpunk: repairs are done by neighbours, water is rationed by agreement, and shade is a shared resource." },
+    { label: "Post-collapse", text: "Post-collapse: the grid fails for hours, convoys bring what the town cannot make, and each street keeps its own treaty." },
+    { label: "Corporate arcology", text: "Corporate arcology: company housing, floors as class, a transit atrium, contracts that include your sleep." },
+    { label: "Mythic", text: "Mythic: oaths are spoken aloud and kept, omens are read from birds and water, and a debt to the water comes due." },
+    { label: "Liminal", text: "Liminal: airport-town motels that rent by the week, shift work that empties the street at six, people who introduce themselves by how long they are staying." },
+    { label: "Coastal working town", text: "Coastal working town: a working waterfront, tourists in summer, everyone knows the water." },
+    { label: "Frontier", text: "Frontier: the road out is long, the land office is the only office that matters, and settlement stops at the fence line." },
+    { label: "Underground", text: "Underground: tunnels and a lift queue, damp concrete, hydroponics, an economy that never sees sky." },
+    { label: "Orbital", text: "Orbital: a station ring, maintenance rotas, Earth as weather, air as a billed utility." },
+    { label: "Weird fiction", text: "Weird fiction: the rule is written on a board outside the post office, everyone follows it, and nobody explains it." },
+    { label: "Industrial river city", text: "Industrial river city: the river carries the city's work and its waste, and the shift whistle sets the day." },
+    { label: "Academic town", text: "Academic town: the college owns the calendar, the money and the reputation, and the town lives around it." },
+    { label: "Suburban night", text: "Suburban night: cul-de-sacs and a strip mall twenty minutes from a city, a big high school, a bonfire that runs past curfew." },
+    { label: "Endless summer", text: "Endless summer: lake days and a boardwalk, ice cream before dinner, a curfew everyone ignores." },
+    { label: "Pool-and-cookout suburb", text: "Pool-and-cookout suburb: a community pool, cookouts every evening, sprinklers and fireflies." },
+    { label: "Festival week", text: "Festival week: fairgrounds, food trucks and bunting, a committee that has lost control of the schedule." },
+    { label: "Party town", text: "Party town: house parties off the county road, a bar strip and an arcade, a lake lot at night, a Friday crowd that starts early." },
+    { label: "Holiday resort", text: "Holiday resort: a ski town in season, staff housing behind the hotel, karaoke and hot tubs." },
+    { label: "Main-street revival", text: "Main-street revival: a new bakery, a mural going up, a farmers market, parking arguments with real affection." },
 ];
 
 /** Theme pickers for the character and world screens; the value sent as a steer is the entry text. */
@@ -154,223 +154,111 @@ export const PERSONA_STEER_OPTIONS = {
 };
 
 /** Seasons each theme tolerates, so summer themes cannot draw Christmas. */
+/** Three adapt-or-invent conditions per theme, not a prop list. */
+export const THEME_ANCHORS = {
+    "Cozy but fraying": ["long-broken repair", "rota gaps", "a volunteer who stopped"],
+    "Neon noir": ["rain most nights", "neon on everything", "police on somebody's payroll"],
+    "Dystopian austerity": ["permits", "queue", "paperwork that decides"],
+    "Pastoral gothic": ["old family names on the land", "weather decides", "past treated as current"],
+    "Solarpunk": ["neighbour repairs", "water rationed by agreement", "shade shared"],
+    "Post-collapse": ["grid outages", "convoy day", "street treaties"],
+    "Corporate arcology": ["company housing", "floor decides class", "sleep in the contract"],
+    "Mythic": ["spoken oaths", "omens in birds and water", "a debt to the water"],
+    "Liminal": ["weekly motels", "shift change empties the street", "people measure the stay in days"],
+    "Coastal working town": ["working boats", "ferry timetable", "tourists in season"],
+    "Frontier": ["long road out", "land office", "fence-line edge"],
+    "Underground": ["lift queue", "hydroponic damp", "no sky"],
+    "Orbital": ["maintenance rota", "Earth as weather", "metered air"],
+    "Weird fiction": ["one rule on a board", "everyone follows it", "nobody explains"],
+    "Industrial river city": ["foundry shifts", "bridge traffic", "the river carries waste"],
+    "Academic town": ["college owns the calendar", "term dates", "students leave in June"],
+    "Suburban night": ["cul-de-sac curfew", "strip-mall lot", "late diner"],
+    "Endless summer": ["lake all day", "boardwalk", "curfew ignored"],
+    "Pool-and-cookout suburb": ["pool crowd", "cookout smoke", "sprinkler evenings"],
+    "Festival week": ["fairground", "food trucks", "committee losing control"],
+    "Party town": ["house party", "lake lot", "Friday crowd"],
+    "Holiday resort": ["ski town off-season", "staff housing", "hot tubs and karaoke"],
+    "Main-street revival": ["new bakery", "mural going up", "parking argument"],
+};
+
 export const THEME_SEASONS = {
-    "Cozy but fraying": [
-        1,
-        3,
-        11
-    ],
-    "Neon noir": [
-        4,
-        6
-    ],
-    "Dystopian austerity": [
-        2,
-        4
-    ],
-    "Pastoral gothic": [
-        1,
-        4
-    ],
-    "Solarpunk": [
-        0,
-        1
-    ],
-    "Post-collapse": [
-        1,
-        2
-    ],
-    "Corporate arcology": [
-        3,
-        6
-    ],
-    "Mythic": [
-        0,
-        8
-    ],
-    "Liminal": [
-        2,
-        5
-    ],
-    "Coastal working town": [
-        0,
-        10
-    ],
-    "Frontier": [
-        1,
-        4
-    ],
-    "Underground": [
-        2,
-        7
-    ],
-    "Orbital": [
-        6
-    ],
-    "Weird fiction": [
-        1,
-        4
-    ],
-    "Industrial river city": [
-        1,
-        4
-    ],
-    "Academic town": [
-        3,
-        6
-    ],
-    "Suburban night": [
-        0,
-        3
-    ],
-    "Endless summer": [
-        0,
-        8
-    ],
-    "Pool-and-cookout suburb": [
-        0,
-        8
-    ],
-    "Festival week": [
-        0,
-        8
-    ],
-    "Party town": [
-        12,
-        13,
-        14
-    ],
-    "Holiday resort": [
-        2,
-        7
-    ],
-    "Main-street revival": [
-        0,
-        1
-    ]
+    "Cozy but fraying": [1, 3, 11, 23],
+    "Neon noir": [4, 6, 16, 22],
+    "Dystopian austerity": [2, 4, 22],
+    "Pastoral gothic": [1, 4],
+    "Solarpunk": [15, 1, 4, 19],
+    "Post-collapse": [1, 2, 19],
+    "Corporate arcology": [3, 6, 23],
+    "Mythic": [15, 8],
+    "Liminal": [2, 5, 16, 23],
+    "Coastal working town": [10, 15],
+    "Frontier": [1, 4, 19],
+    "Underground": [2, 7],
+    "Orbital": [6, 16, 23],
+    "Weird fiction": [1, 4, 19],
+    "Industrial river city": [1, 4, 22],
+    "Academic town": [3, 6, 20],
+    "Suburban night": [15, 3, 21],
+    "Endless summer": [15, 17],
+    "Pool-and-cookout suburb": [15, 17],
+    "Festival week": [0, 8],
+    "Party town": [12, 13, 14, 21],
+    "Holiday resort": [2, 7, 23],
+    "Main-street revival": [15, 3, 21],
 };
 
 /** Population bands each theme tolerates. */
 export const THEME_SCALES = {
-    'Cozy but fraying': [1, 2],
-    'Neon noir': [4, 5],
-    'Dystopian austerity': [3, 5],
-    'Pastoral gothic': [0, 1],
-    'Solarpunk': [2, 3],
-    'Post-collapse': [0, 1],
-    'Corporate arcology': [5],
-    'Mythic': [0, 1, 2],
-    'Liminal': [2, 3, 4],
-    'Coastal working town': [1, 2],
-    'Frontier': [0, 1],
-    'Underground': [4, 5],
-    'Orbital': [4, 5],
-    'Weird fiction': [0, 1, 2],
-    'Industrial river city': [2, 4],
-    'Academic town': [2, 3],
-    'Suburban night': [3],
-    'Endless summer': [2, 3],
-    'Pool-and-cookout suburb': [3],
-    'Festival week': [2, 3],
-    'Party town': [3, 4],
-    'Holiday resort': [2, 3],
-    'Main-street revival': [2, 3],
+    "Cozy but fraying": [1, 2, 3],
+    "Neon noir": [4, 5],
+    "Dystopian austerity": [3, 4, 5],
+    "Pastoral gothic": [0, 1],
+    "Solarpunk": [2, 3, 4],
+    "Post-collapse": [1, 2],
+    "Corporate arcology": [4, 5],
+    "Mythic": [0, 1, 2],
+    "Liminal": [2, 3, 4],
+    "Coastal working town": [1, 2],
+    "Frontier": [0, 1, 2],
+    "Underground": [4, 5],
+    "Orbital": [5],
+    "Weird fiction": [0, 1, 2],
+    "Industrial river city": [2, 3, 4],
+    "Academic town": [2, 3],
+    "Suburban night": [3],
+    "Endless summer": [2, 3],
+    "Pool-and-cookout suburb": [3],
+    "Festival week": [2, 3],
+    "Party town": [3, 4],
+    "Holiday resort": [2, 3],
+    "Main-street revival": [2, 3],
 };
 
 /** Which place kinds each world theme tolerates; a mismatch is moved rather than forced. */
 export const THEME_PLACE_KINDS = {
-    "Cozy but fraying": [
-        "suburban",
-        "smallcity",
-        "lake",
-        "rural"
-    ],
-    "Neon noir": [
-        "urban"
-    ],
-    "Dystopian austerity": [
-        "urban",
-        "smallcity"
-    ],
-    "Pastoral gothic": [
-        "rural"
-    ],
-    "Solarpunk": [
-        "smallcity",
-        "urban",
-        "suburban"
-    ],
-    "Post-collapse": [
-        "rural",
-        "smallcity"
-    ],
-    "Corporate arcology": [
-        "urban"
-    ],
-    "Mythic": [
-        "coastal",
-        "rural"
-    ],
-    "Liminal": [
-        "urban",
-        "smallcity",
-        "rural"
-    ],
-    "Coastal working town": [
-        "coastal",
-        "island"
-    ],
-    "Frontier": [
-        "rural"
-    ],
-    "Underground": [
-        "urban"
-    ],
-    "Orbital": [
-        "urban"
-    ],
-    "Weird fiction": [
-        "rural",
-        "smallcity",
-        "coastal"
-    ],
-    "Industrial river city": [
-        "smallcity",
-        "urban"
-    ],
-    "Academic town": [
-        "college",
-        "smallcity",
-        "suburban"
-    ],
-        "Suburban night": [
-            "suburban"
-        ],
-        "Endless summer": [
-            "lake",
-            "coastal",
-            "suburban"
-        ],
-        "Pool-and-cookout suburb": [
-            "suburban"
-        ],
-        "Festival week": [
-            "smallcity",
-            "rural",
-            "suburban"
-        ],
-        "Party town": [
-            "nightlife",
-            "partyrural"
-        ],
-        "Holiday resort": [
-            "mountain",
-            "lake"
-        ],
-        "Main-street revival": [
-            "smallcity",
-            "suburban"
-        ]
+    "Cozy but fraying": ["suburban", "smallcity", "lake", "rural"],
+    "Neon noir": ["urban", "nightlife", "urbanlively"],
+    "Dystopian austerity": ["urban", "smallcity", "rural"],
+    "Pastoral gothic": ["rural", "smallcity"],
+    "Solarpunk": ["smallcity", "suburban", "college"],
+    "Post-collapse": ["rural", "smallcity", "coastal"],
+    "Corporate arcology": ["urban", "urbanlively"],
+    "Mythic": ["coastal", "rural", "lake"],
+    "Liminal": ["urban", "smallcity", "rural"],
+    "Coastal working town": ["coastal", "island", "lake"],
+    "Frontier": ["rural", "smallcity"],
+    "Underground": ["urban"],
+    "Orbital": ["urban"],
+    "Weird fiction": ["rural", "smallcity", "coastal"],
+    "Industrial river city": ["smallcity", "urban"],
+    "Academic town": ["college", "smallcity", "suburban"],
+    "Suburban night": ["suburban"],
+    "Endless summer": ["lake", "coastal", "suburban"],
+    "Pool-and-cookout suburb": ["suburban"],
+    "Festival week": ["smallcity", "rural", "suburban"],
+    "Party town": ["nightlife", "partyrural"],
+    "Holiday resort": ["mountain", "lake"],
+    "Main-street revival": ["smallcity", "suburban"],
 };
 
 export const PRE_ROLL_CHANNELS = [
@@ -870,31 +758,31 @@ export const WORLD_CHANNELS = [
         label: 'PLACE',
         // Kind lets the theme narrow the place pool; the notes still outrank both.
         kinds: {
-            "A harbour town where the fishing quota was cut this spring.": "coastal",
-            "A commuter suburb where every house is being renovated and nobody knows the neighbours.": "suburban",
-            "A university town in the middle of a building scandal.": "college",
-            "A border town with two currencies and one working road.": "rural",
-            "A desert motel town forty minutes from the nearest supermarket.": "rural",
+            "A harbour town of net sheds, a fish market and a ferry queue.": "coastal",
+            "A commuter suburb where every third house is being renovated and nobody knows the neighbours.": "suburban",
+            "A university town of lecture halls, cheap flats and a river walk.": "college",
+            "A border town with two languages on the signs and one road that works.": "rural",
+            "A desert motel town with one long main street and a truck stop.": "rural",
             "A cold-water island with one ferry a day and a school for every age.": "island",
-            "A city district under a compulsory-purchase order; half the shops are empty.": "urban",
-            "A logging town in the last year before the mill shuts.": "rural",
-            "A canal town where the locks are being automated.": "rural",
-            "A mountain village with a new ski lift and old money.": "mountain",
-            "A railway junction, five hours from anywhere, where the trains still stop.": "rural",
-            "A river town rebuilding after the second flood in two years.": "smallcity",
-            "A suburb of cul-de-sacs, a strip mall and a high school with a new astroturf field.": "suburban",
-            "A lake town in the last week of summer: rented pontoons, a party cove, seasonal money.": "lake",
-            "A small city north side: one high school, a diner, a bowling alley, a bus that runs late.": "smallcity",
+            "A city district of workshops, takeaways and four-storey walk-ups.": "urban",
+            "A logging town of stacked timber, a mill and two bars.": "rural",
+            "A canal town of locks, narrow boats and a towpath pub.": "rural",
+            "A mountain village of steep roofs and one ski lift.": "mountain",
+            "A railway junction of platforms, a waiting room and five hours between trains.": "rural",
+            "A river town of levees, boat ramps and houses on stilts.": "smallcity",
+            "A suburb of cul-de-sacs, a strip mall and a high school field.": "suburban",
+            "A lake town of docks, a boat rental and a bar with a deck.": "lake",
+            "A small city north side of one high school, a diner, a bowling alley and a late bus.": "smallcity",
             "An apartment complex at the edge of a college town, half students and half families.": "college",
             "A sun-belt suburb of new builds, irrigation warnings and a school run at seven.": "suburban",
-            "A rust-belt town where the plant is still open, just smaller than it was.": "smallcity",
-            "A coastal tourist town in high season: boardwalk, seasonal staff, locals priced out.": "coastal",
+            "A rust-belt town of brick warehouses, a tool-and-die plant and a river.": "smallcity",
+            "A coastal tourist town of boardwalk, arcade and seasonal staff.": "coastal",
             "A city neighbourhood with a high school, a corner shop and a transit stop.": "urban",
-            "A mountain resort town with two schools on one campus and staff housing behind the hotel.": "mountain",
+            "A mountain resort town of lodges, staff housing and a gondola.": "mountain",
             "A rural county seat with a courthouse square and a Walmart twenty minutes out.": "rural",
             "A metro suburb of forty-five thousand with three high schools, a mall and a commuter lot.": "suburban",
-            "A gated subdivision beside a six-lane road, with a business park where an orchard used to be.": "suburban",
-            "A suburb of shrunken lawns and new driveways, with a chain coffee place where the video shop was.": "suburban",
+            "A gated subdivision beside a six-lane road, a business park and an orchard.": "suburban",
+            "A suburb of small lawns, new driveways and a drive-thru.": "suburban",
             "A small city of ninety thousand with a downtown strip, a community college and a party district.": "smallcity",
             "A city neighbourhood where the high school lets out onto six lanes and a bus shelter.": "urban",
             "A small city with a party strip: two bars, an arcade, a kebab van and a lake lot kids use at night.": "nightlife",
@@ -904,31 +792,31 @@ export const WORLD_CHANNELS = [
             "A suburb with a retail park, a bowling alley, a cinema and a dead-end where cars park.": "nightlife"
         },
         entries: [
-            'A harbour town where the fishing quota was cut this spring.',
-            'A commuter suburb where every house is being renovated and nobody knows the neighbours.',
-            'A university town in the middle of a building scandal.',
-            'A border town with two currencies and one working road.',
-            'A desert motel town forty minutes from the nearest supermarket.',
+            'A harbour town of net sheds, a fish market and a ferry queue.',
+            'A commuter suburb where every third house is being renovated and nobody knows the neighbours.',
+            'A university town of lecture halls, cheap flats and a river walk.',
+            'A border town with two languages on the signs and one road that works.',
+            'A desert motel town with one long main street and a truck stop.',
             'A cold-water island with one ferry a day and a school for every age.',
-            'A city district under a compulsory-purchase order; half the shops are empty.',
-            'A logging town in the last year before the mill shuts.',
-            'A canal town where the locks are being automated.',
-            'A mountain village with a new ski lift and old money.',
-            'A railway junction, five hours from anywhere, where the trains still stop.',
-            'A river town rebuilding after the second flood in two years.',
-            'A suburb of cul-de-sacs, a strip mall and a high school with a new astroturf field.',
-            'A lake town in the last week of summer: rented pontoons, a party cove, seasonal money.',
-            'A small city north side: one high school, a diner, a bowling alley, a bus that runs late.',
+            'A city district of workshops, takeaways and four-storey walk-ups.',
+            'A logging town of stacked timber, a mill and two bars.',
+            'A canal town of locks, narrow boats and a towpath pub.',
+            'A mountain village of steep roofs and one ski lift.',
+            'A railway junction of platforms, a waiting room and five hours between trains.',
+            'A river town of levees, boat ramps and houses on stilts.',
+            'A suburb of cul-de-sacs, a strip mall and a high school field.',
+            'A lake town of docks, a boat rental and a bar with a deck.',
+            'A small city north side of one high school, a diner, a bowling alley and a late bus.',
             'An apartment complex at the edge of a college town, half students and half families.',
             'A sun-belt suburb of new builds, irrigation warnings and a school run at seven.',
-            'A rust-belt town where the plant is still open, just smaller than it was.',
-            'A coastal tourist town in high season: boardwalk, seasonal staff, locals priced out.',
+            'A rust-belt town of brick warehouses, a tool-and-die plant and a river.',
+            'A coastal tourist town of boardwalk, arcade and seasonal staff.',
             'A city neighbourhood with a high school, a corner shop and a transit stop.',
-            'A mountain resort town with two schools on one campus and staff housing behind the hotel.',
+            'A mountain resort town of lodges, staff housing and a gondola.',
             'A rural county seat with a courthouse square and a Walmart twenty minutes out.',
             'A metro suburb of forty-five thousand with three high schools, a mall and a commuter lot.',
-            'A gated subdivision beside a six-lane road, with a business park where an orchard used to be.',
-            'A suburb of shrunken lawns and new driveways, with a chain coffee place where the video shop was.',
+            'A gated subdivision beside a six-lane road, a business park and an orchard.',
+            'A suburb of small lawns, new driveways and a drive-thru.',
             'A small city of ninety thousand with a downtown strip, a community college and a party district.',
             'A city neighbourhood where the high school lets out onto six lanes and a bus shelter.',
             'A small city with a party strip: two bars, an arcade, a kebab van and a lake lot kids use at night.',
@@ -1001,6 +889,15 @@ export const WORLD_CHANNELS = [
             'The first Friday after school starts, and the whole town is out.',
             'A heatwave; the lake lot is full and nobody goes home before two.',
             'A hot dry Friday; the quarry road is lined with cars by seven and everyone is somebody else\'s plus-one.',
+            'The last week of summer, when the light goes gold by eight.',
+            'The first cold snap; everyone finds their coat.',
+            'A run of ninety-degree summer days and nobody sleeps.',
+            'The week the school supply lists go up in the shop window.',
+            "An ordinary week; the weather has not decided.",
+            "The week a new term starts and everybody is on time.",
+            "A three-day weekend, and everyone leaves town or wishes they could.",
+            "The week after a local election, and the signs are still up.",
+            "A quiet week with nothing on, which is its own kind of pressure.",
         ],
     },
 ];
@@ -1170,6 +1067,11 @@ export function formatPreRoll(values, type = 'persona') {
     const lines = channelsFor(type)
         .filter(channel => values[channel.key])
         .map(channel => `${channel.label}: ${values[channel.key]}`);
+    if (type === 'world') {
+        const label = WORLD_THEMES.find(theme => theme.text === values.THEME)?.label;
+        const anchors = THEME_ANCHORS[label];
+        if (anchors && lines.length) lines.push('THEME ANCHORS (conditions to adapt; use at least two): ' + anchors.join('; '));
+    }
     if (!lines.length) return '';
     return `PRE-ROLLED FOR THIS SESSION (defaults only: the user's details win every conflict and settle any channel they answer)
 ${lines.join('\n')}

@@ -8,7 +8,7 @@ import assert from 'node:assert';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PRE_ROLL_CHANNELS, CHARACTER_CHANNELS, WORLD_CHANNELS, WORLD_THEMES, THEME_PLACE_KINDS, THEME_SCALES, THEME_SEASONS, channelsFor, rollPreRoll, formatPreRoll, parsePreRoll } from '../preroll.js';
+import { PRE_ROLL_CHANNELS, CHARACTER_CHANNELS, WORLD_CHANNELS, WORLD_THEMES, THEME_ANCHORS, THEME_PLACE_KINDS, THEME_SCALES, THEME_SEASONS, channelsFor, rollPreRoll, formatPreRoll, parsePreRoll } from '../preroll.js';
 import { extractTemplate } from './extract.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -323,9 +323,9 @@ test('worlds get a premise, voice, cast and levers', () => {
 
 test('NSFL changes the consent contract', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
-    assert.ok(world.includes('consent is also negotiable rather than assumed'), 'consent-by-NSFL rule missing');
+    assert.ok(world.includes('consent is negotiable'), 'consent-by-NSFL rule missing');
     assert.ok(world.includes('CNC'), 'CNC missing');
-    assert.ok(world.includes('With NSFL off, the default is ask first'), 'consent-first default missing');
+    assert.ok(world.includes('off: ask first'), 'consent-first default missing');
     assert.ok(world.includes('NPCs may act before asking'), 'NSFL acting rule missing');
 });
 
@@ -346,8 +346,8 @@ test('memorable NPC features are varied', () => {
 test('world length allows 700 and remembers recent bones', () => {
     const src = fs.readFileSync(path.join(root, 'world.js'), 'utf8');
     const world = extractTemplate(src, 'DEFAULT_WORLD_PROMPT');
-    assert.ok(world.includes('Roughly 300-700 words'), 'length cap too low');
-    assert.ok(src.includes("Keep the card's description to 700 words"), 'request cap too low');
+    assert.ok(world.includes('320-700 words of prose'), 'length cap too low');
+    assert.ok(src.includes("320-700 words of prose"), 'request cap too low');
     assert.ok(src.includes('Do not reuse their bones'), 'recent-bones instruction missing');
     assert.ok(src.includes('recentWorldBones(excludeDraftId)'), 'bones not gathered');
     assert.ok(src.includes("'theme: '"), 'bones summary lacks theme');
@@ -362,6 +362,19 @@ test('the persona name becomes {{user}} deterministically', () => {
     assert.ok(src.includes('is wrong about'));
 });
 
+test('cast lines do not truncate mid-word', () => {
+    const src = fs.readFileSync(path.join(root, 'world.js'), 'utf8');
+    assert.ok(src.includes('clauses'));
+    assert.ok(src.includes('shortLook.length + clause.length + 2 > 120'));
+});
+
+test('review-round fixes are present', () => {
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    for (const phrase of ['One room and one moment', 'name a body part or a mess', 'No key appears in two entries', 'Name a person {{user}} knows', 'opening with a moving image']) {
+        assert.ok(world.includes(phrase), 'missing: ' + phrase);
+    }
+});
+
 test('the live-review gotchas are guarded', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     assert.ok(world.includes("never use the persona's name in a card field"));
@@ -372,20 +385,50 @@ test('the live-review gotchas are guarded', () => {
     assert.ok(world.includes('not \"being wanted\" as a vibe'));
 });
 
+test('every theme has adapt-or-invent anchors', () => {
+    assert.strictEqual(Object.keys(THEME_ANCHORS).length, WORLD_THEMES.length);
+    const block = formatPreRoll(rollPreRoll({ seed: 3, type: 'world', steer: { THEME: WORLD_THEMES.find(t => t.label === 'Party town').text } }).values, 'world');
+    assert.ok(block.includes('THEME ANCHORS (conditions to adapt'));
+    assert.ok(block.includes('house party'));
+});
+
+test('vague kinks and duplicate keys are repaired', () => {
+    const src = fs.readFileSync(path.join(root, 'world.js'), 'utf8');
+    assert.ok(src.includes('const KINK_BODY'));
+    assert.ok(src.includes('function cleanKeys'));
+    assert.ok(src.includes('data = cleanKeys(data)'));
+    assert.ok(src.includes('KINK_BODY.test(current)'));
+});
+
+test('kinks and description length are repaired in code', () => {
+    const src = fs.readFileSync(path.join(root, 'world.js'), 'utf8');
+    assert.ok(src.includes('function ensureKinks'));
+    assert.ok(src.includes('function clampDescription'));
+    assert.ok(src.includes('data = ensureKinks(data)'));
+    assert.ok(src.includes('data = clampDescription(data)'));
+});
+
+test('cast and entry count are repaired in code', () => {
+    const src = fs.readFileSync(path.join(root, 'world.js'), 'utf8');
+    assert.ok(src.includes('function ensureCast'));
+    assert.ok(src.includes('data = ensureCast(data)'));
+    assert.ok(src.includes('(data.entries || []).slice(0, count)'));
+});
+
 test('the cast block is required and family is included', () => {
     const src = fs.readFileSync(path.join(root, 'world.js'), 'utf8');
     const world = extractTemplate(src, 'DEFAULT_WORLD_PROMPT');
     const format = extractTemplate(src, 'DEFAULT_WORLD_FORMAT');
     assert.ok(world.includes('Never omit the block'));
     assert.ok(world.includes('four to seven'));
-    assert.ok(world.includes('Include both parents if the details name them'));
+    assert.ok(world.includes('both parents if named'));
     assert.ok(world.includes('first mention of that parent'));
     assert.ok(format.includes('ending with the Cast block'));
 });
 
 test('Party town gets a night map, not a festival', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
-    for (const phrase of ['IF THE THEME IS PARTY TOWN', 'night map', 'No zoning', 'a host who cancels', 'the walk home']) {
+    for (const phrase of ['IF THE THEME IS PARTY TOWN', 'Map the night', 'Pressures are social', 'walk home']) {
         assert.ok(world.includes(phrase), 'missing: ' + phrase);
     }
     const powers = WORLD_CHANNELS.find(c => c.key === 'POWER').entries;
@@ -420,7 +463,7 @@ test('money, jobs and fairs are not mandatory', () => {
 
 test('NSFW is heat and NSFL is harm, not illness', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
-    for (const phrase of ['NSFW is heat', 'NSFL is harm and risk', 'roofies in a drink', 'NSFL is not an illness', 'THE CRUTCHES', 'Bonfires need somewhere to burn']) {
+    for (const phrase of ['NSFW is heat', 'NSFL is harm and risk', 'roofies', 'Neither means grim', 'THE CRUTCHES', 'Bonfires need somewhere to burn']) {
         assert.ok(world.includes(phrase), 'missing: ' + phrase);
     }
 });
@@ -447,9 +490,9 @@ test('steer details and a teenager-scale premise survive', () => {
 
 test('world pressures reach the user and people look like people', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
-    assert.ok(world.includes('Some of it reaches {{user}} through friends, family, school'), 'personal stakes missing');
+    assert.ok(world.includes('Some friction reaches {{user}} through people or obligations'), 'personal stakes missing');
     assert.ok(world.includes('do not write that none of the pressures concern her'), 'anti-indifference guard missing');
-    assert.ok(world.includes('warm, funny or easy beat'), 'warm opening beat missing');
+    assert.ok(world.includes('warm, funny or easy act'), 'warm opening beat missing');
     assert.ok(world.includes('attractive in their own way'), 'NPC attractiveness rule missing');
     const kinds = THEME_PLACE_KINDS['Party town'];
     assert.ok(kinds.includes('nightlife'), 'Party town cannot draw a nightlife place');
@@ -518,7 +561,7 @@ test('greetings split on --- and descriptions stay legible', () => {
     assert.ok(world.includes('line containing only ---'), 'fallback separator instruction missing');
     assert.ok(world.includes('At most five named people in the prose'), 'name budget missing');
     assert.ok(world.includes('Let it breathe'), 'breathing room missing');
-    assert.ok(world.includes('Roughly 300-700 words'), 'foundation budget wrong');
+    assert.ok(world.includes('320-700 words of prose'), 'foundation budget wrong');
     assert.ok(world.includes('foundations, not a rulebook'), 'rulebook guard missing');
     assert.ok(world.includes('Skip administration'), 'admin guard missing');
     assert.ok(world.includes('Do not recap the persona'), 'creator notes rule missing');
@@ -546,7 +589,7 @@ test('NPC entries must be self-contained', () => {
 test('Suburban night exists and world consequences are spelled out', () => {
     assert.ok(WORLD_THEMES.some(theme => theme.label === 'Suburban night'), 'Suburban night theme missing');
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
-    assert.ok(world.includes('REAL CONSEQUENCES, NO PROTAGONIST PRIVILEGE'), 'consequence guidance missing');
+    assert.ok(world.includes('### CONSEQUENCES'), 'consequence guidance missing');
     assert.ok(world.includes('Bad choices compound'), 'consequence examples missing');
     assert.ok(world.includes('WORLD RULES LINE'), 'rules line guidance missing');
 });

@@ -1,6 +1,6 @@
 # Pre-roll steering — design brief (draft for review)
 
-Status: implemented through phase 3 (0.14.0). All steers ship: VIBE/WARMTH mask cells, SEXUALITY,
+Status: implemented through phase 3 (0.14.0); world themes reworked to conditions and anchors in 0.40.2. All steers ship: VIBE/WARMTH mask cells, SEXUALITY,
 tiered EXPERIENCE with orientation filtering, theme pickers for characters and worlds, and persona
 pickers in Bulk and Create Persona. Phase 5 (presets, weights, per-image overrides) remains.
 
@@ -13,6 +13,19 @@ pickers in Bulk and Create Persona. Phase 5 (presets, weights, per-image overrid
 - Review/Fix/Enhance/quality passes receive the block and are told to keep it where details leave a
   channel open.
 - The pre-roll panel already round-trips label lines; the new pickers will write the same lines.
+
+## World theme anchors (0.40.2)
+
+World themes are no longer lists of props. Each theme has three anchors written as conditions (a
+house party, a lake lot, a Friday crowd; a port, a shift change, a crew that shares a house) and the
+prompt demands two of them as concrete facts in paragraph one, adapted or replaced when the place
+disagrees. Anchors also travel in the user message directly, not only in the system block. Party town
+keeps its own night-map section: the Friday, not a festival.
+
+The world post-processing now enforces what the prompt only asks for: NSFL harm with a named local,
+kink lines with a body part or a mess, sexed fallback lines, clause-boundary cast looks, and keys
+with generics and duplicates removed. Descriptions are clamped to 700 words without touching the
+Cast block.
 
 ## Problem
 
