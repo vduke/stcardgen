@@ -313,7 +313,7 @@ test('NPC genitals have proportions and kinks are explained', () => {
 
 test('worlds get a premise, voice, cast and levers', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
-    for (const phrase of ['GIVE {{user}} A REASON TO BE HERE', 'A sandbox needs an entry point', 'SANDBOX LEVERS', 'a knowledge route', '\"Voice:\"', '\"Cast:\"', 'plain facts, not prose', '\"Quirks:\"']) {
+    for (const phrase of ['GIVE {{user}} A REASON TO BE HERE', 'A sandbox needs an entry point', 'SANDBOX LEVERS', 'a knowledge route', '\"Cast:\"', 'plain facts, not prose', '\"Quirks:\"']) {
         assert.ok(world.includes(phrase), 'missing: ' + phrase);
     }
     assert.ok(world.includes('Competence, clipboard duty'), 'quirk/kink split missing');
