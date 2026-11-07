@@ -316,6 +316,11 @@ test('the quality layer receives the pre-roll block', () => {
 });
 
 // 0.14.0: the mask is chosen by an energy/warmth cell, and sexuality settles before experience.
+test('reviewer knows what NSFL means', () => {
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('NSFL means harm and risk in play, not illness'));
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('Do not ask for an illness'));
+});
+
 test('reviewer wants kink names, not rooms', () => {
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('Kink entries lead with the recognised kink name'), 'kink-name rule missing');
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('instead of appetites'), 'scene-list failure missing');

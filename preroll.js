@@ -59,7 +59,7 @@ export const WORLD_THEMES = [
     { label: "Endless summer", text: "Endless summer: lake days, a boardwalk, ice cream before dinner, fireworks over water, and a curfew everyone ignores." },
     { label: "Pool-and-cookout suburb", text: "Pool-and-cookout suburb: a community pool, block parties, sprinklers, fireflies, and a grill going every evening." },
     { label: "Festival week", text: "Festival week: fairgrounds, food trucks, a Ferris wheel, bunting across the street, and a committee that has lost control of the schedule." },
-    { label: "Party town", text: "Party town: house parties, a strip of bars and arcades, a rented hall, flyers nobody throws away, and a Friday crowd that starts early." },
+    { label: "Party town", text: "Party town: house parties off the county road, a bar strip and an arcade, a lake lot at night, flyers nobody throws away, and a Friday crowd that starts early." },
     { label: "Holiday resort", text: "Holiday resort: a ski hill, a rented lodge, karaoke, hot tubs, and staff housing behind the hotel." },
     { label: "Main-street revival", text: "Main-street revival: a new bakery, a mural going up, a farmers market, and locals arguing about parking with real affection." },
 ];
@@ -235,8 +235,8 @@ export const THEME_SEASONS = {
         8
     ],
     "Party town": [
-        0,
-        3,
+        12,
+        13,
         8
     ],
     "Holiday resort": [
@@ -359,8 +359,9 @@ export const THEME_PLACE_KINDS = {
             "suburban"
         ],
         "Party town": [
-            "urban",
-            "nightlife"
+            "urbanlively",
+            "nightlife",
+            "partyrural"
         ],
         "Holiday resort": [
             "mountain",
@@ -856,10 +857,11 @@ export const WORLD_CHANNELS = [
             "A suburb of shrunken lawns and new driveways, with a chain coffee place where the video shop was.": "suburban",
             "A small city of ninety thousand with a downtown strip, a community college and a party district.": "smallcity",
             "A city neighbourhood where the high school lets out onto six lanes and a bus shelter.": "urban",
-            "A small city with a party strip: two bars, an arcade, a kebab van and a rented hall on Saturdays.": "nightlife",
+            "A small city with a party strip: two bars, an arcade, a kebab van and a lake lot kids use at night.": "nightlife",
+            "A county-road hamlet with a barn, a bonfire field and a strip two towns over.": "partyrural",
             "A downtown strip with a music venue, three bars and a twenty-four-hour diner.": "urbanlively",
             "A city neighbourhood where the high school lets out onto six lanes and a bus shelter.": "urbanlively",
-            "A suburb with a retail park, a bowling alley, a cinema and a drive-thru that stays open late.": "nightlife"
+            "A suburb with a retail park, a bowling alley, a cinema and a dead-end where cars park.": "nightlife"
         },
         entries: [
             'A harbour town where the fishing quota was cut this spring.',
@@ -889,9 +891,10 @@ export const WORLD_CHANNELS = [
             'A suburb of shrunken lawns and new driveways, with a chain coffee place where the video shop was.',
             'A small city of ninety thousand with a downtown strip, a community college and a party district.',
             'A city neighbourhood where the high school lets out onto six lanes and a bus shelter.',
-            'A small city with a party strip: two bars, an arcade, a kebab van and a rented hall on Saturdays.',
+            'A small city with a party strip: two bars, an arcade, a kebab van and a lake lot kids use at night.',
+            'A county-road hamlet with a barn, a bonfire field and a strip two towns over.',
             'A downtown strip with a music venue, three bars and a twenty-four-hour diner.',
-            'A suburb with a retail park, a bowling alley, a cinema and a drive-thru that stays open late.',
+            'A suburb with a retail park, a bowling alley, a cinema and a dead-end where cars park.',
         ],
     },
     {
@@ -901,7 +904,9 @@ export const WORLD_CHANNELS = [
             'A mayor elected on promises and a dock boss who actually decides.',
             'The council is elected and the developer has been seen buying the coffee.',
             'A police chief who is reasonable, tired, and knows exactly how much he can afford to notice.',
-            'The parish priest holds the food bank, the hall and the only quiet room.',
+            'The parish priest holds the food bank, the hall and the only quiet room, and is one power among several.',
+            'Two sisters own both bars, and their door decides who has a summer.',
+            'A promoter with a barn, a generator and a text list controls every party worth going to.',
             'The family that owns the mill also owns the paper and the bus company.',
             'A tenants\' association of three people doing the work of forty.',
             'The clinic is understaffed and the nurse practitioner has become the local authority.',
@@ -951,6 +956,8 @@ export const WORLD_CHANNELS = [
             'A funeral tomorrow, and the whole street has rearranged its schedule for it.',
             'The first week of the fishing season, boats going out before dawn.',
             'Late autumn, wind off the water, and the first shop has already put up tinsel.',
+            'The first Friday after school starts, and the whole town is out.',
+            'A heatwave; the lake lot is full and nobody goes home before two.',
         ],
     },
 ];

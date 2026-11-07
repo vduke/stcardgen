@@ -321,9 +321,9 @@ test('worlds get a premise, voice, cast and levers', () => {
 
 test('NSFL changes the consent contract', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
-    assert.ok(world.includes('consent is negotiable rather than assumed'), 'consent-by-NSFL rule missing');
+    assert.ok(world.includes('consent is also negotiable rather than assumed'), 'consent-by-NSFL rule missing');
     assert.ok(world.includes('CNC'), 'CNC missing');
-    assert.ok(world.includes('If NSFL is off, the default is ask first'), 'consent-first default missing');
+    assert.ok(world.includes('With NSFL off, the default is ask first'), 'consent-first default missing');
     assert.ok(world.includes('NPCs may act before asking'), 'NSFL acting rule missing');
 });
 
@@ -339,6 +339,23 @@ test('memorable NPC features are varied', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     assert.ok(world.includes('vary what it is'), 'feature variety rule missing');
     assert.ok(world.includes('Do not give every NPC a scar or a chipped tooth'), 'anti-common quirk rule missing');
+});
+
+test('NSFW is heat and NSFL is harm, not illness', () => {
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    for (const phrase of ['NSFW is heat', 'NSFL is harm and risk', 'roofies in a drink', 'NSFL is not an illness', 'THE CRUTCHES', 'Bonfires need somewhere to burn']) {
+        assert.ok(world.includes(phrase), 'missing: ' + phrase);
+    }
+});
+
+test('Party town varies its venues and powers', () => {
+    const theme = WORLD_THEMES.find(t => t.label === 'Party town').text;
+    assert.ok(theme.includes('house parties'), 'theme lost house parties');
+    assert.ok(!theme.includes('rented hall'), 'theme still pushes a hall');
+    assert.ok(THEME_PLACE_KINDS['Party town'].includes('partyrural'), 'no county-road venue');
+    assert.ok(WORLD_CHANNELS.find(c => c.key === 'POWER').entries.some(e => /sisters own both bars/.test(e)), 'no non-priest power');
+    const seasons = WORLD_CHANNELS.find(c => c.key === 'SEASON').entries;
+    assert.ok(seasons[12] && seasons[13], 'party seasons missing');
 });
 
 test('world pressures reach the user and people look like people', () => {
