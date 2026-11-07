@@ -307,7 +307,8 @@ test('NPC genitals have proportions and kinks are explained', () => {
     assert.ok(world.includes('length and girth in inches'), 'cock size rule missing');
     assert.ok(world.includes('labia shape and size'), 'female proportions missing');
     assert.ok(world.includes('A bare noun is not a kink'), 'kink explanation rule missing');
-    assert.ok(world.includes('Praise (sub) — needs to be told out loud'), 'worked kink example missing');
+    assert.ok(world.includes('Power play (dom) — pins her down'), 'worked kink example missing');
+    assert.ok(world.includes('not a scene: no setting, props, smells'), 'named-kink rule missing');
 });
 
 test('worlds get a premise, voice, cast and levers', () => {

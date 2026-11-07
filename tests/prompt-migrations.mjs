@@ -316,6 +316,11 @@ test('the quality layer receives the pre-roll block', () => {
 });
 
 // 0.14.0: the mask is chosen by an energy/warmth cell, and sexuality settles before experience.
+test('reviewer wants kink names, not rooms', () => {
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('Kink entries lead with the recognised kink name'), 'kink-name rule missing');
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('instead of appetites'), 'scene-list failure missing');
+});
+
 test('the rubric cannot sand the heat off', () => {
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('heat (personas and characters)'), 'heat criterion missing');
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('Explicit detail is not bloat'), 'explicit-not-bloat rule missing');

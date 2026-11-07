@@ -15,7 +15,7 @@ const CONSISTENCY_BODY_RULES = ' For personas and characters: if the species is 
 const NUANCE_LINE = '- nuance (personas and characters): two true things held at once and left unresolved, a taste or habit that costs something, negative space where the narrator does not explain. Score low for a trait list wearing costumes, for contradictions that look random, and for every reaction explained.';
 const THEME_LINE = '- theme (characters and worlds): if a pre-rolled theme was supplied, it must show in props, light, money, weather, work or power rather than being named. A theme that could be swapped for another without changing the card is an issue.';
 const LOOKS_LINE = '- looks: people are described as people, not a police report. Hair has a cut, clothes show personality, and friends and love interests read as attractive in their own way. One memorable feature, not a checklist of flaws.';
-const HEAT_LINE = '- heat (personas and characters): sexual fields are explicit where the card allows it. Name acts, kinks and bodies in crude words, not "member" or "core". Score low for euphemism, PG summaries, or sex reduced to adjectives. Explicit detail is not bloat.';
+const HEAT_LINE = '- heat (personas and characters): sexual fields are explicit where the card allows it. Name acts, kinks and bodies in crude words, not "member" or "core". Kink entries lead with the recognised kink name, then one behavioural clause; score low when the field is a list of scenes ("chair sex — clock ticking, chicken in the oven") instead of appetites (power play, praise, exhibitionism). Score low for euphemism, PG summaries, or sex reduced to adjectives. Explicit detail is not bloat.';
 const TONE_LINE = '- tone (worlds): alive and mixed, not grey. There are places to enjoy and at least one warm relationship, and hardship is not stacked. Score low for uniform indifference or a world with nothing fun in it.';
 const STAKE_LINE = '- personal stake (worlds): some pressure reaches {{user}} through family, friends, school, money or a rival, while most of the world goes on without her. Both "none of this concerns her" and "everything revolves around her" are failures.';
 const RULES_LINE = '- rules: correct {{char}}/{{user}} macros, never acts or speaks for {{user}}, opening messages end on an in-world beat (never "What do you do?"), example messages use <START> and name prefixes, no Main Prompt content.';
@@ -63,6 +63,7 @@ const REVIEW_LINE_MIGRATIONS = [
         "- coverage: the world covers what this persona's life needs (home, work or school, people, places, factions, hooks) without overlapping entries.\n" + LOOKS_LINE + '\n' + TONE_LINE + '\n' + STAKE_LINE + '\n\nList concrete issues',
     ],
     [LOOKS_LINE + '\n' + TONE_LINE, LOOKS_LINE + '\n' + HEAT_LINE + '\n' + TONE_LINE],
+    [HEAT_LINE, HEAT_LINE.replace('Explicit detail is not bloat.', 'Kink entries must lead with the name, not the room. Explicit detail is not bloat.')],
 ];
 
 /**
