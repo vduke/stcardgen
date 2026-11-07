@@ -52,11 +52,15 @@ The narrator is the room, the weather and the NPCs, not {{user}}'s inner voice.
 ### LEAVE ROOM TO REVEAL
 The point of a sandbox is that the player finds out who their persona is by acting. Build places and people that offer choices, not verdicts.
 - NPCs get opinions, questions, offers, mistakes and small demands that {{user}} can answer however they like.
-- At least a third of the entries should be open-ended: a conversation that could go several ways, a problem nobody has solved, a person with an unstated reason to be interested.
+- Some entries should be open-ended: a conversation that could go several ways, a problem nobody has solved, a person with an unstated reason to be interested. Not every entry needs a hook.
 - Never pre-answer what {{user}} will do about anything.
 
+### DO NOT REUSE THE LAST WORLD'S BONES
+Each world should be carried by different things. Vary what the premise costs, where the scene lives, what the pressure is made of (a person, money, time, weather, a rule, a want) and what holds the place together (institutions, families, cliques, one street).
+Do not assume every world has an industry closing, a civic threat, a festival, a water tower, a parish, a lake, a quirky local, or a list of three pressures. The same town twice is the failure.
+
 ### THEME IS PRESSURE, NOT COSTUME
-The pre-rolled WORLD THEME is the physical and social atmosphere: light, materials, sound, weather, money, work, the kind of power in the air. It must be present in every entry and named as a genre almost never.
+The pre-rolled WORLD THEME is the physical and social atmosphere: light, materials, sound, weather, money, work, the kind of power in the air. It belongs in the place and most entries, and is named as a genre almost never.
 - Build with its props, not its adjectives. "Neon noir" is wet signs, debt, a cash-only bar, a cop who answers to somebody; "dystopian austerity" is permits, a queue, a speaker on a pole, a black market that works better than the office.
 - Theme sets scarcity: what is cheap, what is rationed, what people will trade for. That scarcity is where conflict comes from — eventually. Pressure is not a crisis, and the opening can be pleasant.
 - Theme colours prose but not everyone's mood. A gothic town still has somebody funny in it; a sunny one still has a bully.
@@ -65,7 +69,7 @@ The pre-rolled WORLD THEME is the physical and social atmosphere: light, materia
 ### INVENT THE PRESSURE AND THE OPENING
 The block does not hand you either. Build them.
 - Derive pressure from what the theme makes scarce, expensive, seasonal or about to end: the last week of the season, the rent going up, the road closed, the one good thing being sold.
-- Give two or three pressures, ordinary and mixed: social, personal, family, time, weather, other people being difficult. Money is one option, not a slot to fill. Each pressure needs somebody who benefits and somebody who pays.
+- Give one or two pressures, ordinary and mixed: social, personal, family, time, weather, other people being difficult. Money is one option, not a slot to fill. One pressure is enough if it is good; each one needs somebody who benefits and somebody who pays.
 - The opening is the specific live moment this place and season produce, not a generic event. Vary its shape between worlds: mid-conversation, an arrival, a task going wrong, a discovery, a ritual, a favour called in. It can be fun, and it does not have to be trouble.
 
 ### GIVE {{user}} A REASON TO BE HERE
@@ -122,20 +126,20 @@ The rolled channels are a floor, not a map. Invent past them.
 - Use at most one explicit nod to the persona's listed skills or tastes in the whole world, and put it in an entry rather than in the description's thesis.
 - Do not reuse the same opening shape every time. Start in motion — someone talking, a task going wrong, an arrival — and keep establishing description to a sentence or two.
 - Vary what leads: one world can grow from a place, another from a person, another from an event.
-- Let at least one detail be surprising or funny and not justified by the theme or the persona.
-- If a theme prop (a diner, a strip mall) does not fit the place that emerged, cut it rather than force it.
+- Leave room for one detail that is funny or strange without being justified by the theme or the persona.
+- If a theme prop (a diner, a strip mall) does not fit the place that emerged, cut it rather than force it. Two true theme details beat six.
 - The world's name and geography are free inventions.
 - PLACE serves the theme and the notes. If the rolled place fights either, move it: an island can be a suburb with a ferry; a suburb can have a lake. Notes that name a year or a technology beat the TEXTURE roll.
 
-### WHAT THE WORLD MUST COVER
-{{user}}'s practical circumstances. Work out what their life needs and fill it in:
-- Home and family: where they live, parents/siblings/partner, household dynamics, who pays.
-- Work or school: the institution, its culture, bosses/teachers/classmates/crew, the pay and the hours.
-- Social circle: friends, rivals, love interests, enemies, each with their own goals.
-- Places: hangouts, hot spots, the wider city/region/star system, and what happens there.
-- Organizations: factions, alliances, companies, gangs, clubs, governments, and where {{user}} stands with them.
-- Daily life: routines, hobbies, events, customs, slang, technology or magic rules.
-- Hooks: tensions, secrets and upcoming events that can start stories, each with somebody already involved.
+### WHAT THE WORLD HAS TO COVER
+Only what {{user}}'s life actually needs. Not every category below needs its own entry, and a category can be one entry or six:
+- A base: where they live and who with.
+- A day: school, work, training or care, and the people who run it.
+- A social circle: friends, rivals, love interests.
+- Places they go, and what happens there.
+- Whatever the premise needs: an institution, a faction, a rule, a date.
+- Hooks that could start a story, each with somebody already involved.
+If a category does not fit this world, leave it out and use the entries for something better.
 
 Examples: a college student needs the campus, their dorm or apartment, parents, roommate, friend group, professors, a part-time job, parties and local spots. A starship captain needs the ship, the crew, the star system being traveled, political powers and alliances, rivals, ports of call and the current mission, plus the dull maintenance that keeps a ship alive.
 
@@ -146,11 +150,11 @@ The block exists so a batch of worlds from the same persona cannot converge on t
 
 ### SANDBOX LEVERS
 Give the sandbox one or two moving parts the narrator can run, in configuration entries rather than the description:
-- a clock with a date and what happens when it runs out;
+- a clock with a date and what happens when it runs out, if a clock fits;
 - a knowledge route: how public something becomes and through whom;
 - a relationship dial or gate: what raises it, what lowers it, what unlocks;
 - a recurring public event with its own rules.
-Name them plainly, keep them consistent, and let them bite. These are the levers that make choices matter without scripting outcomes.
+Name them plainly, keep them consistent, and let them bite. Zero is allowed if the world does not need levers; these are help, not a checklist.
 
 ### THE CRUTCHES
 Some props are always in reach: a parish hall, a priest, a fair and a town committee, a rented hall. Use at most two of them unless the theme is Festival week.
@@ -163,7 +167,7 @@ Some props are always in reach: a parish hall, a priest, a fair and a town commi
 - description: foundations, not a rulebook. Three paragraphs: (1) the PLACE and SCALE in one sentence — type of place, rough population, distance from a city — what the landscape around it actually is (woods, farmland, lake, shore, sprawl), and the premise that puts {{user}} here with a stake; (2) what people do for fun and where they gather, one genuinely good thing about the place, and who {{user}} knows there; (3) one or two live pressures at {{user}}'s own scale — a friend's sulk, a list, a test, a text, a parent's mood, a plan that will not come together — with the town's bigger story behind them. Money only when the place runs on it. At least one reaches her through people she knows. Roughly 300-500 words. At most four named people in the prose, each doing something rather than filling a role slot.
   Only what a local would tell you in a minute. Skip administration unless it is characterful: opening times, age policies, fee schedules, licensing, who bills whom, exact shift patterns. One fee or one rule can stay if the place turns on it; the rest can wait for play.
   Let it breathe: vary sentence length, no and-chains, no announcing a count of pressures. No economic essay, and no need to state what anything costs: money is people, not figures, and only earns a clause when it is the point. Show how the place meets {{user}} instead of declaring "the world does not care", and do not write that none of the pressures concern her.
-- After the prose, one short block. "Cast:" four to six locals {{user}} would actually know (family, friends, a rival, someone who runs a place), one line each: "- Name, age — role; one look; one hook." The look is concrete: hair, build, the clothes they actually wear; the people {{user}} runs with should read attractive in their own way. No plots, no full histories. The chat template handles narrator voice; do not specify it here. Cast names do not count against the prose budget.
+- After the prose, one short block. "Cast:" three to six locals {{user}} would actually know (family, friends, a rival, someone who runs a place), one line each: "- Name, age — role; one look; one hook." The look is concrete: hair, build, the clothes they actually wear; the people {{user}} runs with should read attractive in their own way. No plots, no full histories. The chat template handles narrator voice; do not specify it here. Cast names do not count against the prose budget.
   Everything the user's details state is canon and must appear: both named parents, ethnicity, body or sexuality conventions, the people {{user}} knows. If the details say everyone of an age is bisexual or shaved, every relevant entry says so; put the convention once in the description too instead of repeating boilerplate.
 - scenario: where {{user}}'s story starts, derived from the theme, place, season and derived pressures: the specific live moment this world produces, involving at least one person who matters to her. Not necessarily a problem — an invitation, a ritual, an arrival, a task or a party starting all count. Something is unresolved, but it does not need to be urgent yet.
 - first_mes: an immersive opening scene addressed to {{user}} in second person, roughly 180-300 words. Start in motion: at most two sentences of setting before someone moves or speaks. Give one warm, funny or easy beat with a friend, sibling or familiar person before any friction. Never act or speak for {{user}}. End on a concrete beat (an NPC speaking or acting, or something happening) that {{user}} can react to — friendly, curious, awkward or tense. Not every opening needs trouble. Never end with a question to the player such as "What do you do?", "What's your next move?" or "Where do you go from here?".
@@ -197,7 +201,7 @@ Some props are always in reach: a parish hall, a priest, a fair and a town commi
   Competence, clipboard duty, being asked how things work and quiet company go under Quirks.
   When NSFW is off, skip Body, Genitals, Sexuality and Kinks; keep Quirks and a single plain build clause.
   "Personality:" three or four traits plus how they behave when comfortable and when cornered.
-  "Goal:" what they are trying to get this week, and who stands in the way.
+  "Goal:" what they are trying to get this week, and who stands in the way. For a bit-part NPC this can be one clause.
   Then the "does not know" sentence.
 - NPC entries may run 150-240 words when NSFW is on, 120-200 when it is off. Do not compress away the name, the age or the body.
 - For important NPCs (family, close friends, love interests, rivals, bosses, crew), end the content with "Example dialogue:" followed by 2-3 short lines in their own voice, showing how they talk to {{user}} and what they call her.

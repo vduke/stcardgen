@@ -343,6 +343,14 @@ test('memorable NPC features are varied', () => {
     assert.ok(world.includes('Do not give every NPC a scar or a chipped tooth'), 'anti-common quirk rule missing');
 });
 
+test('the prompt does not prescribe the same skeleton', () => {
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    for (const phrase of ["DO NOT REUSE THE LAST WORLD'S BONES", 'Give one or two pressures', 'Some entries should be open-ended', 'Zero is allowed', 'Only what {{user}}\'s life actually needs']) {
+        assert.ok(world.includes(phrase), 'missing: ' + phrase);
+    }
+    assert.ok(!world.includes('At least a third of the entries'), 'third-of-entries mandate still present');
+});
+
 test('money, jobs and fairs are not mandatory', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     assert.ok(world.includes('Money is one option, not a slot to fill'));
