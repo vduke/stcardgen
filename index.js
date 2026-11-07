@@ -326,7 +326,11 @@ const PROMPT_LINE_MIGRATIONS = [
     ],
     [
         '- alternate_greetings: 1-2 alternative opening messages.',
+        '- alternate_greetings: {{greetings}} alternative opening messages, following the same rules as first_mes.',
+    ],
+    [
         '- alternate_greetings: 1-2 alternative opening messages, following the same rules as first_mes.',
+        '- alternate_greetings: {{greetings}} alternative opening messages, following the same rules as first_mes.',
     ],
 ];
 
@@ -340,7 +344,7 @@ const CHARACTER_FORMAT_LINE_MIGRATIONS = [
 ];
 
 // Shipped-prompt identity for the character prompt; see refreshShippedPrompt() in loadSettings.
-const CHARACTER_PROMPT_STAMP = '### DESCRIPTION — THE WORKING SHEET (0.32.0)';
+const CHARACTER_PROMPT_STAMP = '### DESCRIPTION — THE WORKING SHEET (0.33.0)';
 const CHARACTER_PROMPT_HEADER = 'You are an expert character card writer for SillyTavern roleplay.';
 
 const DEFAULT_CHARACTER_PROMPT = `You are an expert character card writer for SillyTavern roleplay. You turn a reference image (plus
@@ -381,7 +385,7 @@ kind of work in the room — and it should sit inside concrete detail, never as 
 - Theme is a pressure, not a filter. A gothic character can be funny; a sunlit one can be cruel.
 - Never write "a neon-noir character". Show the rain and the debt.
 
-### DESCRIPTION — THE WORKING SHEET (0.32.0)
+### DESCRIPTION — THE WORKING SHEET (0.33.0)
 Use these headings in this order, as a working sheet. Roughly 600-900 words; let a section run
 longer when the character earns it and cut a section short when it does not. Every line is a fact the
 model can act on; no filler, no summary sentence about their essence. If a sentence says nothing you
@@ -552,6 +556,8 @@ const defaultSettings = Object.freeze({
     worldPrompt: DEFAULT_WORLD_PROMPT,
     worldFormat: DEFAULT_WORLD_FORMAT,
     worldEntryCount: 20,
+    // Greetings are replay entry points. Two by default; raise it for variety, lower it for one scene.
+    altGreetings: 2,
     // Worlds reason for a long time before writing: at 20 entries the reply needs ~8k tokens of JSON
     // on top of 10-13k of reasoning. 16000 truncated; 24000 finishes with headroom.
     worldMaxTokens: 24000,
@@ -632,6 +638,7 @@ function loadSettings() {
     // overriding a value the user sets afterwards.
     if (!s.worldTokenBump) {
         if (Number(s.worldMaxTokens) === 12000) s.worldMaxTokens = defaultSettings.worldMaxTokens;
+        s.altGreetings = Math.min(20, Math.max(0, Math.round(Number(s.altGreetings) || 0)));
         s.worldTokenBump = true;
     }
     // Idempotent: this runs on every load, so a pair never re-applies once its replacement is present.
@@ -1061,7 +1068,7 @@ function buildMessages(type, imageDataUrl, details, bannedNames, imageDescriptio
     const s = settings();
     const prompt = type === 'persona' ? s.personaPrompt : s.characterPrompt;
     const format = type === 'persona' ? s.personaFormat : s.characterFormat;
-    let system = `${prompt.trim()}\n\n${format.trim()}`;
+    let system = `${prompt.trim()}\n\n${format.trim()}`.replace(/{{greetings}}/g, String(s.altGreetings));
     // The persona prompt tells the model to expect this block above itself. Nothing else supplies it,
     // so without this the "defaults" it claims to have are simply absent.
     if (preRollBlock.trim()) system = `${preRollBlock.trim()}\n\n${system}`;
@@ -2783,6 +2790,7 @@ async function initSettingsUI() {
     bindSetting('#stcg_world_format', 'worldFormat');
     bindSetting('#stcg_world_count', 'worldEntryCount', { type: 'number' });
     bindSetting('#stcg_world_max_tokens', 'worldMaxTokens', { type: 'number' });
+    bindSetting('#stcg_alt_greetings', 'altGreetings', { type: 'number' });
     bindSetting('#stcg_auto_review', 'autoReview', { type: 'checkbox' });
     bindSetting('#stcg_auto_fix_below', 'autoFixBelow', { type: 'number' });
     bindSetting('#stcg_auto_fix_rounds', 'autoFixRounds', { type: 'number' });

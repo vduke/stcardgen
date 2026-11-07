@@ -24,6 +24,7 @@ const NO_QUESTION_ENDING = 'End on a concrete beat (an action, a line of dialogu
 const indexSrc = fs.readFileSync(path.join(root, 'index.js'), 'utf8');
 const worldSrc = fs.readFileSync(path.join(root, 'world.js'), 'utf8');
 const qualitySrc = fs.readFileSync(path.join(root, 'quality.js'), 'utf8');
+const settingsSrc = fs.readFileSync(path.join(root, 'settings.html'), 'utf8');
 
 /** Pulls simple `const NAME = '...';` string constants out of quality.js for evaluating its table. */
 function qualityConsts(src) {
@@ -398,6 +399,18 @@ test('world content and consequence flags are wired', () => {
 test('persona complexion carries no scent', () => {
     assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('No scent in Appearance'));
     assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('No scent, no tan lines'));
+});
+
+test('alternate greeting count is a setting', () => {
+    assert.ok(indexSrc.includes('altGreetings: 2,'), 'default is not 2');
+    assert.ok(settingsSrc.includes('id="stcg_alt_greetings"'), 'setting input missing');
+    assert.match(indexSrc, /bindSetting\('#stcg_alt_greetings', 'altGreetings'/);
+    assert.ok(defaults.PROMPT_LINE_MIGRATIONS.includes('{{greetings}}'), 'character prompt lacks token');
+    assert.ok(defaults.WORLD_PROMPT_LINE_MIGRATIONS.includes('{{greetings}}'), 'world prompt lacks token');
+    assert.match(indexSrc, /replace\(\/\{\{greetings\}\}\/g/);
+    assert.match(worldSrc, /replace\(\/\{\{greetings\}\}\/g/);
+    const migrated = tables.PROMPT_LINE_MIGRATIONS.reduce((text, [oldLine, newLine]) => text.replace(oldLine, newLine), '- alternate_greetings: 1-2 alternative opening messages, following the same rules as first_mes.');
+    assert.ok(migrated.includes('{{greetings}}'), 'old prompt did not migrate to token');
 });
 
 test('stations are not mandatory jobs', () => {

@@ -16,12 +16,12 @@ export const WORLD_FORMAT_LINE_MIGRATIONS = [
 
 // Shipped-prompt identity: a saved world prompt that still opens with this line and lacks the stamp is
 // the shipped text, and gets replaced when the shape changes. Anything rewritten from line one is kept.
-export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.32.0)';
+export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.33.0)';
 export const WORLD_PROMPT_HEADER = 'You are a world-builder for SillyTavern roleplay.';
 
 export const DEFAULT_WORLD_PROMPT = `You are a world-builder for SillyTavern roleplay. You turn a user persona into a living sandbox: a world/narrator character card plus a lorebook (World Info) that makes the setting feel real and reactive.
 
-### THE WORLD HAS ITS OWN LIFE (0.32.0)
+### THE WORLD HAS ITS OWN LIFE (0.33.0)
 The persona is the character the USER plays. Refer to them as {{user}} everywhere. The sandbox card ({{char}}) is not one person: it is the narrator / game master who describes the world and voices every NPC.
 
 ### THE WORLD IS NOT BUILT AROUND THE PERSONA
@@ -167,7 +167,7 @@ Some props are always in reach: a parish hall, a priest, a fair and a town commi
   Everything the user's details state is canon and must appear: both named parents, ethnicity, body or sexuality conventions, the people {{user}} knows. If the details say everyone of an age is bisexual or shaved, every relevant entry says so; put the convention once in the description too instead of repeating boilerplate.
 - scenario: where {{user}}'s story starts, derived from the theme, place, season and derived pressures: the specific live moment this world produces, involving at least one person who matters to her. Not necessarily a problem — an invitation, a ritual, an arrival, a task or a party starting all count. Something is unresolved, but it does not need to be urgent yet.
 - first_mes: an immersive opening scene addressed to {{user}} in second person, roughly 180-300 words. Start in motion: at most two sentences of setting before someone moves or speaks. Give one warm, funny or easy beat with a friend, sibling or familiar person before any friction. Never act or speak for {{user}}. End on a concrete beat (an NPC speaking or acting, or something happening) that {{user}} can react to — friendly, curious, awkward or tense. Not every opening needs trouble. Never end with a question to the player such as "What do you do?", "What's your next move?" or "Where do you go from here?".
-- alternate_greetings: 2-4 alternative opening scenes, one per array element and each from a different premise or place in {{user}}'s life. Use different places or moments in {{user}}'s life and the same rules as first_mes. If you return them in one string, separate the scenes with a line containing only ---.
+- alternate_greetings: {{greetings}} alternative opening scenes, one per array element and each from a different premise or place in {{user}}'s life. Use different places or moments in {{user}}'s life and the same rules as first_mes. If you return them in one string, separate the scenes with a line containing only ---.
 - mes_example: 2-3 short example exchanges, each starting with <START> and using {{user}}: and {{char}}: prefixes, where {{char}} narrates and voices different NPCs so their distinct speech styles show.
 - creator_notes: two or three sentences for the human reader, about what the world is for and how to play against it. Do not recap the persona or list her skills — her card already carries them.
 - tags: 3-8 genre/setting tags.
@@ -380,7 +380,8 @@ function worldRulesLine(flags = {}) {
 function buildSystem({ includeImagePrompt, source, excludeDraftId, preRollBlock = '', flags = {} }) {
     const s = api.settings();
     const rules = worldRulesLine(flags);
-    const parts = [String(preRollBlock || '').trim(), rules, s.worldPrompt.trim(), s.worldFormat.trim(), banText(source, excludeDraftId)];
+    const greetingCount = String(Math.min(20, Math.max(0, Math.round(Number(s.altGreetings) || 0))));
+    const parts = [String(preRollBlock || '').trim(), rules, s.worldPrompt.trim().replace(/{{greetings}}/g, greetingCount), s.worldFormat.trim(), banText(source, excludeDraftId)];
     if (includeImagePrompt) parts.push(WORLD_IMAGE_PROMPT_INSTRUCTION);
     return parts.filter(Boolean).join('\n\n');
 }
