@@ -16,12 +16,12 @@ export const WORLD_FORMAT_LINE_MIGRATIONS = [
 
 // Shipped-prompt identity: a saved world prompt that still opens with this line and lacks the stamp is
 // the shipped text, and gets replaced when the shape changes. Anything rewritten from line one is kept.
-export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.36.4)';
+export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.36.6)';
 export const WORLD_PROMPT_HEADER = 'You are a world-builder for SillyTavern roleplay.';
 
 export const DEFAULT_WORLD_PROMPT = `You are a world-builder for SillyTavern roleplay. You turn a user persona into a living sandbox: a world/narrator character card plus a lorebook (World Info) that makes the setting feel real and reactive.
 
-### THE WORLD HAS ITS OWN LIFE (0.36.4)
+### THE WORLD HAS ITS OWN LIFE (0.36.6)
 The persona is the character the USER plays. Refer to them as {{user}} everywhere, including the description, scenario, first message and every entry — never use the persona's name in a card field. The sandbox card ({{char}}) is not one person: it is the narrator / game master who describes the world and voices every NPC.
 
 ### THE WORLD IS NOT BUILT AROUND THE PERSONA
@@ -181,17 +181,17 @@ The world is the Friday, not a festival. Party town means social access and a ni
 - After the prose, one short block. "Cast:" four to seven locals {{user}} would actually know, family first, then friends, a rival and someone who runs a place. One line each: "- Name, age — role; one look; one hook." A hook is a person or a want. Never omit the block; everything named in the details belongs in it. The look is concrete: hair, build, the clothes they actually wear; the people {{user}} runs with should read attractive in their own way. No plots, no full histories. The chat template handles narrator voice; do not specify it here. Cast names do not count against the prose budget.
   Everything the user's details state is canon and must appear: both named parents, ethnicity, body or sexuality conventions, the people {{user}} knows. When the details name an ethnicity, render it at the first mention of that parent, in the prose or the cast. If the details say everyone of an age is bisexual or shaved, every relevant entry says so; put the convention once in the description too instead of repeating boilerplate.
 - scenario: where {{user}}'s story starts, derived from the theme, place, season and derived pressures: the specific live moment this world produces, involving at least one person who matters to her. Not necessarily a problem — an invitation, a ritual, an arrival, a task or a party starting all count. Something is unresolved, but it does not need to be urgent yet.
-- first_mes: an immersive opening scene addressed to {{user}} in second person, roughly 180-300 words. Start in motion: at most two sentences of setting before someone moves or speaks. Give one warm, funny or easy beat from somebody on {{user}}'s side before any friction or demand; a small act, not a greeting. Never act or speak for {{user}}. End on a concrete beat (an NPC speaking or acting, or something happening) that {{user}} can react to — friendly, curious, awkward or tense. Not every opening needs trouble. Never end with a question to the player such as "What do you do?", "What's your next move?" or "Where do you go from here?".
+- first_mes: an immersive opening scene addressed to {{user}} in second person, roughly 180-300 words. Start in motion: at most two sentences of setting before someone moves or speaks. Give one warm, funny or easy beat from somebody on {{user}}'s side before any friction or demand: a small act, not a greeting, and not the weather. The first demand comes after it, in the second beat. Never act or speak for {{user}}. End on a concrete beat (an NPC speaking or acting, or something happening) that {{user}} can react to — friendly, curious, awkward or tense. Not every opening needs trouble. Never end with a question to the player such as "What do you do?", "What's your next move?" or "Where do you go from here?".
 - alternate_greetings: {{greetings}} alternative opening scenes, one per array element and each from a different premise or place in {{user}}'s life. Use different places or moments in {{user}}'s life and the same rules as first_mes. If you return them in one string, separate the scenes with a line containing only ---.
 - mes_example: 2-3 short example exchanges, each starting with <START> and using {{user}}: and {{char}}: prefixes, where {{char}} narrates and voices different NPCs so their distinct speech styles show.
 - creator_notes: two or three sentences for the human reader, about what the world is for and how to play against it. Do not recap the persona or list her skills — her card already carries them.
 - tags: 3-8 genre/setting tags.
 
 ### LOREBOOK ENTRIES
-- One topic per entry (one NPC, one place, one faction, one custom, one event). 50-140 words each, factual reference style, present tense. Refer to the persona as {{user}}. Create exactly the requested number, no extras. Short entries are better than truncated JSON: close every brace.
+- One topic per entry (one NPC, one place, one faction, one custom, one event). 50-140 words each, factual reference style, present tense. Refer to the persona as {{user}}. The Cast block is not part of the entry count: create exactly the requested number of entries, no extras. Short entries are better than truncated JSON: close every brace.
 - Keys: two to four specific triggers per entry — names, a distinctive prop, a place's own name. No generic keys like "home", "school", "kitchen" or "strip"; they fire on every scene.
 - Every entry needs one concrete consequence of the theme in it: a repair, a rule, a shortage, a smell, an accident.
-  Each NPC's goal must make sense without {{user}} in the room. State the narrow version of what they know, then end the description with one sentence on the negative space. Vary the shape: some do not know a fact, some have not asked, some are wrong, some suspect. Do not close every entry with "does not know ... and has not asked". One or two NPCs may know something private, but only as an anecdote, never as a label.
+  Each NPC's goal must make sense without {{user}} in the room. State the narrow version of what they know, then end the description with one sentence on the negative space. Vary the shape: at most two entries may use "does not know"; elsewhere use "is wrong about", "assumes", "suspects", "has not told" or "would not admit". Do not close every entry with "does not know ... and has not asked". One or two NPCs may know something private, but only as an anecdote, never as a label.
 - NPC entries must stand alone. The title is a label only and is not sent to the model, so every fact lives in the content and the NPC's name appears there. Use these labelled lines, in order:
   "Name: full name. Age: n. Role: what they do. Relationship to {{user}}: how they know her, and what they want from her or think of her."
   Write NPC entries as plain facts, not prose: no similes, no metaphors, no "the kind of person who". One concrete image at most.
@@ -203,7 +203,7 @@ The world is the Friday, not a festival. Party town means social access and a ni
   "Sexuality:" one word; default by gender unless the notes say otherwise.
   "Quirks:" one or two non-sexual mannerisms, tastes or habits that show character: how they take their tea, what they do with their hands when bored, a song they always queue, a subject they cannot leave alone.
   "Kinks:" every NPC gets these; never write "none". One to three sexual fantasies, and only sexual. NSFW means not safe: no abstractions, no euphemism. Use the words — cock, pussy, tits, ass, cum — and resolve every vague noun: filled with what, risk of what, two of what, took what.
-  This is not biography. Write what she wants, would do, dreams about, gets off on, not what she currently does. Aspirational, embarrassing, off the wall is better than accurate. Present or future tense, never a habit report. Older than about twenty-five can want experience; a teenager's kinks use acts that fit her age — fingers, mouth, being watched, being held down — not "being wanted" as a vibe.
+  Format is "Name (role) — the act and the effect". If the line does not start with a kink name and a dash, rewrite it. This is not biography. Write what she wants, would do, dreams about, gets off on, not what she currently does. Aspirational, embarrassing, off the wall is better than accurate. Present or future tense, never a habit report. Older than about twenty-five can want experience; a teenager's kinks use acts that fit her age — fingers, mouth, being watched, being held down — not "being wanted" as a vibe.
   Test first: if it could be a hobby, a job or a social skill, it is a Quirk. A bare noun is not a kink. Name the recognised kink, then one or two sentences of the fantasy and what it does to her body, plus top/sub/switch where it applies. 20-40 words.
   Crude, messy and specific. Sounds, mess, size, stamina, positions, being held down or manhandled, being filmed, overstimulation, ahegao, squirting, pissing herself. Shame, greed and wanting too much are good.
   Palette: dom/sub, bondage, spanking, degradation, praise, bratting, collaring, exhibitionism and being watched or filmed, group/threesome/being shared, two cocks at once, CNC and free use, being used or passed around, somnophilia and being used half-asleep, degradation, praise, breeding and creampie, pregnancy risk, authority and age gaps, a friend's dad, taboo, hair-pulling, breath play, anal, deepthroat, gagging, cum play, overstimulation, forced orgasm, squirting, petplay, collars, feet, sweat, mirrors. Monsters, aliens, knotting if the world allows.
@@ -446,6 +446,25 @@ function recentWorldBones(excludeDraftId = null, limit = 3) {
     }).join('\n');
 }
 
+/** Replaces the persona's name with {{user}} in card prose: the model keeps using it despite the rule. */
+function personaMacros(value, name) {
+    const names = [name, String(name || '').split(/\s+/)[0]].filter(n => n && n.length > 2);
+    const map = (item) => {
+        if (typeof item === 'string') {
+            return names.reduce((text, n) => text.replace(new RegExp('\\b' + n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'g'), '{{user}}'), item);
+        }
+        if (Array.isArray(item)) return item.map(map);
+        if (item && typeof item === 'object') return Object.fromEntries(Object.entries(item).map(([k, v]) => [k, map(v)]));
+        return item;
+    };
+    const out = { ...value };
+    for (const key of ['description', 'scenario', 'first_mes', 'alternate_greetings', 'mes_example', 'creator_notes', 'post_history_instructions', 'system_prompt']) {
+        if (key in out) out[key] = map(out[key]);
+    }
+    out.entries = (value.entries || []).map(entry => ({ ...entry, content: map(entry.content) }));
+    return out;
+}
+
 export async function generateWorld({ source, imageBlob = null, details = '', excludeDraftId = null, imageDescription = '', preRoll = '', steer = null, flags = {}, signal = null, onStatus = () => { } }) {
     if (!source?.name) throw new Error('Pick a persona to live in this world.');
     const s = api.settings();
@@ -469,8 +488,9 @@ export async function generateWorld({ source, imageBlob = null, details = '', ex
         { role: 'user', content: userContent(text, image) },
     ];
     const raw = await request(messages, signal);
-    const data = normalizeWorld(api.parseJsonLoose(raw, s.worldMaxTokens));
-    if (!data.entries.length) throw new Error('The model returned no lorebook entries. Check the raw output, or raise "World max tokens".');
+    const parsed = normalizeWorld(api.parseJsonLoose(raw, s.worldMaxTokens));
+    if (!parsed.entries.length) throw new Error('The model returned no lorebook entries. Check the raw output, or raise "World max tokens".');
+    const data = personaMacros(parsed, source.name);
     return { data, raw: api.stripReasoning(raw), imageDescription: image.description, preRoll: preRollBlock };
 }
 

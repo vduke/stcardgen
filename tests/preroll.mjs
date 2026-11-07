@@ -354,13 +354,21 @@ test('world length allows 700 and remembers recent bones', () => {
     assert.ok(src.includes('getDrafts'));
 });
 
+test('the persona name becomes {{user}} deterministically', () => {
+    const src = fs.readFileSync(path.join(root, 'world.js'), 'utf8');
+    assert.ok(src.includes('function personaMacros'));
+    assert.ok(src.includes('personaMacros(parsed, source.name)'));
+    assert.ok(src.includes('start with a kink name and a dash'));
+    assert.ok(src.includes('is wrong about'));
+});
+
 test('the live-review gotchas are guarded', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     assert.ok(world.includes("never use the persona's name in a card field"));
     assert.ok(world.includes('somebody on {{user}}\'s side before any friction'));
     assert.ok(world.includes("never write \"none\""));
     assert.ok(world.includes('No generic keys like \"home\"'));
-    assert.ok(world.includes('some are wrong, some suspect'));
+    assert.ok(world.includes('at most two entries may use'));
     assert.ok(world.includes('not \"being wanted\" as a vibe'));
 });
 

@@ -495,6 +495,13 @@ test('the raw pane follows fixed data', () => {
     assert.match(worldSrc, /state\.raw = JSON\.stringify\(state\.data, null, 2\)/);
 });
 
+test('escaped newlines from the endpoint are decoded', () => {
+    const fn = indexSrc.match(/function asText\(v\) \{[\s\S]*?\n\}/)[0];
+    const asText = eval('(' + fn.replace('function asText', 'function') + ')');
+    assert.strictEqual(asText('one\\ntwo'), 'one\ntwo');
+    assert.ok(indexSrc.includes('double-escape newlines'));
+});
+
 test('the persona title carries the age', () => {
     assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('[Age] - a short tagline'));
     assert.ok(defaults.PERSONA_FORMAT_LINE_MIGRATIONS.includes('[Age] - a short tagline'));
