@@ -354,6 +354,16 @@ test('world length allows 700 and remembers recent bones', () => {
     assert.ok(src.includes('getDrafts'));
 });
 
+test('the live-review gotchas are guarded', () => {
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    assert.ok(world.includes("never use the persona's name in a card field"));
+    assert.ok(world.includes('somebody on {{user}}\'s side before any friction'));
+    assert.ok(world.includes("never write \"none\""));
+    assert.ok(world.includes('No generic keys like \"home\"'));
+    assert.ok(world.includes('some are wrong, some suspect'));
+    assert.ok(world.includes('not \"being wanted\" as a vibe'));
+});
+
 test('the cast block is required and family is included', () => {
     const src = fs.readFileSync(path.join(root, 'world.js'), 'utf8');
     const world = extractTemplate(src, 'DEFAULT_WORLD_PROMPT');
@@ -498,7 +508,7 @@ test('greetings split on --- and descriptions stay legible', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     assert.ok(world.includes('one per array element'), 'array-per-greeting rule missing');
     assert.ok(world.includes('line containing only ---'), 'fallback separator instruction missing');
-    assert.ok(world.includes('At most four named people in the prose'), 'name budget missing');
+    assert.ok(world.includes('At most five named people in the prose'), 'name budget missing');
     assert.ok(world.includes('Let it breathe'), 'breathing room missing');
     assert.ok(world.includes('Roughly 300-700 words'), 'foundation budget wrong');
     assert.ok(world.includes('foundations, not a rulebook'), 'rulebook guard missing');
