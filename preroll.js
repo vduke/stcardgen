@@ -238,7 +238,7 @@ export const THEME_SEASONS = {
     "Party town": [
         12,
         13,
-        8
+        14
     ],
     "Holiday resort": [
         2,
@@ -999,6 +999,7 @@ export const WORLD_CHANNELS = [
             'Late autumn, wind off the water, and the first shop has already put up tinsel.',
             'The first Friday after school starts, and the whole town is out.',
             'A heatwave; the lake lot is full and nobody goes home before two.',
+            'A hot dry Friday; the quarry road is lined with cars by seven and everyone is somebody else\'s plus-one.',
         ],
     },
 ];

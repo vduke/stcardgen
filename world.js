@@ -65,21 +65,21 @@ The pre-rolled WORLD THEME is the physical and social atmosphere: light, materia
 ### INVENT THE PRESSURE AND THE OPENING
 The block does not hand you either. Build them.
 - Derive pressure from what the theme makes scarce, expensive, seasonal or about to end: the last week of the season, the rent going up, the road closed, the one good thing being sold.
-- Give two or three pressures, ordinary and mixed: one about money, one social, one personal. Each needs somebody who benefits and somebody who pays.
+- Give two or three pressures, ordinary and mixed: social, personal, family, time, weather, other people being difficult. Money is one option, not a slot to fill. Each pressure needs somebody who benefits and somebody who pays.
 - The opening is the specific live moment this place and season produce, not a generic event. Vary its shape between worlds: mid-conversation, an arrival, a task going wrong, a discovery, a ritual, a favour called in. It can be fun, and it does not have to be trouble.
 
 ### GIVE {{user}} A REASON TO BE HERE
 A sandbox needs an entry point, not just a backdrop. Decide why {{user}} is in this place and has a stake in it: newly arrived, inherited something, enrolled, hired, returned after years away, visiting for the season, stepping into a role somebody left.
 - Write the premise in one sentence early in the description and use it in the scenario.
-- A premise gives access and obligations: a job brings shifts and a boss, a school brings classes and a register, a return brings history and people who remember.
+- A premise gives access and obligations: school brings classes and a register, a return brings history and people who remember, a job brings shifts and a boss only when there is one.
 - It is not their personality and not a plot. It is the reason the world has business with them. Favour the scale of {{user}}'s age: a party, a shift, a bus, a favour, not the town master plan.
-- Let the theme pick the premise. Party town is social access: who invited her, what she is bringing, how she gets in. Festival week is the fair and the committee. A resignation letter or civic obligation is not the default Party town premise.
+- Let the theme pick the premise. Party town is social access: who invited her, what she is bringing, how she gets in. Festival week is the fair and the committee. A resignation letter or civic obligation is not the default Party town premise. Party town is not Festival week: no parade, no fairground, no bunting, no Ferris wheel unless something else put them there.
 - No chosen-one framing. Ordinary stakes: money, family, a favour, a lease, a place at a table.
-- Children and teenagers are at school; a job is a detail, not a requirement, for them and for many adults.
+- Children and teenagers are at school. A job is a detail, not a requirement, for them or for many adults: if the details say no job, do not invent employment. Babysitting is a gig on a Saturday, not a career.
 
 ### REALISM — THE WORLD HAS TO PAY ITS BILLS
 A sandbox is played in the ordinary parts of a life. Build them so they hold weight.
-- Money and work: rent, wages, travel, food, debt, who employs whom. Prices exist; shifts exist; some work is boring and some is dangerous.
+- Money and work: rent, wages, travel, food, debt, who employs whom — where they actually matter. Prices exist, but not every world is a cash problem and not every generation needs one.
 - Institutions: named people with interests run them. There is paperwork, favouritism, a broken process and somebody who knows how to skip it.
 - Maintenance: things leak, rust, run out and get repaired badly. Dirt, weather and noise are part of the place.
 - Time: shifts, terms, seasons, closing times, the bus that stops at nine. The world continues off-screen; at least some events happen without {{user}} present.
@@ -110,7 +110,7 @@ The world does not bend around {{user}}. There is no plot armour.
 A "WORLD RULES" line, when supplied, sets registers explicitly: NSFW, NSFL and real consequences are each on or off. Obey it. When it is absent, treat all three as on.
 
 ### TONE — MIXED, NOT BLEAK
-- Default to mixed. For each hardship put something warm, funny, beautiful or lucky in the same world: a food pantry and a fair, a drowning and a ballfield at dusk.
+- Default to mixed. For each hardship put something warm, funny, beautiful or lucky in the same world: a food pantry and a good chip shop, a drowning and a ballfield at dusk.
 - Not every NPC is indifferent. Some are kind, some nosy, some want something, some are busy. Warmth exists before it is earned.
 - Bleak is a register, not the default. A dystopian world can still have a good pie.
 - Every world needs a pleasure: somewhere people go to enjoy themselves and at least one genuinely good thing about living there. If the theme does not supply one, invent it.
@@ -154,15 +154,15 @@ Name them plainly, keep them consistent, and let them bite. These are the levers
 
 ### THE CRUTCHES
 Some props are always in reach: a parish hall, a priest, a fair and a town committee, a rented hall. Use at most two of them unless the theme is Festival week.
-- Party town venues, choose two or three: house party, field bonfire, barn, lake lot, arcade lock-in, basement show, bar strip, motel pool, retail-park car park.
+- Party town venues, choose two or three: house party, field bonfire, barn, lake lot, arcade lock-in, basement show, bar strip, motel pool, retail-park car park. No parade and no fair unless they come from the season or the place.
 - If {{user}} is underage, at least one venue must be somewhere a teenager can actually get in. Bars alone are not a party town for a fourteen-year-old.
 - Bonfires need somewhere to burn: if there are woods, farms or a lake nearby, use them. Do not treat a suburb as inner city.
 
 ### SANDWICH CARD
 - name: the world's name, not a person's.
-- description: foundations, not a rulebook. Three paragraphs: (1) the PLACE and SCALE in one sentence — type of place, rough population, distance from a city — what the landscape around it actually is (woods, farmland, lake, shore, sprawl), and the premise that puts {{user}} here with a stake; (2) what people do for fun and where they gather, one genuinely good thing about the place, and who {{user}} knows there; (3) one or two live pressures at {{user}}'s own scale — money for a night out, a friend's sulk, a list, a test, a text, a parent's mood — with the town's bigger story behind them. At least one reaches her through people she knows. Social life leads; money comes after. Roughly 300-500 words. At most four named people in the prose, each doing something rather than filling a role slot.
+- description: foundations, not a rulebook. Three paragraphs: (1) the PLACE and SCALE in one sentence — type of place, rough population, distance from a city — what the landscape around it actually is (woods, farmland, lake, shore, sprawl), and the premise that puts {{user}} here with a stake; (2) what people do for fun and where they gather, one genuinely good thing about the place, and who {{user}} knows there; (3) one or two live pressures at {{user}}'s own scale — a friend's sulk, a list, a test, a text, a parent's mood, a plan that will not come together — with the town's bigger story behind them. Money only when the place runs on it. At least one reaches her through people she knows. Roughly 300-500 words. At most four named people in the prose, each doing something rather than filling a role slot.
   Only what a local would tell you in a minute. Skip administration unless it is characterful: opening times, age policies, fee schedules, licensing, who bills whom, exact shift patterns. One fee or one rule can stay if the place turns on it; the rest can wait for play.
-  Let it breathe: vary sentence length, no and-chains, no announcing a count of pressures. No economic essay: money is people, not figures. Show how the place meets {{user}} instead of declaring "the world does not care", and do not write that none of the pressures concern her.
+  Let it breathe: vary sentence length, no and-chains, no announcing a count of pressures. No economic essay, and no need to state what anything costs: money is people, not figures, and only earns a clause when it is the point. Show how the place meets {{user}} instead of declaring "the world does not care", and do not write that none of the pressures concern her.
 - After the prose, one short block. "Cast:" four to six locals {{user}} would actually know (family, friends, a rival, someone who runs a place), one line each: "- Name, age — role; one look; one hook." The look is concrete: hair, build, the clothes they actually wear; the people {{user}} runs with should read attractive in their own way. No plots, no full histories. The chat template handles narrator voice; do not specify it here. Cast names do not count against the prose budget.
   Everything the user's details state is canon and must appear: both named parents, ethnicity, body or sexuality conventions, the people {{user}} knows. If the details say everyone of an age is bisexual or shaved, every relevant entry says so; put the convention once in the description too instead of repeating boilerplate.
 - scenario: where {{user}}'s story starts, derived from the theme, place, season and derived pressures: the specific live moment this world produces, involving at least one person who matters to her. Not necessarily a problem — an invitation, a ritual, an arrival, a task or a party starting all count. Something is unresolved, but it does not need to be urgent yet.

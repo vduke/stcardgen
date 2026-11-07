@@ -343,6 +343,17 @@ test('memorable NPC features are varied', () => {
     assert.ok(world.includes('Do not give every NPC a scar or a chipped tooth'), 'anti-common quirk rule missing');
 });
 
+test('money, jobs and fairs are not mandatory', () => {
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    assert.ok(world.includes('Money is one option, not a slot to fill'));
+    assert.ok(world.includes('if the details say no job, do not invent employment'));
+    assert.ok(world.includes('no parade, no fairground'));
+    assert.ok(world.includes('Money only when the place runs on it'));
+    assert.ok(!THEME_SEASONS['Party town'].includes(8), 'Party town still draws the festival season');
+    const seasons = WORLD_CHANNELS.find(c => c.key === 'SEASON').entries;
+    assert.ok(seasons[14], 'party Friday season missing');
+});
+
 test('NSFW is heat and NSFL is harm, not illness', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     for (const phrase of ['NSFW is heat', 'NSFL is harm and risk', 'roofies in a drink', 'NSFL is not an illness', 'THE CRUTCHES', 'Bonfires need somewhere to burn']) {
