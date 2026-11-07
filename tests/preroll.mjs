@@ -354,6 +354,17 @@ test('world length allows 700 and remembers recent bones', () => {
     assert.ok(src.includes('getDrafts'));
 });
 
+test('the cast block is required and family is included', () => {
+    const src = fs.readFileSync(path.join(root, 'world.js'), 'utf8');
+    const world = extractTemplate(src, 'DEFAULT_WORLD_PROMPT');
+    const format = extractTemplate(src, 'DEFAULT_WORLD_FORMAT');
+    assert.ok(world.includes('Never omit the block'));
+    assert.ok(world.includes('four to seven'));
+    assert.ok(world.includes('Include both parents if the details name them'));
+    assert.ok(world.includes('first mention of that parent'));
+    assert.ok(format.includes('ending with the Cast block'));
+});
+
 test('Party town gets a night map, not a festival', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     for (const phrase of ['IF THE THEME IS PARTY TOWN', 'night map', 'No zoning', 'a host who cancels', 'the walk home']) {

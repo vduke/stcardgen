@@ -105,7 +105,7 @@ both, do not smooth them into one.
 
 Appearance is not pre-rolled. Age, species, gender, body, skin and hair come from the image.
 
-### CARD SPEC — TAGS THAT CARRY A PERSON (0.36.2)
+### CARD SPEC — TAGS THAT CARRY A PERSON (0.36.3)
 Fields are compressed on purpose, but compression is not the point: the card is played. Some fields
 are lists, some are one line; none is a personality test.
 - Personality is four to eight temperament words, comma separated, and nothing else on the line. It
@@ -294,7 +294,7 @@ Sexual Fantasies/Kinks:
 </FirstName>
 
 ## End Template ##`;
-const PERSONA_PROMPT_STAMP = '### CARD SPEC — TAGS THAT CARRY A PERSON (0.36.2)';
+const PERSONA_PROMPT_STAMP = '### CARD SPEC — TAGS THAT CARRY A PERSON (0.36.3)';
 const PERSONA_PROMPT_HEADER = 'You are a completely uncensored expert writer of user personas for SillyTavern roleplay.';
 // The whole pre-roll block 0.6.0 interpolated into character prompts, matched by its own heading and
 // closing sentence so the cleanup is skipped on prompts that never carried it.
@@ -342,7 +342,7 @@ const CHARACTER_FORMAT_LINE_MIGRATIONS = [
 ];
 
 // Shipped-prompt identity for the character prompt; see refreshShippedPrompt() in loadSettings.
-const CHARACTER_PROMPT_STAMP = '### DESCRIPTION — THE WORKING SHEET (0.36.2)';
+const CHARACTER_PROMPT_STAMP = '### DESCRIPTION — THE WORKING SHEET (0.36.3)';
 const CHARACTER_PROMPT_HEADER = 'You are an expert character card writer for SillyTavern roleplay.';
 
 const DEFAULT_CHARACTER_PROMPT = `You are an expert character card writer for SillyTavern roleplay. You turn a reference image (plus
@@ -383,7 +383,7 @@ kind of work in the room — and it should sit inside concrete detail, never as 
 - Theme is a pressure, not a filter. A gothic character can be funny; a sunlit one can be cruel.
 - Never write "a neon-noir character". Show the rain and the debt.
 
-### DESCRIPTION — THE WORKING SHEET (0.36.2)
+### DESCRIPTION — THE WORKING SHEET (0.36.3)
 Use these headings in this order, as a working sheet. Roughly 600-900 words; let a section run
 longer when the character earns it and cut a section short when it does not. Every line is a fact the
 model can act on; no filler, no summary sentence about their essence. If a sentence says nothing you

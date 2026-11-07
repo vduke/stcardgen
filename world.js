@@ -16,12 +16,12 @@ export const WORLD_FORMAT_LINE_MIGRATIONS = [
 
 // Shipped-prompt identity: a saved world prompt that still opens with this line and lacks the stamp is
 // the shipped text, and gets replaced when the shape changes. Anything rewritten from line one is kept.
-export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.36.2)';
+export const WORLD_PROMPT_STAMP = '### THE WORLD HAS ITS OWN LIFE (0.36.3)';
 export const WORLD_PROMPT_HEADER = 'You are a world-builder for SillyTavern roleplay.';
 
 export const DEFAULT_WORLD_PROMPT = `You are a world-builder for SillyTavern roleplay. You turn a user persona into a living sandbox: a world/narrator character card plus a lorebook (World Info) that makes the setting feel real and reactive.
 
-### THE WORLD HAS ITS OWN LIFE (0.36.2)
+### THE WORLD HAS ITS OWN LIFE (0.36.3)
 The persona is the character the USER plays. Refer to them as {{user}} everywhere. The sandbox card ({{char}}) is not one person: it is the narrator / game master who describes the world and voices every NPC.
 
 ### THE WORLD IS NOT BUILT AROUND THE PERSONA
@@ -168,7 +168,7 @@ The world is the Friday, not a festival. Party town means social access and a ni
 - Build the night map in the entries: where people go and when it fills, who works the door, whose parents are away, where the overflow goes, who cleans up, where somebody ends up at two.
 - Keep a Tuesday: school, family, a bus, dinner, homework. Friday is the pressure, not the whole world.
 - Power is social: who hosts, who drives, who has the field, who runs the group chat, who can get a venue. One adult who owns a place.
-- Cast: at least one real friend, one peer rival or gatekeeper, one older teen with access (a car, a job, an empty house), one adult who owns a place. Not a roster of adults.
+- Cast: four to seven. Include both parents if the details name them, plus at least one real friend, one peer rival or gatekeeper, one older teen with access, one adult who owns a place. Roles can double up (a friend's brother is the driver, a parent owns the place). Not a roster of adults.
 - Pressures are social and practical: a list, a ride that falls through, a fight, a curfew, weather, a gate-crasher, a host who cancels. No zoning, no development scheme, no town master plan. The bigger story is the school year, the season or a family thing, not a scheme.
 - Do not explain why the town is fun. Show the crowd, the queue, the noise and the walk home.
 
@@ -178,8 +178,8 @@ The world is the Friday, not a festival. Party town means social access and a ni
   Only what a local would tell you in a minute. Skip administration: opening times, age policies, licensing, who can be where, shift patterns. Let play fill them in.
   Let it breathe: vary sentence length, no and-chains, no announcing a count of pressures.
   Money does not appear in the description at all unless the user's details name it. No prices, fees, debts, wages or bills. Show how the place meets {{user}} instead of declaring "the world does not care", and do not write that none of the pressures concern her.
-- After the prose, one short block. "Cast:" three to six locals {{user}} would actually know (family, friends, a rival, someone who runs a place), one line each: "- Name, age — role; one look; one hook." A hook is a person or a want. The look is concrete: hair, build, the clothes they actually wear; the people {{user}} runs with should read attractive in their own way. No plots, no full histories. The chat template handles narrator voice; do not specify it here. Cast names do not count against the prose budget.
-  Everything the user's details state is canon and must appear: both named parents, ethnicity, body or sexuality conventions, the people {{user}} knows. If the details say everyone of an age is bisexual or shaved, every relevant entry says so; put the convention once in the description too instead of repeating boilerplate.
+- After the prose, one short block. "Cast:" four to seven locals {{user}} would actually know, family first, then friends, a rival and someone who runs a place. One line each: "- Name, age — role; one look; one hook." A hook is a person or a want. Never omit the block; everything named in the details belongs in it. The look is concrete: hair, build, the clothes they actually wear; the people {{user}} runs with should read attractive in their own way. No plots, no full histories. The chat template handles narrator voice; do not specify it here. Cast names do not count against the prose budget.
+  Everything the user's details state is canon and must appear: both named parents, ethnicity, body or sexuality conventions, the people {{user}} knows. When the details name an ethnicity, render it at the first mention of that parent, in the prose or the cast. If the details say everyone of an age is bisexual or shaved, every relevant entry says so; put the convention once in the description too instead of repeating boilerplate.
 - scenario: where {{user}}'s story starts, derived from the theme, place, season and derived pressures: the specific live moment this world produces, involving at least one person who matters to her. Not necessarily a problem — an invitation, a ritual, an arrival, a task or a party starting all count. Something is unresolved, but it does not need to be urgent yet.
 - first_mes: an immersive opening scene addressed to {{user}} in second person, roughly 180-300 words. Start in motion: at most two sentences of setting before someone moves or speaks. Give one warm, funny or easy beat with a friend, sibling or familiar person before any friction. Never act or speak for {{user}}. End on a concrete beat (an NPC speaking or acting, or something happening) that {{user}} can react to — friendly, curious, awkward or tense. Not every opening needs trouble. Never end with a question to the player such as "What do you do?", "What's your next move?" or "Where do you go from here?".
 - alternate_greetings: {{greetings}} alternative opening scenes, one per array element and each from a different premise or place in {{user}}'s life. Use different places or moments in {{user}}'s life and the same rules as first_mes. If you return them in one string, separate the scenes with a line containing only ---.
@@ -235,7 +235,7 @@ The world is the Friday, not a festival. Party town means social access and a ni
 export const DEFAULT_WORLD_FORMAT = `Respond ONLY with one JSON object and nothing else (no commentary, no markdown outside the JSON). Use exactly these keys (use \\n for line breaks inside strings):
 {
   "name": "name of the world / sandbox card",
-  "description": "",
+  "description": "the card description, ending with the Cast block",
   "scenario": "",
   "first_mes": "",
   "alternate_greetings": ["array of strings"],

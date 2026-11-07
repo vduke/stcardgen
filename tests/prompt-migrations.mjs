@@ -329,6 +329,7 @@ test('reviewer leaves administration and greeting count alone', () => {
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes("at {{user}}'s own scale"));
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('Money is not required at all'));
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('Party town is social access and a night map'));
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('must end with its Cast block'));
 });
 
 test('reviewer does not ask for a voice block', () => {
