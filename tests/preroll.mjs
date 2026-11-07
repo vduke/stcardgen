@@ -354,6 +354,14 @@ test('world length allows 700 and remembers recent bones', () => {
     assert.ok(src.includes('getDrafts'));
 });
 
+test('money is capped to two details', () => {
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    assert.ok(world.includes('at most two money details'));
+    assert.ok(world.includes('Money is seasoning, not structure'));
+    assert.ok(world.includes('Do not attach an entrance fee'));
+    assert.ok(world.includes('A hook is a person or a want, not a price'));
+});
+
 test('the prompt does not prescribe the same skeleton', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     for (const phrase of ["DO NOT REUSE THE LAST WORLD'S BONES", 'Give one or two pressures', 'Some entries should be open-ended', 'Zero is allowed', 'Only what {{user}}\'s life actually needs']) {
@@ -367,7 +375,7 @@ test('money, jobs and fairs are not mandatory', () => {
     assert.ok(world.includes('Money is one option, not a slot to fill'));
     assert.ok(world.includes('if the details say no job, do not invent employment'));
     assert.ok(world.includes('no parade, no fairground'));
-    assert.ok(world.includes('Money only when the place runs on it'));
+    assert.ok(world.includes('Money only if the place turns on it'));
     assert.ok(!THEME_SEASONS['Party town'].includes(8), 'Party town still draws the festival season');
     const seasons = WORLD_CHANNELS.find(c => c.key === 'SEASON').entries;
     assert.ok(seasons[14], 'party Friday season missing');

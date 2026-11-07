@@ -328,6 +328,7 @@ test('reviewer leaves administration and greeting count alone', () => {
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('alternate greeting count is a setting'));
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes("at {{user}}'s own scale"));
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('A job and a money problem are optional'));
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('more than two money details'));
 });
 
 test('reviewer does not ask for a voice block', () => {
