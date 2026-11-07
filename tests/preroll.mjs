@@ -395,6 +395,14 @@ test('experience sources are act lists by tier', () => {
     }
 });
 
+test('there is a virgin-with-some-experience tier', () => {
+    const source = PRE_ROLL_CHANNELS.find(c => c.key === 'SOURCE OF EXPERIENCE');
+    assert.ok(source.groups.virgin_some, 'tier missing');
+    assert.ok(source.groups.virgin_some.every(line => !/vaginal|anal/.test(line)), 'penetration in a technical virgin line');
+    assert.ok(source.groups.virgin_some.some(line => /oral/.test(line)), 'no oral in the technical virgin tier');
+    assert.ok(source.groups.some.length >= 6, 'some tier is still rigid');
+});
+
 test('texture includes modern technology', () => {
     const texture = WORLD_CHANNELS.find(c => c.key === 'TEXTURE').entries.join(' ');
     assert.ok(/phone|group chat/i.test(texture), 'no modern phone texture');

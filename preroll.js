@@ -146,6 +146,7 @@ export const PERSONA_STEER_OPTIONS = {
     SEXUALITY: ['Bisexual', 'Heterosexual', 'Lesbian', 'Gay'],
     SOURCE: [
         { value: 'virgin', label: 'Virgin' },
+        { value: 'virgin_some', label: 'Virgin, some experience' },
         { value: 'some', label: 'Some experience' },
         { value: 'experienced', label: 'Experienced' },
         { value: 'hedonist', label: 'Hedonist' },
@@ -517,11 +518,21 @@ export const PRE_ROLL_CHANNELS = [
                 "Virgin: masturbation, and a lot of curiosity.",
                 "Virgin: masturbation only, unhurried."
             ],
+            "virgin_some": [
+                "Virgin, some experience: masturbation, kissing, heavy petting.",
+                "Virgin, some experience: masturbation, oral (receiving), fingering.",
+                "Virgin, some experience: oral giving and receiving, mutual masturbation.",
+                "Virgin, some experience: dry humping, hands, a toy.",
+                "Virgin, some experience: fingering, oral with women, mutual masturbation."
+            ],
             "some": [
                 "Masturbation, oral giving and receiving, vaginal sex with one partner.",
                 "Masturbation, oral (receiving), vaginal sex.",
                 "Masturbation, oral with women, fingering.",
-                "Masturbation, fingering, oral giving and receiving."
+                "Masturbation, fingering, oral giving and receiving.",
+                "Masturbation, oral with men, vaginal sex, one-night stands.",
+                "Masturbation, oral both ways, vaginal and anal sex.",
+                "Masturbation, handjobs, oral, vaginal sex, a summer of it."
             ],
             "experienced": [
                 "Masturbation, oral both ways, vaginal sex, one-night stands.",
@@ -539,6 +550,8 @@ export const PRE_ROLL_CHANNELS = [
         orientationTags: {
             "Masturbation, oral (receiving), vaginal sex.": "m",
             "Masturbation, oral with women, fingering.": "w",
+            "Virgin, some experience: fingering, oral with women, mutual masturbation.": "w",
+            "Masturbation, oral with men, vaginal sex, one-night stands.": "m",
             "Masturbation, oral both ways, vaginal sex, a threesome with two men.": "m",
             "Masturbation, oral with women and men, vaginal sex.": "b",
             "Masturbation, oral with men and women, vaginal and anal sex, rotating partners.": "b"
@@ -548,10 +561,18 @@ export const PRE_ROLL_CHANNELS = [
             'Virgin: masturbation, solitary.',
             'Virgin: masturbation, and a lot of curiosity.',
             'Virgin: masturbation only, unhurried.',
+            'Virgin, some experience: masturbation, kissing, heavy petting.',
+            'Virgin, some experience: masturbation, oral (receiving), fingering.',
+            'Virgin, some experience: oral giving and receiving, mutual masturbation.',
+            'Virgin, some experience: dry humping, hands, a toy.',
+            'Virgin, some experience: fingering, oral with women, mutual masturbation.',
             'Masturbation, oral giving and receiving, vaginal sex with one partner.',
             'Masturbation, oral (receiving), vaginal sex.',
             'Masturbation, oral with women, fingering.',
             'Masturbation, fingering, oral giving and receiving.',
+            'Masturbation, oral with men, vaginal sex, one-night stands.',
+            'Masturbation, oral both ways, vaginal and anal sex.',
+            'Masturbation, handjobs, oral, vaginal sex, a summer of it.',
             'Masturbation, oral both ways, vaginal sex, one-night stands.',
             'Masturbation, oral both ways, vaginal sex, a threesome with two men.',
             'Masturbation, anal sex, oral both ways, rope.',
@@ -760,11 +781,21 @@ export const CHARACTER_CHANNELS = [
                 "Virgin: masturbation, and a lot of curiosity.",
                 "Virgin: masturbation only, unhurried."
             ],
+            "virgin_some": [
+                "Virgin, some experience: masturbation, kissing, heavy petting.",
+                "Virgin, some experience: masturbation, oral (receiving), fingering.",
+                "Virgin, some experience: oral giving and receiving, mutual masturbation.",
+                "Virgin, some experience: dry humping, hands, a toy.",
+                "Virgin, some experience: fingering, oral with women, mutual masturbation."
+            ],
             "some": [
                 "Masturbation, oral giving and receiving, vaginal sex with one partner.",
                 "Masturbation, oral (receiving), vaginal sex.",
                 "Masturbation, oral with women, fingering.",
-                "Masturbation, fingering, oral giving and receiving."
+                "Masturbation, fingering, oral giving and receiving.",
+                "Masturbation, oral with men, vaginal sex, one-night stands.",
+                "Masturbation, oral both ways, vaginal and anal sex.",
+                "Masturbation, handjobs, oral, vaginal sex, a summer of it."
             ],
             "experienced": [
                 "Masturbation, oral both ways, vaginal sex, one-night stands.",
@@ -782,6 +813,8 @@ export const CHARACTER_CHANNELS = [
         orientationTags: {
             "Masturbation, oral (receiving), vaginal sex.": "m",
             "Masturbation, oral with women, fingering.": "w",
+            "Virgin, some experience: fingering, oral with women, mutual masturbation.": "w",
+            "Masturbation, oral with men, vaginal sex, one-night stands.": "m",
             "Masturbation, oral both ways, vaginal sex, a threesome with two men.": "m",
             "Masturbation, oral with women and men, vaginal sex.": "b",
             "Masturbation, oral with men and women, vaginal and anal sex, rotating partners.": "b"
@@ -791,10 +824,18 @@ export const CHARACTER_CHANNELS = [
             'Virgin: masturbation, solitary.',
             'Virgin: masturbation, and a lot of curiosity.',
             'Virgin: masturbation only, unhurried.',
+            'Virgin, some experience: masturbation, kissing, heavy petting.',
+            'Virgin, some experience: masturbation, oral (receiving), fingering.',
+            'Virgin, some experience: oral giving and receiving, mutual masturbation.',
+            'Virgin, some experience: dry humping, hands, a toy.',
+            'Virgin, some experience: fingering, oral with women, mutual masturbation.',
             'Masturbation, oral giving and receiving, vaginal sex with one partner.',
             'Masturbation, oral (receiving), vaginal sex.',
             'Masturbation, oral with women, fingering.',
             'Masturbation, fingering, oral giving and receiving.',
+            'Masturbation, oral with men, vaginal sex, one-night stands.',
+            'Masturbation, oral both ways, vaginal and anal sex.',
+            'Masturbation, handjobs, oral, vaginal sex, a summer of it.',
             'Masturbation, oral both ways, vaginal sex, one-night stands.',
             'Masturbation, oral both ways, vaginal sex, a threesome with two men.',
             'Masturbation, anal sex, oral both ways, rope.',
