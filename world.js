@@ -5,7 +5,7 @@ import { user_avatar } from '../../../personas.js';
 import { debounce } from '../../../utils.js';
 import { reviewCard, reviseCard, reviseField, renameNames, renameCard, qualityPass, autoFixCard, autoFixTarget, autoFixRoundCap, countTokens, tokenSummary, tokenSummaryHtml, reviewHtml, QUALITY_PANEL_HTML, RENAME_CARD_HTML, fieldOpsHtml, wireIssueChecks, canFix } from './quality.js';
 import { startTask, guardClosing } from './tasks.js';
-import { rollPreRoll, formatPreRoll, THEME_OPTIONS } from './preroll.js';
+import { rollPreRoll, formatPreRoll, parsePreRoll, THEME_OPTIONS } from './preroll.js';
 
 // [old line, new line] pairs applied to saved prompts on load; see PROMPT_LINE_MIGRATIONS in index.js.
 export const WORLD_PROMPT_LINE_MIGRATIONS = [];
@@ -164,7 +164,7 @@ Some props are always in reach: a parish hall, a priest, a fair and a town commi
 
 ### SANDWICH CARD
 - name: the world's name, not a person's.
-- description: foundations, not a rulebook. Three paragraphs: (1) the PLACE and SCALE in one sentence — type of place, rough population, distance from a city — what the landscape around it actually is (woods, farmland, lake, shore, sprawl), and the premise that puts {{user}} here with a stake; (2) what people do for fun and where they gather, one genuinely good thing about the place, and who {{user}} knows there; (3) one or two live pressures at {{user}}'s own scale — a friend's sulk, a list, a test, a text, a parent's mood, a plan that will not come together — with the town's bigger story behind them. Money only when the place runs on it. At least one reaches her through people she knows. Roughly 300-500 words. At most four named people in the prose, each doing something rather than filling a role slot.
+- description: foundations, not a rulebook. Three paragraphs: (1) the PLACE and SCALE in one sentence — type of place, rough population, distance from a city — what the landscape around it actually is (woods, farmland, lake, shore, sprawl), and the premise that puts {{user}} here with a stake; (2) what people do for fun and where they gather, one genuinely good thing about the place, and who {{user}} knows there; (3) one or two live pressures at {{user}}'s own scale — a friend's sulk, a list, a test, a text, a parent's mood, a plan that will not come together — with the town's bigger story behind them. Money only when the place runs on it. At least one reaches her through people she knows. Roughly 300-700 words. At most four named people in the prose, each doing something rather than filling a role slot.
   Only what a local would tell you in a minute. Skip administration unless it is characterful: opening times, age policies, fee schedules, licensing, who bills whom, exact shift patterns. One fee or one rule can stay if the place turns on it; the rest can wait for play.
   Let it breathe: vary sentence length, no and-chains, no announcing a count of pressures. No economic essay, and no need to state what anything costs: money is people, not figures, and only earns a clause when it is the point. Show how the place meets {{user}} instead of declaring "the world does not care", and do not write that none of the pressures concern her.
 - After the prose, one short block. "Cast:" three to six locals {{user}} would actually know (family, friends, a rival, someone who runs a place), one line each: "- Name, age — role; one look; one hook." The look is concrete: hair, build, the clothes they actually wear; the people {{user}} runs with should read attractive in their own way. No plots, no full histories. The chat template handles narrator voice; do not specify it here. Cast names do not count against the prose budget.
@@ -412,6 +412,28 @@ async function request(messages, signal) {
  * @param {string} [options.imageDescription] A vision description of the world art to reuse
  * @returns {Promise<{data: object, raw: string, imageDescription: string}>}
  */
+/**
+ * A compact description of the last few generated worlds, so a new one can avoid their bones.
+ * Theme, place, season and premise only: enough to see the shape, not enough to copy it.
+ */
+function recentWorldBones(excludeDraftId = null, limit = 3) {
+    const drafts = (api.getDrafts?.() || [])
+        .filter(d => d.type === 'world' && d.id !== excludeDraftId && d.data?.name)
+        .slice(0, limit);
+    if (!drafts.length) return '';
+    return drafts.map(draft => {
+        const rolled = parsePreRoll(draft.preRoll || '');
+        const premise = String(draft.data.scenario || draft.data.description || '').split(/(?<=[.!?])\s/)[0] || '';
+        const parts = [
+            rolled.THEME ? 'theme: ' + rolled.THEME.slice(0, 110) : '',
+            rolled.PLACE ? 'place: ' + rolled.PLACE.slice(0, 130) : '',
+            rolled.SEASON ? 'season: ' + rolled.SEASON.slice(0, 100) : '',
+            premise ? 'premise: ' + premise.slice(0, 180) : '',
+        ].filter(Boolean);
+        return '- ' + draft.data.name + ' — ' + parts.join('; ');
+    }).join('\n');
+}
+
 export async function generateWorld({ source, imageBlob = null, details = '', excludeDraftId = null, imageDescription = '', preRoll = '', steer = null, flags = {}, signal = null, onStatus = () => { } }) {
     if (!source?.name) throw new Error('Pick a persona to live in this world.');
     const s = api.settings();
@@ -420,10 +442,12 @@ export async function generateWorld({ source, imageBlob = null, details = '', ex
     const preRollBlock = preRoll.trim() || (s.preRoll ? formatPreRoll(rollPreRoll({ type: 'world', steer: steer || {} }).values, 'world') : '');
     const image = await api.prepareImage(imageBlob, 'world', { description: imageDescription, signal, onStatus });
     if (image.description) onStatus('Building the world… big worlds can take a few minutes.');
+    const recent = recentWorldBones(excludeDraftId);
     const text = [
         `Build a living sandbox world that this persona happens to live in.\n\n${sourceBlock(source)}\n\nThe persona's card describes how they experience the world. It is not a list of things the world must provide, and nobody in the world has read it.`,
         details?.trim() ? `World notes from the user (these take priority):\n${details.trim()}` : '',
-        `Create exactly ${count} lorebook entries, 50-140 words each, plus the sandbox card. Keep the card's description to 600 words.`,
+        recent ? `Worlds already built recently. Do not reuse their bones; a new place, a different premise, and a different source of pressure:\n${recent}` : '',
+        `Create exactly ${count} lorebook entries, 50-140 words each, plus the sandbox card. Keep the card's description to 700 words.`,
         BAN_REMINDER,
         'Reply with the JSON object only.',
     ].filter(Boolean).join('\n\n');

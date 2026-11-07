@@ -2906,7 +2906,7 @@ jQuery(async () => {
     initWorld({
         settings, sendMessages, parseJsonLoose, stripReasoning, getBannedNames, findNameConflict, findOverusedParts, findOverusedNames,
         escapeHtml, copyText, pickFiles, imageToPromptDataUrl, prepareImage, imageDescriptionText, usesVisionProfile, visionDescriptionHtml: VISION_DESCRIPTION_HTML, fetchBlob, storeFile, deleteStoredFile,
-        upsertDraft, getDraft, deleteDraft, uid, createCharacterInST, asText, toStringList,
+        upsertDraft, getDraft, getDrafts, deleteDraft, uid, createCharacterInST, asText, toStringList,
     });
     initQuality({ settings, sendMessages, parseJsonLoose, escapeHtml, normalizeData, normalizeEntry, asText, toStringList, getBannedNames, findOverusedNames });
     initManager({ settings, escapeHtml, openEditor, openWorldBuilder, findOverusedParts });

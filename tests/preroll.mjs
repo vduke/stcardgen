@@ -343,6 +343,17 @@ test('memorable NPC features are varied', () => {
     assert.ok(world.includes('Do not give every NPC a scar or a chipped tooth'), 'anti-common quirk rule missing');
 });
 
+test('world length allows 700 and remembers recent bones', () => {
+    const src = fs.readFileSync(path.join(root, 'world.js'), 'utf8');
+    const world = extractTemplate(src, 'DEFAULT_WORLD_PROMPT');
+    assert.ok(world.includes('Roughly 300-700 words'), 'length cap too low');
+    assert.ok(src.includes("Keep the card's description to 700 words"), 'request cap too low');
+    assert.ok(src.includes('Do not reuse their bones'), 'recent-bones instruction missing');
+    assert.ok(src.includes('recentWorldBones(excludeDraftId)'), 'bones not gathered');
+    assert.ok(src.includes("'theme: '"), 'bones summary lacks theme');
+    assert.ok(src.includes('getDrafts'));
+});
+
 test('the prompt does not prescribe the same skeleton', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     for (const phrase of ["DO NOT REUSE THE LAST WORLD'S BONES", 'Give one or two pressures', 'Some entries should be open-ended', 'Zero is allowed', 'Only what {{user}}\'s life actually needs']) {
@@ -462,7 +473,7 @@ test('greetings split on --- and descriptions stay legible', () => {
     assert.ok(world.includes('line containing only ---'), 'fallback separator instruction missing');
     assert.ok(world.includes('At most four named people in the prose'), 'name budget missing');
     assert.ok(world.includes('Let it breathe'), 'breathing room missing');
-    assert.ok(world.includes('Roughly 300-500 words'), 'foundation budget wrong');
+    assert.ok(world.includes('Roughly 300-700 words'), 'foundation budget wrong');
     assert.ok(world.includes('foundations, not a rulebook'), 'rulebook guard missing');
     assert.ok(world.includes('Skip administration'), 'admin guard missing');
     assert.ok(world.includes('Do not recap the persona'), 'creator notes rule missing');
