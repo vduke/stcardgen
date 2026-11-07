@@ -442,6 +442,7 @@ test('experience is acts, not props', () => {
     assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('A blindfold, a hairbrush handle'), 'object failure missing');
     assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('masturbation covers the props'), 'act rule missing');
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('Sexual Experience lists acts'));
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('Virgin source buys masturbation only'), 'tier mismatch rule missing');
 });
 
 test('stations are not mandatory jobs', () => {

@@ -512,54 +512,54 @@ export const PRE_ROLL_CHANNELS = [
         label: 'SOURCE OF EXPERIENCE',
         groups: {
             "virgin": [
-                "Virgin: her own hands and a lot of reading.",
-                "Only her own hands, and a very good idea of what she likes.",
-                "Virgin: a year of thorough reading and her own hands.",
-                "Only ever her own hands, and happy to keep it that way."
+                "Virgin: masturbation only.",
+                "Virgin: masturbation, solitary.",
+                "Virgin: masturbation, and a lot of curiosity.",
+                "Virgin: masturbation only, unhurried."
             ],
             "some": [
-                "Oral sex with one trusted partner, and long enough with them to know what she likes.",
-                "Vaginal sex with two boyfriends, all of it asked for.",
-                "A summer with one woman, and a lot of firsts she still flinches about.",
-                "Vaginal sex and oral (receiving), always after asking."
+                "Masturbation, oral giving and receiving, vaginal sex with one partner.",
+                "Masturbation, oral (receiving), vaginal sex.",
+                "Masturbation, oral with women, fingering.",
+                "Masturbation, fingering, oral giving and receiving."
             ],
             "experienced": [
-                "Oral sex (giving and receiving), vaginal sex, and a few one-night stands.",
-                "Oral sex both ways, vaginal sex, and a threesome with two men.",
-                "Anal sex, oral both ways, and rope.",
-                "Oral sex with women and men, vaginal sex, and a summer she only half remembers."
+                "Masturbation, oral both ways, vaginal sex, one-night stands.",
+                "Masturbation, oral both ways, vaginal sex, a threesome with two men.",
+                "Masturbation, anal sex, oral both ways, rope.",
+                "Masturbation, oral with women and men, vaginal sex."
             ],
             "hedonist": [
-                "Sleeps around: oral, vaginal, toys, light bondage.",
-                "Vaginal sex with several people, oral both ways, and group sex.",
-                "Toys, bondage, exhibitionism, oral both ways, and a lot of partners.",
-                "Oral sex with men and women, vaginal and anal sex, and a rotating cast of partners."
+                "Masturbation, oral both ways, vaginal sex, toys, light bondage, several partners.",
+                "Masturbation, oral both ways, vaginal sex, group sex.",
+                "Masturbation, toys, bondage, exhibitionism, oral both ways, several partners.",
+                "Masturbation, oral with men and women, vaginal and anal sex, rotating partners."
             ]
         },
         orientationTags: {
-            "Vaginal sex with two boyfriends, all of it asked for.": "m",
-            "A summer with one woman, and a lot of firsts she still flinches about.": "w",
-            "Oral sex both ways, vaginal sex, and a threesome with two men.": "m",
-            "Oral sex with women and men, vaginal sex, and a summer she only half remembers.": "b",
-            "Oral sex with men and women, vaginal and anal sex, and a rotating cast of partners.": "b"
+            "Masturbation, oral (receiving), vaginal sex.": "m",
+            "Masturbation, oral with women, fingering.": "w",
+            "Masturbation, oral both ways, vaginal sex, a threesome with two men.": "m",
+            "Masturbation, oral with women and men, vaginal sex.": "b",
+            "Masturbation, oral with men and women, vaginal and anal sex, rotating partners.": "b"
         },
         entries: [
-            'Virgin: her own hands and a lot of reading.',
-            'Only her own hands, and a very good idea of what she likes.',
-            'Virgin: a year of thorough reading and her own hands.',
-            'Only ever her own hands, and happy to keep it that way.',
-            'Oral sex with one trusted partner, and long enough with them to know what she likes.',
-            'Vaginal sex with two boyfriends, all of it asked for.',
-            'A summer with one woman, and a lot of firsts she still flinches about.',
-            'Vaginal sex and oral (receiving), always after asking.',
-            'Oral sex (giving and receiving), vaginal sex, and a few one-night stands.',
-            'Oral sex both ways, vaginal sex, and a threesome with two men.',
-            'Anal sex, oral both ways, and rope.',
-            'Oral sex with women and men, vaginal sex, and a summer she only half remembers.',
-            'Sleeps around: oral, vaginal, toys, light bondage.',
-            'Vaginal sex with several people, oral both ways, and group sex.',
-            'Toys, bondage, exhibitionism, oral both ways, and a lot of partners.',
-            'Oral sex with men and women, vaginal and anal sex, and a rotating cast of partners.',
+            'Virgin: masturbation only.',
+            'Virgin: masturbation, solitary.',
+            'Virgin: masturbation, and a lot of curiosity.',
+            'Virgin: masturbation only, unhurried.',
+            'Masturbation, oral giving and receiving, vaginal sex with one partner.',
+            'Masturbation, oral (receiving), vaginal sex.',
+            'Masturbation, oral with women, fingering.',
+            'Masturbation, fingering, oral giving and receiving.',
+            'Masturbation, oral both ways, vaginal sex, one-night stands.',
+            'Masturbation, oral both ways, vaginal sex, a threesome with two men.',
+            'Masturbation, anal sex, oral both ways, rope.',
+            'Masturbation, oral with women and men, vaginal sex.',
+            'Masturbation, oral both ways, vaginal sex, toys, light bondage, several partners.',
+            'Masturbation, oral both ways, vaginal sex, group sex.',
+            'Masturbation, toys, bondage, exhibitionism, oral both ways, several partners.',
+            'Masturbation, oral with men and women, vaginal and anal sex, rotating partners.',
         ],
     },
     {
@@ -755,54 +755,54 @@ export const CHARACTER_CHANNELS = [
         aliases: ['LIMITS'],
         groups: {
             "virgin": [
-                "Virgin: her own hands and a lot of reading.",
-                "Only her own hands, and a very good idea of what she likes.",
-                "Virgin: a year of thorough reading and her own hands.",
-                "Only ever her own hands, and happy to keep it that way."
+                "Virgin: masturbation only.",
+                "Virgin: masturbation, solitary.",
+                "Virgin: masturbation, and a lot of curiosity.",
+                "Virgin: masturbation only, unhurried."
             ],
             "some": [
-                "Oral sex with one trusted partner, and long enough with them to know what she likes.",
-                "Vaginal sex with two boyfriends, all of it asked for.",
-                "A summer with one woman, and a lot of firsts she still flinches about.",
-                "Vaginal sex and oral (receiving), always after asking."
+                "Masturbation, oral giving and receiving, vaginal sex with one partner.",
+                "Masturbation, oral (receiving), vaginal sex.",
+                "Masturbation, oral with women, fingering.",
+                "Masturbation, fingering, oral giving and receiving."
             ],
             "experienced": [
-                "Oral sex (giving and receiving), vaginal sex, and a few one-night stands.",
-                "Oral sex both ways, vaginal sex, and a threesome with two men.",
-                "Anal sex, oral both ways, and rope.",
-                "Oral sex with women and men, vaginal sex, and a summer she only half remembers."
+                "Masturbation, oral both ways, vaginal sex, one-night stands.",
+                "Masturbation, oral both ways, vaginal sex, a threesome with two men.",
+                "Masturbation, anal sex, oral both ways, rope.",
+                "Masturbation, oral with women and men, vaginal sex."
             ],
             "hedonist": [
-                "Sleeps around: oral, vaginal, toys, light bondage.",
-                "Vaginal sex with several people, oral both ways, and group sex.",
-                "Toys, bondage, exhibitionism, oral both ways, and a lot of partners.",
-                "Oral sex with men and women, vaginal and anal sex, and a rotating cast of partners."
+                "Masturbation, oral both ways, vaginal sex, toys, light bondage, several partners.",
+                "Masturbation, oral both ways, vaginal sex, group sex.",
+                "Masturbation, toys, bondage, exhibitionism, oral both ways, several partners.",
+                "Masturbation, oral with men and women, vaginal and anal sex, rotating partners."
             ]
         },
         orientationTags: {
-            "Vaginal sex with two boyfriends, all of it asked for.": "m",
-            "A summer with one woman, and a lot of firsts she still flinches about.": "w",
-            "Oral sex both ways, vaginal sex, and a threesome with two men.": "m",
-            "Oral sex with women and men, vaginal sex, and a summer she only half remembers.": "b",
-            "Oral sex with men and women, vaginal and anal sex, and a rotating cast of partners.": "b"
+            "Masturbation, oral (receiving), vaginal sex.": "m",
+            "Masturbation, oral with women, fingering.": "w",
+            "Masturbation, oral both ways, vaginal sex, a threesome with two men.": "m",
+            "Masturbation, oral with women and men, vaginal sex.": "b",
+            "Masturbation, oral with men and women, vaginal and anal sex, rotating partners.": "b"
         },
         entries: [
-            'Virgin: her own hands and a lot of reading.',
-            'Only her own hands, and a very good idea of what she likes.',
-            'Virgin: a year of thorough reading and her own hands.',
-            'Only ever her own hands, and happy to keep it that way.',
-            'Oral sex with one trusted partner, and long enough with them to know what she likes.',
-            'Vaginal sex with two boyfriends, all of it asked for.',
-            'A summer with one woman, and a lot of firsts she still flinches about.',
-            'Vaginal sex and oral (receiving), always after asking.',
-            'Oral sex (giving and receiving), vaginal sex, and a few one-night stands.',
-            'Oral sex both ways, vaginal sex, and a threesome with two men.',
-            'Anal sex, oral both ways, and rope.',
-            'Oral sex with women and men, vaginal sex, and a summer she only half remembers.',
-            'Sleeps around: oral, vaginal, toys, light bondage.',
-            'Vaginal sex with several people, oral both ways, and group sex.',
-            'Toys, bondage, exhibitionism, oral both ways, and a lot of partners.',
-            'Oral sex with men and women, vaginal and anal sex, and a rotating cast of partners.',
+            'Virgin: masturbation only.',
+            'Virgin: masturbation, solitary.',
+            'Virgin: masturbation, and a lot of curiosity.',
+            'Virgin: masturbation only, unhurried.',
+            'Masturbation, oral giving and receiving, vaginal sex with one partner.',
+            'Masturbation, oral (receiving), vaginal sex.',
+            'Masturbation, oral with women, fingering.',
+            'Masturbation, fingering, oral giving and receiving.',
+            'Masturbation, oral both ways, vaginal sex, one-night stands.',
+            'Masturbation, oral both ways, vaginal sex, a threesome with two men.',
+            'Masturbation, anal sex, oral both ways, rope.',
+            'Masturbation, oral with women and men, vaginal sex.',
+            'Masturbation, oral both ways, vaginal sex, toys, light bondage, several partners.',
+            'Masturbation, oral both ways, vaginal sex, group sex.',
+            'Masturbation, toys, bondage, exhibitionism, oral both ways, several partners.',
+            'Masturbation, oral with men and women, vaginal and anal sex, rotating partners.',
         ],
     },
 ];

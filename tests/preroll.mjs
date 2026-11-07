@@ -381,6 +381,20 @@ test('world pressures reach the user and people look like people', () => {
     assert.ok(WORLD_CHANNELS.find(c => c.key === 'PLACE').entries.some(e => /party strip|bowling alley/.test(e)), 'no playful places');
 });
 
+test('experience sources are act lists by tier', () => {
+    const source = PRE_ROLL_CHANNELS.find(c => c.key === 'SOURCE OF EXPERIENCE');
+    for (const line of Object.values(source.groups).flat()) {
+        assert.ok(!/happy to keep|flinches|half remembers|long enough/.test(line), 'mood in act list: ' + line);
+    }
+    for (const line of source.groups.virgin) {
+        assert.match(line, /^Virgin: masturbation/, 'virgin line is not masturbation only: ' + line);
+        assert.ok(!/oral|fingering/.test(line), 'virgin line has partner acts: ' + line);
+    }
+    for (const line of Object.values(source.groups).flat().filter(l => !l.startsWith('Virgin'))) {
+        assert.match(line, /^Masturbation/, 'non-virgin line does not lead with an act: ' + line);
+    }
+});
+
 test('texture includes modern technology', () => {
     const texture = WORLD_CHANNELS.find(c => c.key === 'TEXTURE').entries.join(' ');
     assert.ok(/phone|group chat/i.test(texture), 'no modern phone texture');
