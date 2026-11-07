@@ -358,6 +358,16 @@ test('Party town varies its venues and powers', () => {
     assert.ok(seasons[12] && seasons[13], 'party seasons missing');
 });
 
+test('steer details and a teenager-scale premise survive', () => {
+    const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
+    assert.ok(world.includes("Everything the user's details state is canon"), 'steer fidelity rule missing');
+    assert.ok(world.includes('both named parents'), 'parent obligation missing');
+    assert.ok(world.includes('one look; one hook'), 'look in cast missing');
+    assert.ok(world.includes('read attractive in their own way'), 'cast attractiveness missing');
+    assert.ok(world.includes("at {{user}}'s own scale"), 'teen-scale pressure missing');
+    assert.ok(world.includes('not the town master plan'), 'premise scale missing');
+});
+
 test('world pressures reach the user and people look like people', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     assert.ok(world.includes('Some of it reaches {{user}} through friends, family, school'), 'personal stakes missing');
