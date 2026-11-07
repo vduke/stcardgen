@@ -407,9 +407,11 @@ test('greetings split on --- and descriptions stay legible', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
     assert.ok(world.includes('one per array element'), 'array-per-greeting rule missing');
     assert.ok(world.includes('line containing only ---'), 'fallback separator instruction missing');
-    assert.ok(world.includes('at most five named people in the prose'), 'name budget missing');
+    assert.ok(world.includes('At most four named people in the prose'), 'name budget missing');
     assert.ok(world.includes('Let it breathe'), 'breathing room missing');
-    assert.ok(world.includes('Roughly 400-700 words'), 'length budget too tight');
+    assert.ok(world.includes('Roughly 300-500 words'), 'foundation budget wrong');
+    assert.ok(world.includes('foundations, not a rulebook'), 'rulebook guard missing');
+    assert.ok(world.includes('Skip administration'), 'admin guard missing');
     assert.ok(world.includes('Do not recap the persona'), 'creator notes rule missing');
     assert.match(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), /function splitGreetings/);
     assert.match(fs.readFileSync(path.join(root, 'index.js'), 'utf8'), /function splitGreetings/);
