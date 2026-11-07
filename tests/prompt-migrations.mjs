@@ -275,7 +275,7 @@ test('the persona prompt lets user details outrank the roll', () => {
 test('sexuality defaults by gender and experience lists only acts done', () => {
     assert.match(defaults.PERSONA_LINE_MIGRATIONS, /female cards are\s+Bisexual/);
     assert.match(defaults.PERSONA_LINE_MIGRATIONS, /male cards are\s+Heterosexual/);
-    assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('not a record of what she has not done'));
+    assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('Sexual Experience is a list of ACTS'));
     assert.ok(defaults.PROMPT_LINE_MIGRATIONS.includes('Bisexual by default for a female character'));
 });
 
@@ -404,8 +404,19 @@ test('world content and consequence flags are wired', () => {
 });
 
 test('persona complexion carries no scent', () => {
-    assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('No scent in Appearance'));
+    assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('No scent anywhere'));
     assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('No scent, no tan lines'));
+});
+
+test('persona and character generation have NSFW/NSFL flags', () => {
+    assert.ok(indexSrc.includes('function cardRulesLine'));
+    assert.ok(indexSrc.includes('NSFW on: Body and Genitals are crude'));
+    assert.ok(indexSrc.includes('NSFW off: keep Body and Genitals plain'));
+    assert.match(indexSrc, /stcg-c-nsfw/);
+    assert.match(indexSrc, /stcg-bulk-nsfw/);
+    assert.match(indexSrc, /flags: state\.cardFlags/);
+    assert.match(indexSrc, /flags: draft\.cardFlags/);
+    assert.match(indexSrc, /draft\.cardFlags = \{ \.\.\.state\.cardFlags \}/);
 });
 
 test('alternate greeting count is a setting', () => {
@@ -418,6 +429,19 @@ test('alternate greeting count is a setting', () => {
     assert.match(worldSrc, /replace\(\/\{\{greetings\}\}\/g/);
     const migrated = tables.PROMPT_LINE_MIGRATIONS.reduce((text, [oldLine, newLine]) => text.replace(oldLine, newLine), '- alternate_greetings: 1-2 alternative opening messages, following the same rules as first_mes.');
     assert.ok(migrated.includes('{{greetings}}'), 'old prompt did not migrate to token');
+});
+
+test('persona genitals carry no scent and kinks say the nouns', () => {
+    assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('not its reaction, and no scent'), 'genital scent still allowed');
+    assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('Twenty to forty words'), 'kink length missing');
+    assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('Creampies — wants a cock'), 'explicit kink example missing');
+    assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('Bad: "Sensory deprivation'), 'soft example labelled');
+});
+
+test('experience is acts, not props', () => {
+    assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('A blindfold, a hairbrush handle'), 'object failure missing');
+    assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('masturbation covers the props'), 'act rule missing');
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('Sexual Experience lists acts'));
 });
 
 test('stations are not mandatory jobs', () => {
