@@ -566,6 +566,10 @@ const defaultSettings = Object.freeze({
     // How many fix rounds a draft's Auto Fix button may spend before it hands back the best version.
     autoFixRounds: 3,
     reviewProfileId: '',
+    // Body parameters for reasoning models. Off switch for APIs that reject unknown fields.
+    sendReasoningParams: true,
+    enableThinking: false,
+    reasoningEffort: 'none',
     reviewPrompt: DEFAULT_REVIEW_PROMPT,
     enhancePrompt: DEFAULT_ENHANCE_PROMPT,
     optimizePrompt: DEFAULT_OPTIMIZE_PROMPT,
@@ -637,6 +641,7 @@ function loadSettings() {
     if (!s.worldTokenBump) {
         if (Number(s.worldMaxTokens) === 12000) s.worldMaxTokens = defaultSettings.worldMaxTokens;
         s.altGreetings = Math.min(20, Math.max(0, Math.round(Number(s.altGreetings) || 0)));
+        if (!['none', 'low', 'high'].includes(s.reasoningEffort)) s.reasoningEffort = 'none';
         s.worldTokenBump = true;
     }
     // Idempotent: this runs on every load, so a pair never re-applies once its replacement is present.
@@ -1139,6 +1144,16 @@ function withJailbreak(messages) {
  * @param {number} [options.maxTokens] Overrides the max tokens setting
  * @param {string} [options.profileId] Overrides the connection profile setting (e.g. a separate reviewer)
  */
+/** Body parameters the endpoint should apply to every request. */
+function reasoningOverrides() {
+    const s = settings();
+    if (!s.sendReasoningParams) return {};
+    const override = {};
+    if (s.reasoningEffort) override.reasoning_effort = s.reasoningEffort;
+    override.chat_template_kwargs = { enable_thinking: Boolean(s.enableThinking) };
+    return override;
+}
+
 async function sendMessages(messages, signal, { maxTokens = null, profileId = null } = {}) {
     const s = settings();
     const context = SillyTavern.getContext();
@@ -1153,7 +1168,7 @@ async function sendMessages(messages, signal, { maxTokens = null, profileId = nu
                 signal,
                 extractData: true,
                 includePreset: true,
-            });
+            }, reasoningOverrides());
         } catch (error) {
             throw error?.cause ?? error;
         }
@@ -1170,6 +1185,7 @@ async function sendMessages(messages, signal, { maxTokens = null, profileId = nu
         max_tokens: maxTokens,
         model: context.getChatCompletionModel(),
         chat_completion_source: oai.chat_completion_source,
+        ...reasoningOverrides(),
         custom_url: oai.custom_url,
         reverse_proxy: oai.reverse_proxy,
         proxy_password: oai.proxy_password,
@@ -2818,6 +2834,9 @@ async function initSettingsUI() {
     bindSetting('#stcg_world_count', 'worldEntryCount', { type: 'number' });
     bindSetting('#stcg_world_max_tokens', 'worldMaxTokens', { type: 'number' });
     bindSetting('#stcg_alt_greetings', 'altGreetings', { type: 'number' });
+    bindSetting('#stcg_reasoning_effort', 'reasoningEffort');
+    bindSetting('#stcg_enable_thinking', 'enableThinking', { type: 'checkbox' });
+    bindSetting('#stcg_send_reasoning', 'sendReasoningParams', { type: 'checkbox' });
     bindSetting('#stcg_auto_review', 'autoReview', { type: 'checkbox' });
     bindSetting('#stcg_auto_fix_below', 'autoFixBelow', { type: 'number' });
     bindSetting('#stcg_auto_fix_rounds', 'autoFixRounds', { type: 'number' });

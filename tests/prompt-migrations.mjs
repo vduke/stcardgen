@@ -408,6 +408,19 @@ test('persona complexion carries no scent', () => {
     assert.ok(defaults.PERSONA_LINE_MIGRATIONS.includes('No scent, no tan lines'));
 });
 
+test('reasoning parameters are configurable and sent', () => {
+    assert.ok(indexSrc.includes("sendReasoningParams: true"), 'send toggle default missing');
+    assert.ok(indexSrc.includes("reasoningEffort: 'none'"), 'effort default missing');
+    assert.ok(indexSrc.includes('enableThinking: false'), 'thinking default missing');
+    assert.ok(settingsSrc.includes('id="stcg_reasoning_effort"'));
+    assert.ok(settingsSrc.includes('id="stcg_enable_thinking"'));
+    assert.ok(settingsSrc.includes('id="stcg_send_reasoning"'));
+    assert.ok(indexSrc.includes('chat_template_kwargs = { enable_thinking'));
+    assert.ok(indexSrc.includes('overridePayload') || indexSrc.includes('}, reasoningOverrides());'));
+    assert.ok(indexSrc.includes('...reasoningOverrides(),'));
+    assert.ok(indexSrc.includes("if (!['none', 'low', 'high'].includes(s.reasoningEffort))"));
+});
+
 test('persona and character generation have NSFW/NSFL flags', () => {
     assert.ok(indexSrc.includes('function cardRulesLine'));
     assert.ok(indexSrc.includes('NSFW on: Body and Genitals are crude'));

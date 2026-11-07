@@ -53,6 +53,20 @@
                     <input id="stcg_concurrency" class="text_pole" type="number" min="1" max="4" step="1">
                 </label>
             </div>
+            <h4>Reasoning</h4>
+            <div class="stcg-row">
+                <label for="stcg_reasoning_effort">Reasoning effort
+                    <select id="stcg_reasoning_effort" class="text_pole">
+                        <option value="none">none</option>
+                        <option value="low">low</option>
+                        <option value="high">high</option>
+                    </select>
+                </label>
+                <label class="checkbox_label"><input id="stcg_enable_thinking" type="checkbox"> Enable thinking</label>
+                <label class="checkbox_label"><input id="stcg_send_reasoning" type="checkbox"> Send as body parameters</label>
+            </div>
+            <small class="notes">Sent as <code>chat_template_kwargs.enable_thinking</code> and <code>reasoning_effort</code> with every request. Turn off "Send as body parameters" if your API rejects unknown top-level fields. Thinking off and effort none is fastest for card writing.</small>
+
             <label for="stcg_jailbreak">Jailbreak / extra system instructions</label>
             <textarea id="stcg_jailbreak" class="text_pole textarea_compact" rows="4" placeholder="Anything you want every request to carry, e.g. your NSFW/content rules or a jailbreak."></textarea>
             <label class="checkbox_label"><input id="stcg_jailbreak_enabled" type="checkbox"> Append to every system prompt</label>
