@@ -109,6 +109,9 @@ ${HEAT_LINE}
 ${TONE_LINE}
 ${STAKE_LINE}
 
+Only raise a concrete violation of a criterion, not a preference. If a field already works, leave it alone instead of inventing an issue to fill the list.
+Raise one issue per field where possible, and never ask the description and its matching entries to move in opposite directions. Aim for three to six issues: a fix round should be able to finish them.
+
 List concrete issues, most important first. Tie each one to a single field (or lorebook entry index) and give a specific fix. Always list at least the 3 most impactful improvements, even for a good card; skip pure nitpicks; list at most 8.`);
 
 export const DEFAULT_ENHANCE_PROMPT = `Enhance the {{type}}: add concrete, specific details that make it better to roleplay with (history, habits, relationships, sensory details, speech quirks, conflicts, story hooks). Stay consistent with everything already established. Grow the text by roughly 30-60%. No filler, no purple prose, no repetition. Every detail you add must be a fact about the character or the world, not an adjective about them. Do not soften, explain, summarize or tidy the character, and do not smooth over contradictions: deepen them if anything. Do not clean up the language; add bodily and sexual specificity where it fits. Keep the voice.`;
@@ -489,9 +492,35 @@ export async function reviseCard({ type, data, mode, issues = [], steer = '', de
         const issueText = mode === 'fix' && contentIssues.length
             ? `\n\nIssues to fix:\n${contentIssues.map((i, n) => `${n + 1}. [${i.entry !== null ? `entry ${i.entry} ` : ''}${i.field}] ${i.problem} Fix: ${i.fix}`).join('\n')}`
             : '';
-        const user = [`${contextBlock({ type, data, details, source, preRoll })}${issueText}`, steerText, 'Return the patch JSON only.'].filter(Boolean).join('\n\n');
+        const fixTargets = mode === 'fix' && !steerText
+            ? contentIssues.map(i => i.entry !== null ? `entry #${i.entry} field "${i.field}"` : `"${i.field}"`)
+            : [];
+        const scope = fixTargets.length
+            ? `Change ONLY these: ${[...new Set(fixTargets)].join('; ')}. Do not rewrite any other field, do not re-title anything, and do not add entries unless an issue is about coverage.`
+            : '';
+        const user = [`${contextBlock({ type, data, details, source, preRoll })}${issueText}`, steerText, scope, 'Return the patch JSON only.'].filter(Boolean).join('\n\n');
         const patch = await ask(type, system, user, signal);
         next = applyPatch(type, data, patch);
+    }
+    // The model drifts into unrelated fields, and the next review then reacts to changes nobody
+    // asked for. A fix may only keep what the issues named: everything else is restored.
+    if (mode === 'fix' && !steerText && contentIssues.length) {
+        const allowed = new Set(contentIssues.map(i => i.field));
+        for (const key of Object.keys(next)) {
+            if (key === 'entries' || key === 'image_prompt') continue;
+            if (!allowed.has(key)) next[key] = data[key];
+        }
+        if (type === 'world') {
+            const base = data.entries || [];
+            const patched = next.entries || [];
+            const touched = new Set(contentIssues.map(i => i.entry).filter(Number.isInteger));
+            const mayAdd = contentIssues.some(i => i.field === 'coverage' || i.field === 'entries');
+            next.entries = base.map((entry, index) => (touched.has(index) ? (patched[index] ?? entry) : entry));
+            if (mayAdd) next.entries = next.entries.concat(patched.slice(base.length));
+            else next.entries = next.entries.slice(0, base.length);
+        }
+        next = api.normalizeData(type, next);
+        next.image_prompt = data.image_prompt ?? '';
     }
     const changed = changedFields(type, data, next);
 

@@ -380,6 +380,13 @@ test('stations are not mandatory jobs', () => {
     assert.ok(defaults.PROMPT_LINE_MIGRATIONS.includes('A job is one way to fill a day, not a requirement'));
 });
 
+test('fixes are scoped to the issues that were raised', () => {
+    assert.match(qualitySrc, /Change ONLY these:/);
+    assert.match(qualitySrc, /A fix may only keep what the issues named/);
+    assert.match(qualitySrc, /Only raise a concrete violation of a criterion, not a preference/);
+    assert.match(qualitySrc, /never ask the description and its matching entries to move in opposite directions/);
+});
+
 test('a revision clears and refreshes the issue list', () => {
     for (const src of [indexSrc, worldSrc]) {
         assert.match(src, /issues: \[\], summary: 'Revision applied\. Re-reviewing/);
