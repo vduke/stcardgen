@@ -326,9 +326,14 @@ test('reviewer does not ask for a voice block', () => {
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('do not ask for a Voice block'));
 });
 
+test('reviewer wants fantasies, not habits', () => {
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('fantasies and wants, not habits'));
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('crude, specific and aspirational'));
+});
+
 test('reviewer wants kink names, not rooms', () => {
     assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('Kink entries lead with the recognised kink name'), 'kink-name rule missing');
-    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('instead of appetites'), 'scene-list failure missing');
+    assert.ok(quality.DEFAULT_REVIEW_PROMPT.includes('instead of what she wants'), 'scene-list failure missing');
 });
 
 test('the rubric cannot sand the heat off', () => {

@@ -307,8 +307,8 @@ test('NPC genitals have proportions and kinks are explained', () => {
     assert.ok(world.includes('length and girth in inches'), 'cock size rule missing');
     assert.ok(world.includes('labia shape and size'), 'female proportions missing');
     assert.ok(world.includes('A bare noun is not a kink'), 'kink explanation rule missing');
-    assert.ok(world.includes('Power play (dom) — pins her down'), 'worked kink example missing');
-    assert.ok(world.includes('not a scene: no setting, props, smells'), 'named-kink rule missing');
+    assert.ok(world.includes('Breeding (sub) — wants to be filled'), 'worked kink example missing');
+    assert.ok(world.includes('not biography'), 'fantasy-not-habit rule missing');
 });
 
 test('worlds get a premise, voice, cast and levers', () => {
@@ -329,7 +329,7 @@ test('NSFL changes the consent contract', () => {
 
 test('kinks are recognisable sexual appetites, not duties', () => {
     const world = extractTemplate(fs.readFileSync(path.join(root, 'world.js'), 'utf8'), 'DEFAULT_WORLD_PROMPT');
-    for (const phrase of ['if it could be a hobby, a job or a social skill', 'Use recognisable kink names', 'exhibitionism', 'breath play', 'hair-pulling', 'dom/sub', 'Competence, clipboard duty']) {
+    for (const phrase of ['if it could be a hobby, a job or a social skill', 'Name the recognised kink', 'exhibitionism', 'breath play', 'hair-pulling', 'dom/sub', 'Competence, clipboard duty']) {
         assert.ok(world.includes(phrase), 'missing: ' + phrase);
     }
     assert.ok(!world.includes('Kinks: Being in charge at a door'), 'old duty-style example still present');
